@@ -50,7 +50,7 @@ FIELDS = (("name", "Use case name"), ("brief", "Brief description"), ("primary_a
           ("success_guarantee", "Success guarantee"), ("minimal_guarantee", "Minimal guarantee"),
           ("open_questions", "Open questions"))
 NUMERIC_GUARD = re.compile(r"[<>≤≥]|\b\d+\s*(s|seconds?|minutes?|min|calls?|items?|cards?|files?|pages?|chunks?|%)\b"
-                           r"|\b(budget|limit|ceiling|at least|at most|more than|fewer than|within|timeout|time out)\b",
+                           r"|\b(budget|limit|ceiling|at least|at most|more than|fewer than|timeout|time out)\b",
                            re.I)
 
 

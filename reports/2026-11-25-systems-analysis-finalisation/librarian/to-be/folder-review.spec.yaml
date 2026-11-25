@@ -1,4 +1,4 @@
-# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: folder-review
 use_case: UC1.1
 status: PROPOSED_UNACCEPTED
@@ -19,34 +19,35 @@ nodes:
 - id: rootinv
   kind: activity
   lane: Core
-  label: surveys roots, fingerprints, licences & exclusions ($0); reuses NAT-13 folder receipts
+  label: surveys the roots, fingerprints, licences and exclusions at no cost, reusing the folder receipts already held
   step: 1
 - id: droot
   kind: decision
   lane: Core
-  label: roots & folder-route valid?
+  label: are the roots current, and the folder route qualified?
 - id: doctorroot
   kind: ref
   lane: Doctor
   use_case: doctor
-  label: attempts scoped R1/R2 Ticket recovery (GLM-5.3 isolated adapter; single-pass)
+  label: attempts a scoped repair of a stale root or a lost route, once
 - id: reentryroot
   kind: activity
   lane: Core
-  label: verifies bounded R1/R2 repair progress (attempt <= 1)
+  label: checks the single repair's progress
 - id: folderscreen
   kind: activity
   lane: Clerk (tier 2)
-  label: screens only new/ambiguous folders for purpose, unlicensed third-party risk & sensitivity (docs unread)
+  label: screens only the new or ambiguous folders for purpose, unlicensed third-party risk and sensitivity, without reading
+    documents
   step: 2
 - id: dfolderauth
   kind: decision
   lane: Core
-  label: folder decision covered by Context-1 commission or standing policy?
+  label: is the folder decision within tier 0's commission or a standing policy?
 - id: leadfolder
   kind: activity
   lane: Lead (tier 1)
-  label: approves in-scope folders (Context 1 commission or standing policy); applies exclusions
+  label: decides the in-scope folders under the commission or standing policy, and applies the exclusions
   step: 3
 - id: dheldcaller
   kind: decision
@@ -63,12 +64,12 @@ nodes:
 - id: folderapply
   kind: activity
   lane: Core
-  label: submits only changed/selected accepted groups (OP2 single-group fix)
+  label: submits only the changed or selected group
   step: 4
 - id: geoapply
   kind: activity
   lane: Geo-Grapher
-  label: indexes changed folder group incrementally; returns parse/coverage receipt
+  label: indexes the changed group incrementally and returns its parse and coverage receipt
   step: 5
 - id: dgeo
   kind: decision
@@ -78,7 +79,7 @@ nodes:
   kind: ref
   lane: Doctor
   use_case: doctor
-  label: runs bounded group/service Ticket recovery without global rebuild
+  label: repairs the group or the service through a ticket, without rebuilding the library
 - id: reentrygeo
   kind: activity
   lane: Core
@@ -114,10 +115,10 @@ edges:
   to: droot
 - from: droot
   to: folderscreen
-  guard: current & route ready
+  guard: current, and the route is ready
 - from: droot
   to: doctorroot
-  guard: stale root or lost route qualification (R1/R2)
+  guard: a stale root, or the route's qualification lost
   ext: 2a
 - from: droot
   to: e_escalated
@@ -138,17 +139,18 @@ edges:
   to: dfolderauth
 - from: dfolderauth
   to: leadfolder
-  guard: covered by Context-1 task commission (in-scope) or standing non-sensitive policy
+  guard: within the commission, or a standing policy for non-sensitive folders
 - from: dfolderauth
   to: dheldcaller
-  guard: Context-3 direct UI, Context-2 out-of-scope folder, unlicensed/symlink/out-of-scope, or OD-05 policy hold
+  guard: 'outside it: the person in the Web UI, an external project''s out-of-scope folder, unlicensed or linked content,
+    or a reserved decision'
   ext: 3a
 - from: dheldcaller
   to: ownerfolder
-  guard: interactive UI/Owner present
+  guard: the Owner is present, in the Web UI
 - from: dheldcaller
   to: e_held_for_the_Owner
-  guard: MCP Tier 0 / Context-2 / scheduled run (log Agenda Ticket without blocking)
+  guard: 'no person present (tier 0 over MCP, an external project, a scheduled run): put it on the agenda without blocking'
 - from: ownerfolder
   to: folderapply
   guard: approve
@@ -171,7 +173,7 @@ edges:
   guard: valid receipt
 - from: dgeo
   to: doctorgeo
-  guard: FOLDER_STALE or mapped Geo service fault
+  guard: the folder is stale, or a mapped Geo-Grapher fault
   ext: 5a
 - from: doctorgeo
   to: reentrygeo
@@ -186,7 +188,7 @@ edges:
   guard: escalated
 - from: dgeo
   to: oraclecov
-  guard: degraded parse coverage (e.g. tree_sitter skips)
+  guard: parse coverage is degraded (some files skipped)
   ext: 5b
 - from: dgeo
   to: e_escalated

@@ -114,6 +114,8 @@ use_cases:
   - id: UC1b
     name: Run the approved batch
     spec: batch-enrichment
+    boundaries:
+      - {at: dcontrols, values: ["reserve fits exactly", "short by one call", "cancelled between items"], expect: "an item is dispatched only with its budget reserved"}
     includes: [UC1c, UC-D]
     fields:
       brief: "The frozen selection runs item by item under a budget reserve, folder cards drafted by a Scribe and reviewed by a Clerk, then judged by the Oracle."
@@ -127,6 +129,8 @@ use_cases:
   - id: UC1c
     name: Enrich one source
     spec: source-enrichment
+    boundaries:
+      - {at: dcontrols, values: ["reserve fits exactly", "short by one call", "cancelled between stages"], expect: "a stage is dispatched only with its budget reserved"}
     includes: [UC1c.1, UC1c.2, UC1c.3, UC-D]
     fields:
       brief: "Parse, read and publish one source, then the Oracle audits its receipts."
@@ -140,6 +144,7 @@ use_cases:
   - {id: UC1c.1, name: Validate and parse a source, spec: source-parse,
      fields: {brief: "Validate, extract, convert with a Clerk-assigned and Clerk-reviewed Scribe task, and mark the provisional projection.", primary_actor: Core, supporting_actors: "Clerk, Scribe", preconditions: "Captured evidence", trigger: "Stage 1", success_guarantee: "Text ready with its gaps recorded", minimal_guarantee: "Unrecoverable items quarantined", open_questions: "—"}}
   - {id: UC1c.2, name: Read a source, spec: source-reading,
+     boundaries: [{at: drelate, values: ["1 read chapter", "2"], expect: "chapter relations are proposed from 2 read chapters"}],
      fields: {brief: "A Clerk plans the reading; Scribes read bounded parts; every part's answer is checked before it counts.", primary_actor: Clerk, supporting_actors: "Scribe, Model host, Core", preconditions: "Parsed text", trigger: "Stage 3", success_guarantee: "Every part read and checked", minimal_guarantee: "Poison text quarantined after bounded retries", open_questions: "—"}}
   - {id: UC1c.3, name: Publish a paper to the paper graph, spec: paper-publication, actors: [geo],
      fields: {brief: "A fully converted paper is published, and an empty claim receipt is refused.", primary_actor: Core, supporting_actors: Geo-Grapher, preconditions: "Full reading and conversion", trigger: "Stage 9", success_guarantee: "Published with a non-empty receipt and its stored link", minimal_guarantee: "A gap is recorded with its reason", open_questions: "W-PUB-02: the folder prerequisite (Geo-Grapher pack)"}}
@@ -166,6 +171,7 @@ use_cases:
   - {id: UC-O, name: Judge a process's output, spec: oracle, actors: [oracle],
      fields: {brief: "Tier A checks, then Tier B review, on a route distinct from every worker; the verdict is a checked claim.", primary_actor: Oracle, supporting_actors: "Core, Doctor", preconditions: "A process with a specification", trigger: "The parent's check step", success_guarantee: "A verdict with evidence, re-checked", minimal_guarantee: "No distinct route: unverified, never a pass", open_questions: "Which model is assigned to the Oracle (revisable)"}}
   - {id: UC-D, name: Repair a failure through a ticket, spec: doctor, actors: [doctor, owner],
+     boundaries: [{at: dgrant, values: ["3 recovery steps", "4", "2 paid calls", "3"], expect: "over 3 steps or 2 paid calls goes to the Owner"}],
      fields: {brief: "A ticket, a matching accepted remedy, a blast-radius check, the repair, then the Oracle's confirmation.", primary_actor: Doctor, supporting_actors: "Clerk, Lead, Owner, Oracle, Core", preconditions: "An open ticket", trigger: "A failure at a mapped extension", success_guarantee: "Resolved, confirmed by the Oracle", minimal_guarantee: "Never beyond the mandate without the Owner", open_questions: "The repair role's code name (W-DOC-05)"}}
   - {id: UC-L, name: Learn a remedy, spec: learn, actors: [owner],
      fields: {brief: "A repair tier 0 made by hand becomes a proposed remedy that the Owner accepts.", primary_actor: Owner, supporting_actors: "Overseer, Core", preconditions: "A resolved case with no remedy", trigger: "Tier 0 proposes the remedy", success_guarantee: "An accepted catalogue entry", minimal_guarantee: "Nothing is installed without acceptance", open_questions: "—"}}

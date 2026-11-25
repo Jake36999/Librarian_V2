@@ -7547,4 +7547,20 @@ The Geo-Grapher packs (`geo-grapher/as-is`, `geo-grapher/to-be`), from its code 
 
 Open: S6 (the Owner's review); D2–D4. Two Owner decisions (W-ACT-05, W-ACC-04) and two to-be gaps (W-INT-02, W-ACC-01). A plain-language pass over the 24 November to-be wording.
 
+Tests: reports only; no code changed. Hosted CI on `3e9eab4`: all jobs passed.
+
+### The inherited to-be specs reworded in plain language (2026-11-25)
+
+Owner direction: reword the 14 to-be specs inherited from 24 November before the review.
+- **What changed.** [`tools/s4_plain_language.py`](../reports/2026-11-25-systems-analysis-finalisation/tools/s4_plain_language.py) rewords 325 titles, problem statements, node labels and decision guards.
+  - Every rule and workstream code now says what it means: Rule 15 is the permission envelope approved once, MC-10 the budget reserved before each dispatch, OD-05 the open Owner decision on sensitivity exceptions, and so on.
+  - Labels start with the actor's verb, so the generated written use case reads "The Core checks…".
+  - Model names (GLM-5.3) are out of the labels.
+- **What did not.** Node ids, steps, edges, extension numbers and reference outcomes are unchanged; the script refuses to touch a reference's outcome. handles.yaml and every check still hold.
+- **Checked.**
+  - A scan of every to-be title, label and guard finds no code or shorthand left.
+  - The four packs pass with no errors.
+  - The to-be warnings fell from 29 to 1, after boundary values were added for the real limits: the Doctor's 3 steps and 2 paid calls, the budget reserves, and the two-chapter threshold for relations.
+  - The quantity check no longer reads "within" as a quantity.
+
 Tests: reports only; no code changed.

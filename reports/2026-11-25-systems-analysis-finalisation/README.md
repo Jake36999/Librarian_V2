@@ -42,7 +42,8 @@ Weaknesses link to their evidence, and as-is and to-be use cases pair by id.
   - archiving superseded specs;
   - the size limit, applied here at 40;
   - sequence diagrams, none drawn yet.
-- **Wording.** The 24 November to-be specs were split and relabelled only. Their wording leans on rule and workstream codes (Rule-15, OD-05, MC-10, NAT-13) and needs a plain-language pass before review.
+- **Wording: done.** The 14 to-be specs inherited from 24 November were reworded in plain language: 325 titles, problem statements, labels and guards, with structure, ids and reference outcomes unchanged ([`tools/s4_plain_language.py`](tools/s4_plain_language.py) holds the old-code-to-meaning key).
+  - Model names were taken out of the labels. The Oracle and Doctor were assigned GLM-5.3 on 24 November; that assignment is revisable and is not part of the design.
 - **S6, your review** of the four packs.
 
 ## How to regenerate

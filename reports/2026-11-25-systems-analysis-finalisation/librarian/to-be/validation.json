@@ -3,7 +3,7 @@
   "receipts": [
     {
       "spec": "acceptance.spec.yaml",
-      "sha256": "584f84348ad20d457a00dca51a57be7199014a7913ef32c55adb11b1a5762cb8",
+      "sha256": "41d854cabc98de1d7794fdf298837fbf09ee7d76d30e2c7d9b7f6d34133c4bfd",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 9,
       "steps": 2,
@@ -17,7 +17,7 @@
     },
     {
       "spec": "activation-external-project.spec.yaml",
-      "sha256": "1cd2c81b315b64aa6140ecc6fb46b5f8a8823f38615f6ce93a6d5159b442f424",
+      "sha256": "9b6af8e8d51920fe1fc9cc7f109f09afdfcdd783f226fa7dfb0b69992a2efa6e",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 34,
       "steps": 8,
@@ -27,13 +27,11 @@
       "weaknesses": 0,
       "handles": 4,
       "errors": [],
-      "warnings": [
-        "decision dmissing ('catalogued Sources satisfy external need?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "activation-overseer.spec.yaml",
-      "sha256": "8ba0e93b7b25736e769c052ee1a9ab27532e4758cff9bbdefef792ecbd828d07",
+      "sha256": "58adc9bff4bdea7e0d4573afa693395dac4eab6e11a97955ca307d076e306fef",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 40,
       "steps": 9,
@@ -43,14 +41,11 @@
       "weaknesses": 0,
       "handles": 2,
       "errors": [],
-      "warnings": [
-        "decision dpperm ('partials acceptable for sprint?') tests a quantity but declares no boundary values",
-        "decision dverdict ('L3 sprint obligations satisfied?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "activation-web-ui.spec.yaml",
-      "sha256": "48f387292e101c44ec77355445426e92f032e1cb28a9632156e3285350406297",
+      "sha256": "6c1b633cc098a46a9cd7cf00f51ffc81827284889538913d93e7e0faeb812e2e",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 37,
       "steps": 12,
@@ -60,13 +55,11 @@
       "weaknesses": 0,
       "handles": 2,
       "errors": [],
-      "warnings": [
-        "decision dgate1choice ('Gate 1 Source choice on Staging page?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "batch-enrichment.spec.yaml",
-      "sha256": "1e93fc223b589da889a70528a10bdfee2618ea4cde7e16dbbf8b0f8789a034f4",
+      "sha256": "b6003d2a41b2cb5ae199f178f34803bd50c866f1387205c895e9e48b1a690217",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 37,
       "steps": 10,
@@ -94,7 +87,7 @@
     },
     {
       "spec": "compose.spec.yaml",
-      "sha256": "fef65fef900aafeafa2f9d77c0fef6d572eea9933e17e19de40744ac26b53582",
+      "sha256": "af2f3266602bd0366c5d3da40d31f297647563fbe875b8b26042c800044c727a",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 34,
       "steps": 9,
@@ -104,14 +97,11 @@
       "weaknesses": 0,
       "handles": 3,
       "errors": [],
-      "warnings": [
-        "decision dnarrow ('sub-run manifest fits parent mandate (Rules 9, 10, 16)?') tests a quantity but declares no boundary values",
-        "decision dscope ('within spec & parent mandate?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "doctor.spec.yaml",
-      "sha256": "a734eebb70a9445bb1d77ae7b47d82a1bfbe1cf14c5ac983098aad249aabfed4",
+      "sha256": "7b740c92b754b90cef19d658c57ebb1c73220260e52b5ddea2407c4d463516aa",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 26,
       "steps": 6,
@@ -122,12 +112,12 @@
       "handles": 5,
       "errors": [],
       "warnings": [
-        "decision dgrant ('within parent mandate and DOC-GEO-03 bounds?') tests a quantity but declares no boundary values"
+        "decision drepaired ('deterministic checks passed?') tests a quantity but declares no boundary values"
       ]
     },
     {
       "spec": "folder-review.spec.yaml",
-      "sha256": "b8879a88bc171aab64b1b228b44be19a7a1e36fb460822fd44db6d908b213e0e",
+      "sha256": "eaf98ea51d648e85cb6264d99d9f3da568ee7c2101238eeadab901ca42665465",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 22,
       "steps": 5,
@@ -137,13 +127,11 @@
       "weaknesses": 0,
       "handles": 3,
       "errors": [],
-      "warnings": [
-        "decision oraclecov ('degraded parse within caller tolerance?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "ingestion.spec.yaml",
-      "sha256": "7388329cc20cd7815897e7908429be10437ea5473a1047da5893fa15d5a427f4",
+      "sha256": "551e0ce83c9f1eb7f818fb0304ca4ef24a44dedf0e2f2dbd7cbf2653ab11c73d",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 36,
       "steps": 13,
@@ -185,7 +173,7 @@
     },
     {
       "spec": "paper-publication.spec.yaml",
-      "sha256": "56075476fa492341b56d4c8b1c2f9084711b1aa9dd5af4d3c3c4afc71b9b4c29",
+      "sha256": "77f1a610b75119f463d1c5d3341ddf1669e7a244641637eb0fe6c02922ad2fd7",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 8,
       "steps": 2,
@@ -213,7 +201,7 @@
     },
     {
       "spec": "source-enrichment.spec.yaml",
-      "sha256": "21ff8d435c2e4752dcff1ce2ab3775217a76f9e0660bedfbcf6cb9486d09088f",
+      "sha256": "34c52887a66cbd11c04e879a252900dcc674c46886939e715c04c97d6526460a",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 26,
       "steps": 7,
@@ -227,7 +215,7 @@
     },
     {
       "spec": "source-intake.spec.yaml",
-      "sha256": "429a3137cd60caf0dca74db0499225a126ac4cee029d95d4bab2e6d2d1ed8540",
+      "sha256": "a19a3496eeee6db5f1c50278a35e6069fc3bc3a9accab56dd34aeda1754bc653",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 8,
       "steps": 3,
@@ -241,7 +229,7 @@
     },
     {
       "spec": "source-parse.spec.yaml",
-      "sha256": "22da98f660549b9ed639460c13bd1d2ef6bdcc2241de3da6bbc8c49da80070ed",
+      "sha256": "d3ae5896445e487741c5ada3f3caf4575d5851dc7fa6aab139cf8915cad46d37",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 17,
       "steps": 3,
@@ -255,7 +243,7 @@
     },
     {
       "spec": "source-reading.spec.yaml",
-      "sha256": "a7b1cc26e924d604e3e2e5a25977824aa00536cc7ddb4d313fddbcfe35123ec8",
+      "sha256": "345cb88236736ca5058b0d53a899f8d63a6783fd49385b9b5c06bf703bd6fee6",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 20,
       "steps": 12,
@@ -265,9 +253,7 @@
       "weaknesses": 0,
       "handles": 2,
       "errors": [],
-      "warnings": [
-        "decision drelate ('multi-chapter document needing semantic relations?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "verify-claims.spec.yaml",
@@ -286,14 +272,6 @@
   ],
   "errors": [],
   "warnings": [
-    "activation-external-project: decision dmissing ('catalogued Sources satisfy external need?') tests a quantity but declares no boundary values",
-    "activation-overseer: decision dpperm ('partials acceptable for sprint?') tests a quantity but declares no boundary values",
-    "activation-overseer: decision dverdict ('L3 sprint obligations satisfied?') tests a quantity but declares no boundary values",
-    "activation-web-ui: decision dgate1choice ('Gate 1 Source choice on Staging page?') tests a quantity but declares no boundary values",
-    "compose: decision dnarrow ('sub-run manifest fits parent mandate (Rules 9, 10, 16)?') tests a quantity but declares no boundary values",
-    "compose: decision dscope ('within spec & parent mandate?') tests a quantity but declares no boundary values",
-    "doctor: decision dgrant ('within parent mandate and DOC-GEO-03 bounds?') tests a quantity but declares no boundary values",
-    "folder-review: decision oraclecov ('degraded parse within caller tolerance?') tests a quantity but declares no boundary values",
-    "source-reading: decision drelate ('multi-chapter document needing semantic relations?') tests a quantity but declares no boundary values"
+    "doctor: decision drepaired ('deterministic checks passed?') tests a quantity but declares no boundary values"
   ]
 }

@@ -1,4 +1,4 @@
-# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: paper-publication
 use_case: UC1c.3
 status: PROPOSED_UNACCEPTED
@@ -18,12 +18,12 @@ nodes:
 - id: publish
   kind: activity
   lane: Geo-Grapher
-  label: imports full-conversion paper into catalog; returns claim/concept/error counts
+  label: imports the fully converted paper and returns its claim, concept and error counts
   step: 1
 - id: pubreceipt
   kind: activity
   lane: Core
-  label: enforces non-zero claims on multi-page PDF and triggers W5 bridge check
+  label: requires claims for a multi-page PDF, and checks for bridges to propose
   step: 2
 - id: dpubok
   kind: decision
@@ -61,8 +61,8 @@ edges:
   to: dpubok
 - from: dpubok
   to: e_success
-  guard: valid non-zero graph & bridge checked
+  guard: valid, with claims, and bridges checked
 - from: dpubok
   to: e_gap
-  guard: EMPTY_PAPER_GRAPH or late refusal
+  guard: an empty paper graph, or a late refusal
   ext: 2a

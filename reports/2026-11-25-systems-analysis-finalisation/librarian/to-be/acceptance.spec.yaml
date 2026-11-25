@@ -1,4 +1,4 @@
-# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: acceptance
 use_case: UC1.3
 status: PROPOSED_UNACCEPTED
@@ -19,7 +19,8 @@ nodes:
 - id: leadaccept
   kind: activity
   lane: Lead (tier 1)
-  label: accepts in-scope Sources & cards (decided_by=agent; preserves flags); defers OD-05/reserved items
+  label: accepts the in-scope sources and folder cards, recorded as accepted by an agent with their flags kept; defers the
+    reserved ones
   step: 1
 - id: dgate2caller
   kind: decision
@@ -28,11 +29,11 @@ nodes:
 - id: ownergate2
   kind: decision
   lane: Owner
-  label: consolidated independent Folder/Source/Lens/Topic choices?
+  label: 'the Owner''s one consolidated decision: which folders, sources, lenses and topics?'
 - id: promote
   kind: activity
   lane: Core
-  label: commits approved Sources (PromotionGuard CAS, index.upsert, DA-3 handoff) & separate approved metadata
+  label: commits the accepted sources through the guarded writer, indexes them, and hands any undecided candidates on
   step: 2
 - id: e_success
   kind: end
@@ -51,17 +52,17 @@ edges:
   to: dgate2
 - from: dgate2
   to: leadaccept
-  guard: authorized by Context-1 task commission (decided_by=agent) or standing agent policy
+  guard: within tier 0's commission, or a standing agent policy
 - from: dgate2
   to: dgate2caller
-  guard: Context-2 no-accept, Context-3 human UI review, uncommissioned taxonomy change, or OD-05 policy hold
+  guard: 'outside it: an external project may not accept, the Web UI person reviews, a taxonomy change, or a reserved decision'
   ext: 1a
 - from: dgate2caller
   to: ownergate2
-  guard: interactive UI/Owner present
+  guard: the Owner is present, in the Web UI
 - from: dgate2caller
   to: e_held_for_the_Owner
-  guard: Context-2 / scheduled (queue for human or Context-1 curate)
+  guard: no person present (an external project or a scheduled run)
 - from: ownergate2
   to: promote
   guard: accept selected items

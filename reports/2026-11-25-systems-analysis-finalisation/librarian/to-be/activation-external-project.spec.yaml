@@ -1,16 +1,16 @@
-# Copied from reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-context2-external-project-mcp.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: activation-external-project
 use_case: UC0
 status: PROPOSED_UNACCEPTED
 supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-context2-external-project-mcp.spec.yaml
+title: Work for an external project through MCP (proposed)
 superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/activation-external-project.spec.yaml
-title: 'Context 2: External-Project Tier 0 Accesses Librarian via MCP (Proposed To-Be)'
 problem:
-  symptom: External project agents hit delegate contribute-tier blocks, Chat-tab Ask timeouts on MCP writes, conflated Context-1/3
-    acceptance authority, and Applications logs missing authorship/repeatability provenance.
-  root: Enforce explicit Context-2 authority boundaries (consult research delegation budget, S1-S6b source access, queue/stage_only
-    intake, no vault acceptance, agent-authored & Core-stored Applications/) and dual project/Librarian notifications.
+  symptom: 'As-is: delegation refused at the external project''s tier, permission asks timing out, acceptance authority confused
+    with the other contexts, and Applications/ notes that record no authorship or locators.'
+  root: 'An external project gets a scoped grant: a reading budget, checked third-party access, intake that only queues or
+    stages, no acceptance, and Applications/ notes written by the agent and stored by the Core.'
 lanes:
 - Clerk (tier 2)
 - Doctor
@@ -35,7 +35,8 @@ nodes:
   kind: activity
   lane: Core
   step: 3
-  label: records spec_owner=external_project_caller; enforces helper budget, S1-S6b, queue/stage_only, no vault accept
+  label: records the external project as the specification's owner, and enforces its helper budget, third-party checks and
+    stage-only intake (no acceptance)
 - id: dmode
   kind: decision
   lane: Core
@@ -43,19 +44,19 @@ nodes:
 - id: mcpblocked
   kind: activity
   lane: Core
-  label: returns fast structured PERMISSION_UNANSWERED/tier/scope Ticket instead of blind 150s UI hang
+  label: returns a structured ticket at once (unanswered, tier or scope), not a 150-second wait
 - id: notifyblocked
   kind: activity
   lane: Overseer (tier 0)
-  label: reports exact Context-2 MCP authority/route gap & resume choice to external-project user
+  label: tells the external project's user exactly what authority or route is missing, and how to resume
 - id: userpause
   kind: activity
   lane: Owner
-  label: receives paused external notice, Ticket ID, & Librarian Agenda resume link
+  label: receives the pause, its ticket and the agenda link to resume it
 - id: reusedapp
   kind: activity
   lane: Core
-  label: confirms unchanged catalogued Sources & matching Applications/ precedent ($0 new spend)
+  label: confirms the catalogued sources are unchanged and a matching Applications/ note exists, at no new spend
 - id: reuseext
   kind: activity
   lane: Overseer (tier 0)
@@ -64,12 +65,12 @@ nodes:
   kind: activity
   lane: Clerk (tier 2)
   step: 4
-  label: Lead sets narrowed helper sub-spec; Clerk/Scribe run DeepInfra delegate/dispatch_plan in budget
+  label: 'runs the delegated reading within the helper budget: the Lead sets a narrower sub-task, Clerks and Scribes do it'
 - id: checkcatalog
   kind: activity
   lane: Core
   step: 5
-  label: 'returns verified catalogue citations, ref: handles, spend & checks unresolved external leads'
+  label: returns the verified catalogue citations with their handles and the spend, and checks the unresolved leads
 - id: dmissing
   kind: decision
   lane: Core
@@ -77,37 +78,37 @@ nodes:
 - id: queueasync
   kind: activity
   lane: Core
-  label: enqueues unresolved_sources into .librarian/staging/source without hijacking external build
+  label: queues the unresolved sources for the library's staging, without holding up the external work
 - id: ingestchild
   kind: ref
   lane: Core
   use_case: ingestion
-  label: Lead runs narrowed L2 stage_only intake child (sub_spec_owner=lead_tier1 <= Context 2; no accept)
+  label: stages the missing sources through a stage-only intake the Lead runs, narrower than the grant and with no acceptance
 - id: dcrit_ex
   kind: decision
   lane: Core
-  label: critical security/data-loss/boundary breach vs mapped shortfall?
+  label: a critical security, data-loss or boundary breach, rather than a mapped shortfall?
 - id: reuseingest
   kind: activity
   lane: Core
-  label: reconciles reused source note & links candidate to active apply session
+  label: reconciles the reused Source note and links the candidate to the open apply session
 - id: applypartial
   kind: activity
   lane: Overseer (tier 0)
-  label: applies held partial evidence in external project & records unresolved_sources leads + spend
+  label: applies the partial evidence it holds in the external project, and records the unresolved leads and spend
 - id: userpartial
   kind: activity
   lane: Owner
-  label: receives external deliverable, coverage gaps, spend & queued Library Agenda leads
+  label: receives the external deliverable, its coverage gaps, the spend and the leads queued in the library
 - id: queuepause
   kind: activity
   lane: Core
-  label: keeps staged/enriched Source on Librarian Agenda for human/Context-1 acceptance; returns resume ref
+  label: keeps the staged sources on the library's agenda for a person, or tier 0, to accept; returns how to resume
 - id: doctorex
   kind: ref
   lane: Doctor
   use_case: doctor
-  label: attempts bounded MCP/intake Ticket repair (GLM-5.3 isolated adapter)
+  label: attempts a bounded repair of the MCP or intake ticket
 - id: reentryex
   kind: activity
   lane: Core
@@ -115,42 +116,42 @@ nodes:
 - id: escticket
   kind: activity
   lane: Core
-  label: routes critical escalated Ticket immediately with flags, evidence & Rule-8 compensation
+  label: routes the critical ticket at once, with its flags, evidence and the compensation shown
 - id: notifyesc
   kind: activity
   lane: Overseer (tier 0)
-  label: alerts external-project user immediately with critical Ticket ID & retained evidence
+  label: alerts the external project's user at once, with the ticket and the evidence kept
 - id: useresc
   kind: activity
   lane: Owner
-  label: receives urgent external failure notice & Librarian Ticket link
+  label: receives the urgent failure notice and the ticket's link
 - id: extapply
   kind: activity
   lane: Overseer (tier 0)
   step: 6
-  label: applies verified findings in external project & submits authored Application proposal
+  label: applies the verified findings in the external project and proposes the Applications/ note it wrote
 - id: recordapp
   kind: activity
   lane: Core
   step: 7
-  label: validates citations, stores append-only Applications/ + sidecar & auto-enqueues unresolved_sources
+  label: validates the citations, stores the append-only Applications/ note with its locators, and queues the unresolved sources
 - id: userhandover
   kind: activity
   lane: Owner
   step: 8
-  label: receives ext deliverable + locators, spend, Applications/ link & Agenda queued-lead receipt
+  label: receives the external deliverable with its locators, the spend, the Applications/ link and the queued leads
 - id: userreuse
   kind: activity
   lane: Owner
-  label: receives reused Library precedent & unchanged Application link
+  label: receives the library's reused precedent and the unchanged Applications/ link
 - id: e1
   kind: end
   outcome: success
-  label: external task completed with repeatable Applications/ precedent & queued leads
+  label: the external task is done, with a repeatable Applications/ precedent and any queued leads
 - id: epartial
   kind: end
   outcome: partial
-  label: external task completed with partial/async-queued Library leads; user notified
+  label: the external task is done with partial evidence; the leads are queued in the library and the user told
 - id: ereused
   kind: end
   outcome: reused
@@ -158,11 +159,11 @@ nodes:
 - id: epaused
   kind: end
   outcome: paused
-  label: Librarian MCP grant/gate paused cleanly on Agenda; external user notified
+  label: the library's grant or gate paused cleanly on the agenda; the external user is told
 - id: eescalated
   kind: end
   outcome: escalated
-  label: critical Librarian MCP/intake Ticket escalated; user notified
+  label: a critical MCP or intake ticket escalated; the user is told
 edges:
 - from: s
   to: extgoal
@@ -174,14 +175,14 @@ edges:
   to: dmode
 - from: dmode
   to: parallelhelpers
-  guard: authorized read/helper/apply MCP session
+  guard: a session authorised to read, delegate and apply
 - from: dmode
   to: mcpblocked
   guard: ungranted write or missing MCP route
   ext: 3a
 - from: dmode
   to: reusedapp
-  guard: unchanged Sources & Application precedent
+  guard: the sources are unchanged and an Applications/ precedent exists
   ext: 3b
 - from: mcpblocked
   to: notifyblocked
@@ -204,11 +205,11 @@ edges:
   guard: held Sources satisfy external project
 - from: dmissing
   to: queueasync
-  guard: missing refs queued asynchronously (default Context-2 queue scope)
+  guard: 'missing sources: queue them for later (the default for an external project)'
   ext: 5a
 - from: dmissing
   to: ingestchild
-  guard: scoped stage_only intake within project-intake grant
+  guard: missing sources, and the grant allows staging them
   ext: 5b
 - from: queueasync
   to: applypartial

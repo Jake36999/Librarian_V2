@@ -13,9 +13,7 @@
       "weaknesses": 0,
       "handles": 2,
       "errors": [],
-      "warnings": [
-        "decision dvalid ('within the bounds?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "graph-building.spec.yaml",
@@ -64,7 +62,6 @@
   ],
   "errors": [],
   "warnings": [
-    "federated-search: decision dvalid ('within the bounds?') tests a quantity but declares no boundary values",
     "query-graph: decision dsize ('does the item fit the connection's limit?') tests a quantity but declares no boundary values"
   ]
 }

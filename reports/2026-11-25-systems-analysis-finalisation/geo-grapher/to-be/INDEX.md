@@ -8,7 +8,7 @@ The preferred Geo-Grapher: a decision changes its own group as a delta, a paper 
 
 | Id | Use case | Status | Nodes | Steps | Paths | Tier-0 turns (main / worst) | Weaknesses | Handles | Errors | Warnings |
 |---|---|---|---|---|---|---|---|---|---|---|
-| UC-G4 | [federated-search](views/federated-search.views.md) | `PROPOSED_UNACCEPTED` | 13 | 4 | 3 | — | 0 | 2 | 0 | 1 |
+| UC-G4 | [federated-search](views/federated-search.views.md) | `PROPOSED_UNACCEPTED` | 13 | 4 | 3 | — | 0 | 2 | 0 | 0 |
 | UC-G1 | [graph-building](views/graph-building.views.md) | `PROPOSED_UNACCEPTED` | 17 | 7 | 4 | — | 0 | 5 | 0 | 0 |
 | UC-G2 | [paper-import](views/paper-import.views.md) | `PROPOSED_UNACCEPTED` | 21 | 7 | 6 | — | 0 | 7 | 0 | 0 |
 | UC-G3 | [query-graph](views/query-graph.views.md) | `PROPOSED_UNACCEPTED` | 14 | 6 | 3 | — | 0 | 2 | 0 | 1 |
@@ -19,6 +19,5 @@ Not drawn yet: UC-G5 Compare (deferred: not on the Librarian's path); UC-G6 Expl
 
 Errors (0):
 
-Warnings (2):
-- federated-search: decision dvalid ('within the bounds?') tests a quantity but declares no boundary values
+Warnings (1):
 - query-graph: decision dsize ('does the item fit the connection's limit?') tests a quantity but declares no boundary values

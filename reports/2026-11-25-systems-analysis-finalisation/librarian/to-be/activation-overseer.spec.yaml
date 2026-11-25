@@ -1,17 +1,16 @@
-# Copied from reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-context1-tier0-delegated.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: activation-overseer
 use_case: UC0
 status: PROPOSED_UNACCEPTED
 supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-context1-tier0-delegated.spec.yaml
+title: Work for the Owner as tier 0 (proposed)
 superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/activation-overseer.spec.yaml
-title: 'Context 1: User Directs Tier 0 Agent to Operate Librarian (Proposed To-Be Sprint)'
 problem:
-  symptom: Tier 0 agents operating Librarian on a user's behalf face MCP curate refusals (process_approved), 150s/600s hidden
-    Chat-tab Ask stalls (F-03), redundant approval prompts, and repeated low-value chunk/gate babysitting.
-  root: Treat user explicit instruction + scope as the commission (no 2nd approval prompt), have Tier 0 approve Rule-15 manifest
-    envelope on user's behalf, delegate L2/L1 execution to Lead + shared pipeline, enforce concrete Oracle route-collision
-    fallback, and return one receipt.
+  symptom: 'As-is: tier 0 is refused the curate tier, stalls on hidden 150- and 600-second permission asks, is asked to approve
+    twice, and has to watch low-value steps.'
+  root: 'The Owner''s instruction and scope are the commission: tier 0 approves the permission envelope once on the Owner''s
+    behalf, delegates the work to the Lead and the shared pipeline, and hands back one receipt.'
 lanes:
 - Lead (tier 1)
 - Doctor
@@ -27,16 +26,17 @@ nodes:
   kind: activity
   lane: Owner
   step: 1
-  label: instructs Tier 0 on Librarian task, scope, exclusions & budget (instruction + scope = commission)
+  label: 'instructs tier 0 with the task, scope, exclusions and budget: the instruction and its scope are the commission'
 - id: commission
   kind: activity
   lane: Overseer (tier 0)
   step: 2
-  label: authors L3 sprint spec (spec_owner=tier0_on_behalf_of_person) & approves Rule-15 envelope with no 2nd prompt
+  label: writes the sprint's specification on the Owner's behalf and approves its permission envelope once, with no second
+    ask
 - id: denv
   kind: decision
   lane: Core
-  label: commissioned spec & scope well-formed?
+  label: are the commissioned specification and scope well formed?
 - id: pausecancel
   kind: activity
   lane: Core
@@ -44,36 +44,37 @@ nodes:
 - id: t0cancel
   kind: activity
   lane: Overseer (tier 0)
-  label: reports rejected/malformed commission & clarification needed to user ($0 spent)
+  label: reports the rejected commission and what needs clarifying, with nothing spent
 - id: storeenv
   kind: activity
   lane: Core
   step: 3
-  label: stores spec & mandate_id (commissioned_by=person, decided_by=agent); grants delegated in-scope permissions
+  label: stores the specification and its mandate (commissioned by the person, decided by the agent) and grants the delegated
+    in-scope permissions
 - id: policy_note
   kind: note
   lane: Core
-  label: 'PROPOSED_UNACCEPTED (OD-05): full in-scope Tier-0 delegation; Rule-16 sensitivity/challenged-claim exceptions flagged
-    for Owner review.'
+  label: 'Proposed: full in-scope delegation to tier 0. Sensitivity and challenged-claim exceptions stay flagged for the Owner
+    (an open Owner decision).'
 - id: leaddispatch
   kind: activity
   lane: Lead (tier 1)
   step: 4
-  label: owns delegated L2 sub-run spec (sub_spec_owner=lead_tier1 <= parent); routes work to Clerk/Scribe
+  label: owns the delegated pipeline run, never wider than its parent, and routes work to Clerks and Scribes
 - id: callingest
   kind: ref
   lane: Core
   step: 5
   use_case: ingestion
-  label: executes shared L2 ingestion -> L2 batch -> L1 source pipeline under commissioned mandate
+  label: runs the shared ingestion pipeline, its batch and each source's workflow, under the commission
 - id: dcrit
   kind: decision
   lane: Core
-  label: critical security/data-loss/boundary breach vs mapped shortfall?
+  label: a critical security, data-loss or boundary breach, rather than a mapped shortfall?
 - id: partbranch
   kind: activity
   lane: Core
-  label: evaluates permitted partial coverage & spend vs L3 sprint acceptance criteria
+  label: weighs the permitted partial coverage and spend against the sprint's acceptance criteria
 - id: dpperm
   kind: decision
   lane: Core
@@ -81,79 +82,81 @@ nodes:
 - id: partnotify
   kind: activity
   lane: Overseer (tier 0)
-  label: notifies human user with coverage, spend, not_examined list, deferred tabs & Agenda Tickets
+  label: tells the Owner the coverage, spend, what was not examined, the deferred decisions and the open tickets
 - id: reusehand
   kind: activity
   lane: Core
-  label: packages reused NAT-13/existing receipts ($0 spend) & unchanged Source list
+  label: packages the reused receipts and the unchanged source list, at no spend
 - id: t0notifyreuse
   kind: activity
   lane: Overseer (tier 0)
-  label: notifies human user of reused/unchanged state, evidence hashes & $0 duplicate spend
+  label: tells the Owner nothing changed, with the evidence hashes and no duplicate spend
 - id: t0ticket
   kind: activity
   lane: Core
-  label: records paused Ticket (ext ID, flags, spend, resume target) for out-of-scope, budget, global change, or OD-05 hold
+  label: 'records a paused ticket (its id, flags, spend and resume point): out of scope, budget, a library-wide change, or
+    a reserved decision'
 - id: t0surface
   kind: activity
   lane: Overseer (tier 0)
-  label: surfaces single structured boundary, OD-05 policy hold, or collision Ticket + resume target to user
+  label: puts one structured question to the Owner (a boundary, a reserved decision or a route collision) with where to resume
 - id: userchoice
   kind: activity
   lane: Owner
-  label: decides boundary/hazard/route exception cleanly & receives exact Agenda resume path
+  label: decides the boundary, hazard or route exception, and gets the exact place on the agenda to resume
 - id: collisionrec
   kind: activity
   lane: Core
-  label: marks review_status=unverified_route_collision & logs ORACLE_ROUTE_COLLISION Ticket (never claims independent review)
+  label: 'records the review as unverified, with a ticket: no Oracle route distinct from the workers'' (never marked as independently
+    reviewed)'
 - id: doctortriage
   kind: ref
   lane: Doctor
   use_case: doctor
-  label: attempts bounded L3 Ticket recovery via revisable adapter (GLM-5.3 isolated context)
+  label: attempts a bounded repair of the sprint's ticket
 - id: reentrydoc
   kind: activity
   lane: Core
-  label: verifies bounded L3 repair progress & prepares independent Oracle recheck
+  label: checks the repair's progress and prepares the Oracle's independent recheck
 - id: declinerec
   kind: activity
   lane: Core
-  label: persists declined Ticket, attempt history & Rule-8 shown compensation on Agenda
+  label: keeps the declined ticket, its attempts and the compensation shown on the agenda
 - id: t0decline
   kind: activity
   lane: Overseer (tier 0)
-  label: reports open Ticket, declined remedy, spend & Rule-8 shown compensation to human user
+  label: reports the open ticket, the declined remedy, the spend and the compensation shown
 - id: escrec
   kind: activity
   lane: Core
-  label: routes critical escalated Ticket immediately with flags, evidence hashes & Rule-8 compensation
+  label: routes the critical ticket at once, with its flags, evidence hashes and the compensation shown
 - id: failnotify
   kind: activity
   lane: Overseer (tier 0)
-  label: alerts human user immediately with critical Ticket ID, evidence, spend & failure state
+  label: alerts the Owner at once with the critical ticket, evidence, spend and state
 - id: useresc
   kind: activity
   lane: Owner
-  label: receives urgent critical failure alert & Ticket link
+  label: receives the urgent failure alert and the ticket's link
 - id: oraclesprint
   kind: activity
   lane: Oracle
   step: 6
-  label: audits L3 sprint obligations via distinct qualified Oracle route (GLM-5.3 current revisable adapter; isolated context)
+  label: audits the sprint's obligations on a route distinct from the workers'
 - id: dverdict
   kind: decision
   lane: Oracle
-  label: L3 sprint obligations satisfied?
+  label: are the sprint's obligations met?
 - id: packagereceipt
   kind: activity
   lane: Core
   step: 7
-  label: commits delivery receipt (promoted IDs, spend, coverage, deferred tabs, Ticket ledger & Agenda)
+  label: 'commits the delivery receipt: accepted notes, spend, coverage, deferred decisions, tickets and agenda'
 - id: t0deliver
   kind: activity
   lane: Overseer (tier 0)
   step: 8
-  label: synthesizes final handover (evidence, spend, coverage, deferred work, review_status, Tickets)
+  label: 'writes the final handover: evidence, spend, coverage, deferred work, review status and tickets'
 - id: userreuse
   kind: activity
   lane: Owner
@@ -161,28 +164,28 @@ nodes:
 - id: userpartial
   kind: activity
   lane: Owner
-  label: receives permitted partial coverage report, not_examined list & Agenda Tickets
+  label: receives the permitted partial report, what was not examined and the open tickets
 - id: userdecline
   kind: activity
   lane: Owner
-  label: receives open Ticket, declined remedy & Rule-8 compensation plan
+  label: receives the open ticket, the declined remedy and the compensation plan
 - id: usercancel
   kind: activity
   lane: Owner
-  label: receives rejected/clarification commission notice (vault unchanged)
+  label: receives the rejected commission and what needs clarifying; the library is unchanged
 - id: userack
   kind: activity
   lane: Owner
   step: 9
-  label: receives explicit completion notification in active chat/IDE session + UI Agenda receipt
+  label: receives the completion notice in the chat or IDE session, and the receipt on the agenda
 - id: e1
   kind: end
   outcome: success
-  label: Context 1 sprint complete; user notified with Oracle-verified evidence & Agenda state
+  label: the sprint is done; the Owner has the Oracle-verified evidence and the agenda
 - id: epartial
   kind: end
   outcome: partial
-  label: Context 1 finished with permitted partials; user notified with not_examined & Tickets
+  label: done with permitted partials; the Owner has what was not examined and the tickets
 - id: ereused
   kind: end
   outcome: reused
@@ -190,11 +193,11 @@ nodes:
 - id: epaused
   kind: end
   outcome: paused
-  label: paused on boundary/hazard/route-collision Ticket or declined commission; user notified
+  label: paused on a boundary, a hazard, a route collision or a declined commission; the Owner is told
 - id: eescalated
   kind: end
   outcome: escalated
-  label: critical Ticket escalated with evidence; user alerted immediately
+  label: a critical ticket escalated with its evidence; the Owner is alerted at once
 edges:
 - from: s
   to: request
@@ -239,7 +242,7 @@ edges:
   guard: critical security, data-loss, or boundary violation
 - from: dcrit
   to: doctortriage
-  guard: mapped noncritical L3 shortfall
+  guard: a mapped, non-critical shortfall
 - from: partbranch
   to: dpperm
 - from: dpperm
@@ -312,7 +315,7 @@ edges:
   ext: 6c
 - from: dverdict
   to: collisionrec
-  guard: ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)
+  guard: no Oracle route distinct from the workers' (never marked as independently reviewed)
   ext: 6d
 - from: collisionrec
   to: t0surface

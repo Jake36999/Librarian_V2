@@ -1,4 +1,4 @@
-# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: source-parse
 use_case: UC1c.1
 status: PROPOSED_UNACCEPTED
@@ -15,7 +15,7 @@ nodes:
 - id: validate
   kind: activity
   lane: Core
-  label: verifies evidence hash, NAT-13 route/recipe key, and fresh publish state
+  label: verifies the evidence hash, the route and recipe, and that publication state is current
   step: 1
 - id: dvalidate
   kind: decision
@@ -24,20 +24,20 @@ nodes:
 - id: parse
   kind: activity
   lane: Core
-  label: runs scripted fetch, AST/PDF text extract, and page map; saves originals
+  label: fetches and extracts the text by script (code syntax trees, PDF text) with its page map, keeping the originals
   step: 2
 - id: dparse
   kind: decision
   lane: Core
-  label: parse & conversion need?
+  label: 'what does the parse need: nothing more, a conversion, or does it stop early?'
 - id: convplan
   kind: activity
   lane: Clerk (tier 2)
-  label: assigns bounded OCR or cleanup task under qualified role and MC-10 reserve
+  label: assigns a bounded OCR or cleanup task to a qualified role, within the reserved budget
 - id: convert
   kind: activity
   lane: Scribe (tier 3)
-  label: converts pages with [page N] anchors and explicit unread/error markers
+  label: converts the pages with page anchors, marking what is unread or failed
 - id: convrev
   kind: activity
   lane: Clerk (tier 2)
@@ -45,7 +45,7 @@ nodes:
 - id: convchk
   kind: activity
   lane: Core
-  label: stores conversion with source_authorship metadata and reconciles spend
+  label: stores the conversion with its authorship, and reconciles the spend
 - id: dconv
   kind: decision
   lane: Core
@@ -61,7 +61,7 @@ nodes:
 - id: preproj
   kind: activity
   lane: Core
-  label: marks provisional .nodes.json (text_layer=False); never counted published
+  label: marks the provisional paper projection as provisional; it is never counted as published
   step: 3
 - id: parsegap
   kind: activity
@@ -122,7 +122,7 @@ edges:
   to: dprov
 - from: dprov
   to: preproj
-  guard: PDF/paper
+  guard: a PDF or a paper
 - from: dprov
   to: m_success
   guard: non-PDF

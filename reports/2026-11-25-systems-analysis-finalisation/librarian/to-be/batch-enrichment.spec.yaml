@@ -1,17 +1,17 @@
-# Copied from reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-batch-enrichment-tobe.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: batch-enrichment
 use_case: UC1b
 status: PROPOSED_UNACCEPTED
 supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-batch-enrichment-tobe.spec.yaml
 - reports/2026-11-23-proposed-process-family/proposed-batch-enrichment.spec.yaml
+title: Run the approved batch (proposed)
 superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/batch-enrichment.spec.yaml
-title: Librarian Mixed-Batch Enrichment L2 Pipeline (Proposed To-Be)
 problem:
-  symptom: Batches ran sessionless with before-item-only budget checks, redundant folder drafting, and UC-D recovery without
-    Oracle verification.
-  root: Record batch activation trigger, reuse NAT-13 folder receipts, enforce MC-10 atomic pre-dispatch reserve, Oracle gate,
-    and single-pass Doctor re-entry.
+  symptom: 'As-is: batches ran outside a session, checked the budget only before each item, drafted folders twice, and were
+    repaired without an Oracle''s check.'
+  root: Record what started the batch, reuse the receipts of work already done, reserve the budget before each dispatch, gate
+    the result with the Oracle, and let the Doctor repair once.
 lanes:
 - Oracle
 - Lead (tier 1)
@@ -27,7 +27,8 @@ nodes:
   kind: activity
   lane: Core
   step: 1
-  label: records narrowed L2 batch mandate, parent spec_owner, F-02 checkpoint & commissioned_by / decided_by
+  label: records the batch's mandate (narrower than its parent), who owns it, the run's checkpoint and who commissioned and
+    decided it
 - id: dtrigger
   kind: decision
   lane: Core
@@ -35,21 +36,21 @@ nodes:
 - id: useradmit
   kind: activity
   lane: Core
-  label: binds Context 3 direct curate process_approved selection (spec_owner=person)
+  label: takes the person's own Process approved selection
 - id: t0admit
   kind: activity
   lane: Core
-  label: validates Context-1 commissioned mandate_id (or scoped stage_only grant); records decided_by=agent
+  label: validates tier 0's commission (or a scoped stage-only grant), recorded as decided by an agent
 - id: bind
   kind: activity
   lane: Lead (tier 1)
   step: 2
-  label: owns delegated L2 sub-run spec (sub_spec_owner=lead_tier1 <= parent)
+  label: owns the delegated batch run, never wider than its parent
 - id: admit
   kind: activity
   lane: Core
   step: 3
-  label: validates session-bound F-02 checkpoint, frozen selection, and role routes
+  label: validates the session's checkpoint, the frozen selection and the role routes
 - id: dadmit
   kind: decision
   lane: Core
@@ -63,7 +64,7 @@ nodes:
   kind: activity
   lane: Core
   step: 5
-  label: checks cancel/writer lease and reserves MC-10 budget before item dispatch
+  label: checks cancellation and the writer lease, and reserves the item's budget before dispatching it
 - id: dcontrols
   kind: decision
   lane: Core
@@ -77,19 +78,19 @@ nodes:
   lane: Core
   step: 6
   use_case: source-enrichment
-  label: runs singleton Source enrichment child under shared commission & MC-10
+  label: runs one source's enrichment under the shared commission and its budget
 - id: fval
   kind: activity
   lane: Core
-  label: 'folder_validate: verifies survey digest, access, and sensitivity flags'
+  label: 'validates the folder card: the survey digest, access and sensitivity flags'
 - id: froute
   kind: activity
   lane: Core
-  label: checks folder drafting grant, NAT-13 intake receipt, & MC-10 reserve
+  label: checks the folder drafting grant, reuses the intake receipt, and reserves the budget
 - id: dfroute
   kind: decision
   lane: Core
-  label: folder drafting needed & permitted?
+  label: is folder drafting needed, and permitted?
 - id: fscribe
   kind: activity
   lane: Scribe (tier 3)
@@ -97,11 +98,11 @@ nodes:
 - id: freview
   kind: activity
   lane: Clerk (tier 2)
-  label: reviews folder summary organization & semantic sensitivity
+  label: reviews the folder summary's organisation and sensitivity
 - id: fdata
   kind: activity
   lane: Core
-  label: runs scripted provenance.py arithmetic cap check & writes folder_data Silver DIK receipt
+  label: checks the folder's provenance arithmetic by script and writes its Data record
 - id: ffail
   kind: activity
   lane: Core
@@ -110,7 +111,7 @@ nodes:
   kind: activity
   lane: Core
   step: 7
-  label: updates mixed parent ledger with coverage, MC-10 spend, and worklists
+  label: updates the batch ledger with coverage, spend and the worklists
 - id: dmore
   kind: decision
   lane: Core
@@ -124,8 +125,7 @@ nodes:
   kind: activity
   lane: Oracle
   step: 9
-  label: verifies mixed L2 ledger & MC-10 totals via distinct qualified Oracle route (GLM-5.3 current adapter); emits Tickets
-    on fault
+  label: verifies the batch ledger and its spend on a route distinct from the workers', and opens tickets on faults
 - id: dverdict
   kind: decision
   lane: Oracle
@@ -138,16 +138,16 @@ nodes:
 - id: reentry
   kind: activity
   lane: Core
-  label: verifies single-pass Doctor repair receipt (attempt <= 1)
+  label: checks the Doctor's single repair receipt
 - id: fullhandoff
   kind: activity
   lane: Lead (tier 1)
   step: 10
-  label: hands verified mixed package & separate pending worklists to parent
+  label: hands the verified batch and its separate pending worklists to the parent
 - id: partialhandoff
   kind: activity
   lane: Lead (tier 1)
-  label: returns completed items beside explicit unmet tickets/partials
+  label: returns the completed items beside the unmet tickets and partial items
 - id: noworkhandoff
   kind: activity
   lane: Lead (tier 1)
@@ -155,7 +155,8 @@ nodes:
 - id: pausehandoff
   kind: activity
   lane: Lead (tier 1)
-  label: returns cancel, MC-10 limit, or ORACLE_ROUTE_COLLISION (unverified) pause Ticket with retained state
+  label: returns the pause (cancelled, budget reached, or no Oracle route distinct from the workers' (never marked as independently
+    reviewed)) as a ticket, with its state kept
 - id: eschandoff
   kind: activity
   lane: Lead (tier 1)
@@ -175,7 +176,7 @@ nodes:
 - id: epaused
   kind: end
   outcome: paused
-  label: paused on cancel, reserved grant, MC-10 cap, or ORACLE_ROUTE_COLLISION
+  label: 'paused: cancelled, a reserved grant, the budget reached, or no distinct Oracle route'
 - id: eescalated
   kind: end
   outcome: escalated
@@ -194,7 +195,7 @@ edges:
   ext: 1a
 - from: dtrigger
   to: t0admit
-  guard: tier 0 directed (Context-1 commissioned mandate_id or scoped stage_only)
+  guard: tier 0, under a commission or a scoped stage-only grant
   ext: 1b
 - from: useradmit
   to: bind
@@ -221,10 +222,10 @@ edges:
   to: dcontrols
 - from: dcontrols
   to: dkind
-  guard: controls and MC-10 reserve active
+  guard: the controls allow it and the budget is reserved
 - from: dcontrols
   to: pausehandoff
-  guard: cancelled or MC-10 cap reached
+  guard: cancelled, or the budget is reached
   ext: 5a
 - from: dcontrols
   to: eschandoff
@@ -265,7 +266,7 @@ edges:
   guard: drafting permitted
 - from: dfroute
   to: fdata
-  guard: scripted/reused NAT-13 receipt
+  guard: scripted, or an intake receipt reused
 - from: dfroute
   to: ffail
   guard: stale or invalid folder card
@@ -307,7 +308,7 @@ edges:
   ext: 9c
 - from: dverdict
   to: pausehandoff
-  guard: ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)
+  guard: no Oracle route distinct from the workers' (never marked as independently reviewed)
   ext: 9d
 - from: doctor
   to: reentry

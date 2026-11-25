@@ -1,4 +1,4 @@
-# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: ingestion
 use_case: UC1
 status: PROPOSED_UNACCEPTED
@@ -6,14 +6,13 @@ supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-ingestion-tobe.spec.yaml
 - reports/2026-11-20-workflow-map/examples/ingestion/ingestion-tobe.spec.yaml
 - reports/2026-11-23-proposed-process-family/proposed-ingestion.spec.yaml
-title: Librarian Shared L2 Ingestion & Governance Pipeline (Proposed To-Be)
+title: Make a folder of documents into Source notes (proposed)
 superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/ingestion.spec.yaml
 problem:
-  symptom: Prior draft hid distinct Context 1/2/3 entry callers inside one trigger switch, overloaded Owner with 7 main-path
-    steps & 3 serial Gate-2 prompts, risked blocking external Tier 0 on curate, and skipped final Oracle on code-only roots.
-  root: Accept narrowed parent mandates from Context 1/2/3 or scheduler (never widening parent scope), delegate routine screening
-    & acceptance via Lead + Oracle (GLM-5.3) + 4-point Doctor, consolidate Gate 2, and emit canonical 5-outcome receipts +
-    tickets.
+  symptom: The earlier draft hid three different callers behind one trigger, gave the Owner seven main-path steps and three
+    serial acceptance prompts, could block an external tier 0 at curate, and skipped the final Oracle check on code-only folders.
+  root: Take a mandate from any caller that never widens its parent; delegate routine screening and acceptance to the Lead,
+    the Oracle and the Doctor; consolidate acceptance into one decision; end with one of five outcomes and its tickets.
 lanes:
 - Owner
 - Lead (tier 1)
@@ -27,12 +26,12 @@ nodes:
 - id: admit_mandate
   kind: activity
   lane: Core
-  label: admits narrowed L2 mandate, parent spec_owner, budget & commissioned_by provenance (no widen)
+  label: admits the ingestion's mandate, its owner, budget and who commissioned it; it never widens its parent
   step: 1
 - id: leadbind
   kind: activity
   lane: Lead (tier 1)
-  label: owns L2 sub-run spec (sub_spec_owner=lead_tier1 <= parent) & narrowed grant envelope
+  label: owns the ingestion run and its permission envelope, never wider than the parent
   step: 2
 - id: ref_folder_review
   kind: ref
@@ -43,7 +42,7 @@ nodes:
 - id: queueagenda
   kind: activity
   lane: Core
-  label: logs Rule-16/OD-05 or Context-2 hold Ticket on vault Agenda without blocking caller
+  label: puts the reserved decision, or the external project's hold, on the agenda as a ticket without blocking the caller
 - id: dinput
   kind: decision
   lane: Core
@@ -57,7 +56,7 @@ nodes:
 - id: dgate1
   kind: decision
   lane: Core
-  label: Gate 1 & batch-start authority in mandate?
+  label: are approving and starting the batch within the mandate?
 - id: dgate1caller
   kind: decision
   lane: Core
@@ -65,27 +64,27 @@ nodes:
 - id: ownergate1
   kind: decision
   lane: Owner
-  label: approve & start batch?
+  label: approve and start the batch?
 - id: startrun
   kind: activity
   lane: Core
-  label: Lead approves within grant; Core validates F-02 checkpoint & freezes mixed batch
+  label: checks the Lead's approval against the grant and the run's checkpoint, and freezes the mixed batch
   step: 5
 - id: batch
   kind: ref
   lane: Core
   use_case: batch-enrichment
-  label: runs mixed source + folder enrichment child against frozen ledger
+  label: runs the mixed batch of sources and folder cards against the frozen ledger
   step: 6
 - id: ledger
   kind: activity
   lane: Core
-  label: reconciles F-01 paginated ledger; separates Folder, Source, Lens, Topic & W5 Bridge lists
+  label: reconciles one paged ledger for the folder, and separates the folder, source, lens, topic and bridge lists
   step: 7
 - id: oraclebatch
   kind: activity
   lane: Oracle
-  label: screens batch outputs, partial gaps & Geo receipts via distinct qualified Oracle route (GLM-5.3 current adapter)
+  label: screens the batch's outputs, partial gaps and Geo-Grapher receipts on a route distinct from the workers'
   step: 8
 - id: dbatchscreen
   kind: decision
@@ -95,11 +94,11 @@ nodes:
   kind: ref
   lane: Doctor
   use_case: doctor
-  label: runs bounded R4 partial/publish Ticket repair on affected subset
+  label: repairs the partial or unpublished items through a ticket, on the affected subset only
 - id: reentrybatch
   kind: activity
   lane: Core
-  label: merges verified R4 repair into parent ledger (attempt <= 1)
+  label: merges the checked repair into the ledger (one attempt)
 - id: ref_acceptance
   kind: ref
   lane: Lead (tier 1)
@@ -109,18 +108,17 @@ nodes:
 - id: oraclefinal
   kind: activity
   lane: Oracle
-  label: verifies findability, DATA_IS_UNFRAMED neutrality & F-01..F-03 via distinct qualified Oracle route (GLM-5.3 current
-    adapter)
+  label: verifies findability, neutrality and the ledger on a route distinct from the workers'
   step: 10
 - id: doracle
   kind: decision
   lane: Oracle
-  label: parent obligations & findability met?
+  label: are the parent's obligations and findability met?
 - id: doctorphase
   kind: ref
   lane: Doctor
   use_case: doctor
-  label: repairs candidate index/findability (R5) or mapped parent Ticket
+  label: repairs findability, or another mapped shortfall, through a ticket
 - id: reentryfinal
   kind: activity
   lane: Core
@@ -128,7 +126,7 @@ nodes:
 - id: deliver
   kind: activity
   lane: Lead (tier 1)
-  label: packages Oracle verdict, evidence hashes, spend, coverage, deferred tabs & Agenda Tickets
+  label: packages the Oracle's verdict, evidence hashes, spend, coverage, deferred decisions and tickets
   step: 11
 - id: dfinalkind
   kind: decision
@@ -137,33 +135,33 @@ nodes:
 - id: recorddelivery
   kind: activity
   lane: Core
-  label: persists final run receipt, MC-10 cost ledger, coverage, deferrals & handover record
+  label: 'stores the final receipt: spend, coverage, deferrals and the handover'
   step: 12
 - id: notifyowner
   kind: activity
   lane: Owner
-  label: receives verified catalogue result, spend, deferred work & notification payload
+  label: 'receives the verified result: the catalogued notes, the spend and the deferred work'
   step: 13
 - id: recordpartial
   kind: activity
   lane: Core
-  label: persists partial coverage, spend, deferred items & open Ticket ledger
+  label: stores the partial coverage, spend, deferred items and open tickets
 - id: notifypartial
   kind: activity
   lane: Owner
-  label: receives truthful partial result, not_examined list, spend & Agenda resume Tickets
+  label: receives the partial result, what was not examined, the spend and the tickets to resume
 - id: reuseout
   kind: activity
   lane: Core
-  label: reconciles reused/excluded inputs with zero duplicate batch dispatch ($0 spend)
+  label: reconciles the reused and excluded inputs, with no batch dispatched and nothing spent
 - id: pauseout
   kind: activity
   lane: Lead (tier 1)
-  label: returns held gate/ORACLE_ROUTE_COLLISION Ticket, spend, F-02/F-03 refusal, or resume path
+  label: returns the held gate, a route-collision ticket or a refusal, with the spend and where to resume
 - id: escout
   kind: activity
   lane: Lead (tier 1)
-  label: routes critical/unresolved Ticket immediately with flags, hashes & Rule-8 compensation
+  label: routes the critical or unresolved ticket at once, with its flags, hashes and the compensation shown
 - id: e1
   kind: end
   outcome: success
@@ -171,19 +169,19 @@ nodes:
 - id: epartial
   kind: end
   outcome: partial
-  label: permitted partial or deferred worklist returned with explicit gaps & Tickets
+  label: a permitted partial, or a deferred worklist, returned with its gaps and tickets
 - id: ereused
   kind: end
   outcome: reused
-  label: existing/excluded scope reconciled cleanly
+  label: the existing and excluded inputs reconciled cleanly
 - id: epaused
   kind: end
   outcome: paused
-  label: paused on Rule-16/OD-05 Ticket, staged-only gate, MC-10 cap, or ORACLE_ROUTE_COLLISION
+  label: 'paused: a reserved decision, stage-only scope, the budget, or no distinct Oracle route'
 - id: eescalated
   kind: end
   outcome: escalated
-  label: escalated unresolved critical integrity Ticket
+  label: an unresolved critical integrity ticket escalated
 edges:
 - from: s
   to: admit_mandate
@@ -196,7 +194,7 @@ edges:
   guard: Source-eligible inputs present
 - from: dinput
   to: oraclefinal
-  guard: code/graph folder scope only (no Source notes)
+  guard: code or graph folders only (no Source notes)
   ext: 4a
 - from: dinput
   to: reuseout
@@ -204,20 +202,20 @@ edges:
   ext: 4b
 - from: dgate1
   to: startrun
-  guard: authorized by Context-1 task commission or Context-3 curate start
+  guard: within tier 0's commission, or the person's own start
 - from: dgate1
   to: dgate1caller
-  guard: Context-2 stage_only scope or Context-3 awaiting human batch start
+  guard: an external project's stage-only scope, or waiting for the person's start
   ext: 5a
 - from: dgate1caller
   to: ownergate1
-  guard: interactive UI/Owner present
+  guard: the Owner is present, in the Web UI
 - from: dgate1caller
   to: queueagenda
-  guard: Context-2 / scheduled (stage_only or awaiting curate)
+  guard: no person present (an external project or a scheduled run)
 - from: ownergate1
   to: startrun
-  guard: approve & start
+  guard: approve and start
 - from: ownergate1
   to: pauseout
   guard: stage only / defer
@@ -270,11 +268,11 @@ edges:
   ext: 9b
 - from: dbatchscreen
   to: pauseout
-  guard: ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)
+  guard: no Oracle route distinct from the workers' (never marked as independently reviewed)
   ext: 9c
 - from: dbatchscreen
   to: escout
-  guard: critical security, data-loss, or integrity violation in batch
+  guard: a critical security, data-loss or integrity violation
   ext: 9d
 - from: oraclefinal
   to: doracle
@@ -283,7 +281,7 @@ edges:
   guard: met (distinct Oracle route pass)
 - from: doracle
   to: doctorphase
-  guard: index/findability miss or mapped shortfall (R5/R6)
+  guard: a findability miss, or another mapped shortfall
   ext: 11a
 - from: doctorphase
   to: reentryfinal
@@ -302,7 +300,7 @@ edges:
   ext: 11b
 - from: doracle
   to: pauseout
-  guard: ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)
+  guard: no Oracle route distinct from the workers' (never marked as independently reviewed)
   ext: 11c
 - from: doracle
   to: escout
@@ -312,7 +310,7 @@ edges:
   to: dfinalkind
 - from: dfinalkind
   to: recorddelivery
-  guard: all required & optional clean
+  guard: everything required and optional is clean
 - from: dfinalkind
   to: recordpartial
   guard: permitted partial coverage or deferred lenses

@@ -1,18 +1,18 @@
-# Copied from reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-process-composition-tobe.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: compose
 use_case: UC8
 status: PROPOSED_UNACCEPTED
 supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-process-composition-tobe.spec.yaml
 - reports/2026-11-20-workflow-map/examples/ingestion/compose.spec.yaml
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/compose.spec.yaml
 kind: activity
-title: 'Librarian Process Composition & Mandate Narrowing (Proposed To-Be: L0 Action -> L3 Sprint)'
+title: Compose and start a sprint (proposed)
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/compose.spec.yaml
 problem:
-  symptom: Prior model used layer names as swimlanes and omitted per-context spec_owner, Rule-17 Oracle scope judgment, and
-    direct Human user exit handovers.
-  root: Enforce strict action -> workflow -> pipeline -> sprint composition across true actor lanes, explicit spec_owner attribution,
-    Rule-9/16 narrowing, Rule-17 Oracle scope checks, and user handovers.
+  symptom: The earlier model used the composition layers as swim lanes, and left out who owns each specification, the Oracle's
+    scope judgment and the handovers to the person.
+  root: Compose strictly action, workflow, pipeline, sprint across the real actors; name each specification's owner; keep
+    every sub-run within its parent; let the Oracle judge scope; hand over to the person.
 lanes:
 - Owner
 - Overseer (tier 0)
@@ -28,106 +28,106 @@ nodes:
   kind: activity
   lane: Owner
   step: 1
-  label: initiates work via Context 1 (Tier 0 instruction), Context 2 (Ext project MCP), or Context 3 (Direct UI)
+  label: starts work as tier 0's instruction, an external project over MCP, or directly in the Web UI
 - id: dspec_owner
   kind: decision
   lane: Core
-  label: which actor owns top-level L3 Sprint specification?
+  label: who owns the sprint's specification?
 - id: t0_spec
   kind: activity
   lane: Overseer (tier 0)
   step: 2
-  label: authors Context-1 L3 spec on user behalf & approves Rule-15 envelope (spec_owner=tier0_on_behalf_of_person)
+  label: writes the sprint's specification on the Owner's behalf and approves its permission envelope
 - id: c2_spec
   kind: activity
   lane: Overseer (tier 0)
-  label: sets Context-2 ext-project MCP spec within bounded read/apply grant (spec_owner=external_project_caller)
+  label: sets the external project's specification within its bounded read-and-apply grant
 - id: c3_spec
   kind: activity
   lane: Owner
-  label: sets direct UI curate/workflow_grant spec with zero Tier 0 (spec_owner=person)
+  label: sets the specification of the person's own Web UI work, with no tier 0
 - id: compile_manifest
   kind: activity
   lane: Core
   step: 3
-  label: verifies acyclic action -> workflow -> pipeline -> sprint order; compiles manifest & Rule-15 mandate_id
+  label: checks the order action, workflow, pipeline, sprint has no cycle, and compiles the manifest and the permission envelope
 - id: lead_subspec
   kind: activity
   lane: Lead (tier 1)
   step: 4
-  label: authors delegated L2/L1 sub-run specs only within parent mandate (sub_spec_owner=lead_tier1 <= parent)
+  label: writes the delegated pipeline and workflow specifications, only within the parent's mandate
 - id: dnarrow
   kind: decision
   lane: Core
-  label: sub-run manifest fits parent mandate (Rules 9, 10, 16)?
+  label: does the sub-run's manifest stay within its parent's mandate, reserved decisions included?
 - id: oracle_scope
   kind: activity
   lane: Oracle
-  label: judges ungranted call against L3 spec obligations before asking (Rule 17)
+  label: judges an ungranted call against the sprint's specification before anyone is asked
 - id: dscope
   kind: decision
   lane: Oracle
-  label: within spec & parent mandate?
+  label: is it within the specification and the parent's mandate?
 - id: log_allowance
   kind: activity
   lane: Core
-  label: records evidence-bearing Rule-17 allowance for end-of-run report
+  label: records the allowance and its evidence for the end-of-run report
 - id: worker_roles
   kind: activity
   lane: Clerk (tier 2)
   step: 5
-  label: performs assigned semantic interpretation, review & bounded reading/writing over scripted Core actions
+  label: carries out the assigned interpretation, review and bounded reading and writing over the Core's scripted actions
 - id: dctx
   kind: decision
   lane: Core
-  label: which L3 activation context executes?
+  label: which context runs the sprint?
 - id: ctx1
   kind: ref
   lane: Lead (tier 1)
   step: 6
   use_case: activation-overseer
-  label: 'Context 1 Sprint: Tier 0 commissioned run (Lead sub-run -> ingestion-tobe)'
+  label: 'tier 0''s sprint: the Lead runs the ingestion'
 - id: ctx2
   kind: ref
   lane: Lead (tier 1)
   use_case: activation-external-project
-  label: 'Context 2 Sprint: External MCP helpers/apply (optional stage_only ingestion)'
+  label: 'runs the external project''s sprint: delegated reading and applying, optionally staging'
 - id: ctx3
   kind: ref
   lane: Lead (tier 1)
   use_case: activation-web-ui
-  label: 'Context 3 Sprint: Direct UI curation (no Tier 0 -> batch / ingestion-tobe)'
+  label: 'runs the person''s Web UI sprint: curation, then the batch or the ingestion, with no tier 0'
 - id: oracle_rollup
   kind: activity
   lane: Oracle
   step: 7
-  label: verifies rolled-up L0-L3 obligations & Rule-17 allowances via distinct qualified route (GLM-5.3 current)
+  label: verifies the rolled-up obligations of every layer and the allowances made, on a route distinct from the workers'
 - id: dor_comp
   kind: decision
   lane: Oracle
-  label: composed L3 obligations satisfied cleanly?
+  label: are the composed obligations met?
 - id: rollreceipt
   kind: activity
   lane: Core
   step: 8
-  label: persists L0-L3 provenance, spend, coverage, deferrals, Ticket ledger & Agenda receipt (Rule 12)
+  label: 'stores the run''s receipt: provenance at every layer, spend, coverage, deferrals, tickets and agenda'
 - id: usernotify
   kind: activity
   lane: Owner
   step: 9
-  label: receives explicit context handover, result evidence, spend, coverage & deferred work
+  label: 'receives the handover: the result''s evidence, spend, coverage and deferred work'
 - id: outpartial
   kind: activity
   lane: Core
-  label: persists partial outputs, spend, coverage gaps & open Agenda Tickets
+  label: stores the partial outputs, spend, coverage gaps and open tickets
 - id: userpartial
   kind: activity
   lane: Owner
-  label: receives permitted partial report, not_examined list, spend & open Tickets
+  label: receives the permitted partial report, what was not examined, the spend and the open tickets
 - id: outreused
   kind: activity
   lane: Core
-  label: persists zero-rework reuse receipt & existing precedent links
+  label: stores the reuse receipt and the links to the existing precedent, with no work redone
 - id: userreused
   kind: activity
   lane: Owner
@@ -135,39 +135,39 @@ nodes:
 - id: outpause
   kind: activity
   lane: Core
-  label: persists paused Rule-16/OD-05 gate, MC-10 cap, or ORACLE_ROUTE_COLLISION Ticket with resume target
+  label: 'stores the pause as a ticket with where to resume: a reserved decision, the budget, or no distinct Oracle route'
 - id: userpaused
   kind: activity
   lane: Owner
-  label: receives paused Ticket, spend/state to date, & exact Agenda resume path
+  label: receives the paused ticket, the spend and state so far, and where to resume
 - id: outesc
   kind: activity
   lane: Core
-  label: routes critical escalated Ticket immediately with full trace & Rule-8 compensation
+  label: routes the critical ticket at once, with its full trace and the compensation shown
 - id: useresc
   kind: activity
   lane: Owner
-  label: receives immediate critical failure alert, Ticket ID & Rule-8 compensation
+  label: receives the critical failure alert, the ticket and the compensation plan
 - id: e1
   kind: end
   outcome: success
-  label: L3-L0 composition complete with verified narrowing & user-facing notification
+  label: the composition is done, every sub-run within its parent, and the person is told
 - id: epartial
   kind: end
   outcome: partial
-  label: composed run finished with permitted partials & open Tickets notified
+  label: done with permitted partials; the open tickets are reported
 - id: ereused
   kind: end
   outcome: reused
-  label: reused clean across L3-L0 without duplicate spend
+  label: nothing new needed at any layer, with no duplicate spend
 - id: epaused
   kind: end
   outcome: paused
-  label: composed run paused cleanly on Rule-16/OD-05, budget, or route-collision Ticket
+  label: paused cleanly on a reserved decision, the budget or a route collision
 - id: eescalated
   kind: end
   outcome: escalated
-  label: critical/unresolved Ticket escalated immediately to Human user & spec owner
+  label: a critical or unresolved ticket escalated at once to the person and the specification's owner
 edges:
 - from: s
   to: init
@@ -175,14 +175,14 @@ edges:
   to: dspec_owner
 - from: dspec_owner
   to: t0_spec
-  guard: 'Context 1: User-directed Tier 0 Librarian Sprint'
+  guard: tier 0, working for the Owner
 - from: dspec_owner
   to: c2_spec
-  guard: 'Context 2: External-project Tier 0 MCP Sprint'
+  guard: tier 0, working for an external project
   ext: 1a
 - from: dspec_owner
   to: c3_spec
-  guard: 'Context 3: Direct Human Platform UI Sprint'
+  guard: the person, in the Web UI
   ext: 1b
 - from: t0_spec
   to: compile_manifest
@@ -199,33 +199,33 @@ edges:
   guard: within parent mandate
 - from: dnarrow
   to: oracle_scope
-  guard: ungranted call needing Rule-17 scope judgment
+  guard: 'an ungranted call: the Oracle judges its scope'
   ext: 4a
 - from: oracle_scope
   to: dscope
 - from: dscope
   to: log_allowance
-  guard: within parent mandate & spec
+  guard: within the parent's mandate and the specification
 - from: dscope
   to: outpause
-  guard: widens parent mandate or hits Rule-16/OD-05 boundary
+  guard: it would widen the parent's mandate, or needs a reserved decision
 - from: dscope
   to: outesc
-  guard: critical security/data-loss boundary breach
+  guard: a critical security or data-loss breach
 - from: log_allowance
   to: worker_roles
 - from: worker_roles
   to: dctx
 - from: dctx
   to: ctx1
-  guard: Context 1 commissioned Sprint
+  guard: tier 0's commission
 - from: dctx
   to: ctx2
-  guard: Context 2 External MCP Sprint
+  guard: an external project
   ext: 6a
 - from: dctx
   to: ctx3
-  guard: Context 3 Direct UI Sprint
+  guard: the Web UI
   ext: 6b
 - from: ctx1
   to: oracle_rollup
@@ -283,11 +283,11 @@ edges:
   guard: obligations met (distinct Oracle route pass)
 - from: dor_comp
   to: outpause
-  guard: ORACLE_ROUTE_COLLISION (unverified_route_collision; never marked independently reviewed)
+  guard: no Oracle route distinct from the workers' (never marked as independently reviewed)
   ext: 7a
 - from: dor_comp
   to: outesc
-  guard: critical L0-L3 integrity finding
+  guard: a critical integrity finding at any layer
   ext: 7b
 - from: rollreceipt
   to: usernotify

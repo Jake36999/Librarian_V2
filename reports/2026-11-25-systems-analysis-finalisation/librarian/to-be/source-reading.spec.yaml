@@ -1,4 +1,4 @@
-# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
 diagram: source-reading
 use_case: UC1c.2
 status: PROPOSED_UNACCEPTED
@@ -21,44 +21,44 @@ nodes:
 - id: read
   kind: activity
   lane: Scribe (tier 3)
-  label: executes bounded chunk and synthesis tasks with MC-10 spend reservation
+  label: carries out bounded reading and synthesis tasks within the reserved budget
   step: 2
 - id: host
   kind: activity
   lane: Model host
-  label: answers task requests via qualified route; settles reserved vs actual cost
+  label: answers the task requests on a qualified route, and settles the reserved cost against the actual
   step: 3
 - id: readchk
   kind: activity
   lane: Core
-  label: verifies schemas/quotes (E4/E5) and separates chunk vs _document_pass state
+  label: verifies each part's schema and quotes, and keeps part reading apart from the whole-source pass
   step: 4
 - id: readproof
   kind: activity
   lane: Clerk (tier 2)
-  label: reconciles whole-source _document_pass and relate_chapters synthesis (P1-L7)
+  label: reconciles the whole-source pass and the chapter relations
   step: 5
 - id: dread
   kind: decision
   lane: Core
-  label: chunk reads + whole derivations complete?
+  label: are the part readings and the whole-source derivations complete?
 - id: dpoison
   kind: decision
   lane: Core
-  label: bounded retries exhausted on poison/ungrounded text?
+  label: are the bounded retries spent on poison or ungrounded text?
 - id: partialread
   kind: activity
   lane: Core
-  label: keeps item partial with unread chunks or missing _document_pass explicit
+  label: keeps the item partial, with its unread parts or missing whole-source pass stated
 - id: lenses
   kind: activity
   lane: Core
-  label: stores blind E4/E5 grounded lens candidates (parent acceptance separate)
+  label: stores the grounded lens candidates, read blind; accepting them is a separate decision
   step: 6
 - id: data
   kind: activity
   lane: Core
-  label: extracts scripted DIK structural records & static AST code relations ($0; DATA_IS_UNFRAMED)
+  label: extracts the structural Data records and the static code relations by script, at no cost
   step: 7
 - id: drelate
   kind: decision
@@ -67,7 +67,7 @@ nodes:
 - id: relateskip
   kind: activity
   lane: Core
-  label: retains Core static AST relations or marks chapter-relate N/A
+  label: keeps the Core's static code relations, or records chapter relations as not applicable
 - id: relate
   kind: activity
   lane: Clerk (tier 2)
@@ -81,17 +81,17 @@ nodes:
 - id: metadata
   kind: activity
   lane: Core
-  label: derives deterministic facts/readiness, validates proposed fields against schema, & stores proposals + Unknowns
+  label: derives the deterministic facts, validates the proposed fields against the schema, and stores them with the unknowns
   step: 10
 - id: review
   kind: activity
   lane: Clerk (tier 2)
-  label: drafts neutral Bottom Line & sensitivity check with low_confidence rescue
+  label: drafts a neutral Bottom Line and the sensitivity check, flagging low confidence
   step: 11
 - id: reviewchk
   kind: activity
   lane: Core
-  label: checks Bottom Line schema, literal quote grounding, flags & reading counters (does not override incomplete reading)
+  label: checks the Bottom Line's form, its quotes and the reading counters; a good draft never overrides incomplete reading
   step: 12
 - id: e_success
   kind: end
@@ -116,14 +116,14 @@ edges:
   to: dread
 - from: dread
   to: lenses
-  guard: chunks and _document_pass/relate complete
+  guard: every part and the whole-source pass are complete
 - from: dread
   to: dpoison
   guard: unread parts or missing synthesis pass
   ext: 6a
 - from: dpoison
   to: e_failed
-  guard: exhausted ungrounded/poison
+  guard: the retries are spent on ungrounded or poison text
 - from: dpoison
   to: partialread
   guard: noncritical partial retained
