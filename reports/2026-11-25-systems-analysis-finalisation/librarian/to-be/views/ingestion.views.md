@@ -13,15 +13,15 @@ Supersedes: `reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/l
 
 | Field | Content |
 |---|---|
-| **Use case name** | Librarian Shared L2 Ingestion & Governance Pipeline (Proposed To-Be) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Make a folder of documents into Source notes |
+| **Brief description** | One parent owns the folder from survey to judged notes: it applies the folder's own group, stages, enriches, screens, accepts within its mandate and verifies. |
+| **Primary actor** | Owner, or tier 0 under a commission |
+| **Supporting actors** | Lead, Clerk, Oracle, Doctor, Core, Geo-Grapher |
+| **Preconditions** | A mandate naming the roots, exclusions, budget and reserved decisions |
+| **Trigger** | A commission, or the Owner's request |
+| **Success guarantee** | Every document is a judged, findable note, or an explicit gap with a ticket |
+| **Minimal guarantee** | The ledger reconciles every input to one outcome |
+| **Open questions** | OP2 in Geo-Grapher: incremental group application |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -352,11 +352,19 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-ING-01 (ingestion): Nothing reconciles a folder's counts (surveyed, queued, staged, enriched, accepted); the person or tier 0 does it by hand. | ledger | The parent reconciles one paginated ledger for the folder and separates the folder, source, lens and topic lists. |
+| W-ING-02 (ingestion): Queued documents wait until someone runs the queue, and a queue nobody drains says nothing. | ref_source_intake | The parent starts intake itself once the folder's inputs are known; no queue waits for a click. |
+| W-ING-04 (ingestion): A partial item is re-run only by a fresh approval and start; resuming an unfinished run is a different path. | doctorbatch | A repairable partial is repaired on the affected subset through a ticket (R4) and merged back into the ledger. |
+| W-FOL-04 (folder-review): Accepting a folder does not start its intake: queueing its documents is a separate click or API call. | dinput | An accepted folder's Source-eligible inputs flow straight into intake in the same parent. |
+| W-ING-03 (ingestion): Tier 0 cannot approve or start a batch, so an orchestrated ingestion always hands Gate 1 back to the person. | dgate1 | Gate 1 and the batch start are in the mandate; the Owner is asked only when they are not. |
+| W-ACC-03 (acceptance): The only check of an enriched source is a person reading its summary; nothing compares the note with its evidence first. | oraclefinal | The Oracle verifies findability and neutrality of the committed notes before the handover. |
+| W-BAT-02 (batch-enrichment): A finished batch is not acceptance, yet nothing assigns the decisions it leaves; W7 now counts them (awaiting_acceptance) but does not route them. | ledger | The ledger separates each kind of decision the batch leaves, and the acceptance child assigns them. |
+| W-ACC-02 (acceptance): A note written but not findable needs a manual Rewrite indexes; nothing re-checks findability by itself. | doctorphase | An unfindable note is repaired through a ticket (R5) and re-checked by the Oracle. |
 
 ## Checks
 
 Errors: none
 
-Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
+Warnings: none

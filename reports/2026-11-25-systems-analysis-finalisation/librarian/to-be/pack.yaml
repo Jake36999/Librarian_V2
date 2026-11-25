@@ -1,0 +1,174 @@
+# The Librarian as proposed. PLAN.md section 2; rendered by ../../render_pack.py.
+pack: librarian-to-be
+system: Librarian
+state: to-be
+about: >-
+  The preferred Librarian: every use case runs under a parent process that owns it end to end, is
+  granted its authority once, is judged by an Oracle separate from its workers, and repairs its
+  failures through tickets and a Doctor. handles.yaml answers each as-is weakness, and the as-is index
+  counts what is left. Nothing here is accepted or built (PROPOSED_UNACCEPTED).
+actors:
+  - {id: owner, name: Owner}
+  - {id: overseer, name: Overseer (tier 0)}
+  - {id: lead, name: Lead (tier 1)}
+  - {id: clerk, name: Clerk (tier 2)}
+  - {id: scribe, name: Scribe (tier 3)}
+  - {id: oracle, name: Oracle}
+  - {id: doctor, name: Doctor}
+  - {id: geo, name: Geo-Grapher}
+  - {id: external, name: External project}
+use_cases:
+  - id: UC8
+    name: Compose and start a sprint
+    spec: compose
+    actors: [owner, overseer]
+    includes: [UC0.1, UC0.2, UC0.3, UC-O]
+    fields:
+      brief: "Whichever context starts the work, it becomes one composed sprint: an owned specification, a compiled manifest, one envelope, a rolled-up Oracle verdict."
+      primary_actor: "Owner, or tier 0 on the Owner's behalf"
+      supporting_actors: "Lead, Clerk, Scribe, Oracle, Core"
+      preconditions: "Every action the sprint reaches is registered and declares its effects"
+      trigger: "A request in any context"
+      success_guarantee: "One result, judged against the sprint's specification, with spend and coverage"
+      minimal_guarantee: "Nothing runs outside the parent's mandate; an ungranted call is judged before anyone is asked"
+      open_questions: "Which rules let the Oracle allow extra work without the Owner (W9)?"
+  - id: UC0.1
+    name: Work for the Owner as tier 0 (Context 1)
+    spec: activation-overseer
+    actors: [owner, overseer]
+    includes: [UC1, UC-D]
+    fields:
+      brief: "The Owner instructs tier 0 once; tier 0 commissions the run, the Lead carries it out, and tier 0 hands over."
+      primary_actor: Owner
+      supporting_actors: "Overseer (tier 0), Lead, Oracle, Doctor, Core"
+      preconditions: "A commission with scope, exclusions and budget"
+      trigger: "The Owner's instruction"
+      success_guarantee: "A verified handover in at most two tier-0 turns on the main path"
+      minimal_guarantee: "A malformed commission changes nothing"
+      open_questions: "How much standing authority may a commission carry (Rule 15)?"
+  - id: UC0.2
+    name: Work for an external project through MCP (Context 2)
+    spec: activation-external-project
+    actors: [overseer, external]
+    fields:
+      brief: "Tier 0 in another project reads, delegates bounded reading and records what it applied, within a scoped grant."
+      primary_actor: "Overseer (tier 0), in the external project"
+      supporting_actors: "Clerk, Scribe, Core, Doctor"
+      preconditions: "MCP connected with a scoped grant"
+      trigger: "The external task needs the library"
+      success_guarantee: "An Applications/ note with validated citations and locators"
+      minimal_guarantee: "A blocked call returns a ticket at once; leads are queued, not ingested"
+      open_questions: "What may an external project's grant include?"
+  - id: UC0.3
+    name: Work directly in the Web UI (Context 3)
+    spec: activation-web-ui
+    actors: [owner]
+    fields:
+      brief: "The Owner curates in the Web UI; the Lead delegates; results open from the Core's record."
+      primary_actor: Owner
+      supporting_actors: "Web UI, Lead, Clerk, Oracle, Doctor, Core"
+      preconditions: "A Core running for the library"
+      trigger: "Add source, Folders, Chat or a workflow"
+      success_guarantee: "A judged, findable note, with spend and coverage shown"
+      minimal_guarantee: "A pause or failure shows its ticket and resume path"
+      open_questions: "W-ACC-01: keeping the person's draft through a conflict"
+  - id: UC1
+    name: Make a folder of documents into Source notes
+    spec: ingestion
+    actors: [owner, overseer, geo]
+    includes: [UC1.1, UC1.2, UC1b, UC1.3, UC-D]
+    fields:
+      brief: "One parent owns the folder from survey to judged notes: it applies the folder's own group, stages, enriches, screens, accepts within its mandate and verifies."
+      primary_actor: "Owner, or tier 0 under a commission"
+      supporting_actors: "Lead, Clerk, Oracle, Doctor, Core, Geo-Grapher"
+      preconditions: "A mandate naming the roots, exclusions, budget and reserved decisions"
+      trigger: "A commission, or the Owner's request"
+      success_guarantee: "Every document is a judged, findable note, or an explicit gap with a ticket"
+      minimal_guarantee: "The ledger reconciles every input to one outcome"
+      open_questions: "OP2 in Geo-Grapher: incremental group application"
+  - id: UC1.1
+    name: Review a folder and apply its group
+    spec: folder-review
+    actors: [owner, geo]
+    fields:
+      brief: "Survey, screen the new or ambiguous folders, decide within the mandate or ask once, and apply only the changed group."
+      primary_actor: Lead
+      supporting_actors: "Clerk, Owner, Doctor, Oracle, Core, Geo-Grapher"
+      preconditions: "Roots within the mandate"
+      trigger: "The ingestion parent's first step"
+      success_guarantee: "The folder's group is applied, its inputs known"
+      minimal_guarantee: "A stale root is repaired in its own scope or held with a ticket"
+      open_questions: "Standing policy for folder decisions"
+  - id: UC1.2
+    name: Capture, title and stage each source
+    spec: source-intake
+    fields:
+      brief: "Immutable evidence, literal metadata, a proposed readable title and staging."
+      primary_actor: Core
+      supporting_actors: "Clerk"
+      preconditions: "Source-eligible inputs"
+      trigger: "The parent's intake step"
+      success_guarantee: "Staged with a readable title and its unknowns explicit"
+      minimal_guarantee: "Duplicates reconciled; failures quarantined"
+      open_questions: "W-INT-02: a ticket for each quarantined sibling"
+  - id: UC1b
+    name: Run the approved batch
+    spec: batch-enrichment
+    includes: [UC1c, UC-D]
+    fields:
+      brief: "The frozen selection runs item by item under a budget reserve, folder cards drafted by a Scribe and reviewed by a Clerk, then judged by the Oracle."
+      primary_actor: Core
+      supporting_actors: "Lead, Clerk, Scribe, Oracle, Doctor"
+      preconditions: "Gate 1 within the mandate"
+      trigger: "The parent's batch step"
+      success_guarantee: "A verified mixed ledger"
+      minimal_guarantee: "Sibling faults isolated; completed items kept"
+      open_questions: "—"
+  - id: UC1c
+    name: Enrich one source
+    spec: source-enrichment
+    includes: [UC1c.1, UC1c.2, UC1c.3, UC-D]
+    fields:
+      brief: "Parse, read and publish one source, then the Oracle audits its receipts."
+      primary_actor: Core
+      supporting_actors: "Clerk, Scribe, Model host, Oracle, Doctor, Geo-Grapher"
+      preconditions: "Admitted by the batch, a reread or a commission"
+      trigger: "The item's turn"
+      success_guarantee: "Read, checked, published where eligible, and judged"
+      minimal_guarantee: "A partial or quarantined source returns its gaps explicitly"
+      open_questions: "—"
+  - {id: UC1c.1, name: Validate and parse a source, spec: source-parse,
+     fields: {brief: "Validate, extract, convert with a Clerk-assigned and Clerk-reviewed Scribe task, and mark the provisional projection.", primary_actor: Core, supporting_actors: "Clerk, Scribe", preconditions: "Captured evidence", trigger: "Stage 1", success_guarantee: "Text ready with its gaps recorded", minimal_guarantee: "Unrecoverable items quarantined", open_questions: "—"}}
+  - {id: UC1c.2, name: Read a source, spec: source-reading,
+     fields: {brief: "A Clerk plans the reading; Scribes read bounded parts; every part's answer is checked before it counts.", primary_actor: Clerk, supporting_actors: "Scribe, Model host, Core", preconditions: "Parsed text", trigger: "Stage 3", success_guarantee: "Every part read and checked", minimal_guarantee: "Poison text quarantined after bounded retries", open_questions: "—"}}
+  - {id: UC1c.3, name: Publish a paper to the paper graph, spec: paper-publication, actors: [geo],
+     fields: {brief: "A fully converted paper is published, and an empty claim receipt is refused.", primary_actor: Core, supporting_actors: Geo-Grapher, preconditions: "Full reading and conversion", trigger: "Stage 9", success_guarantee: "Published with a non-empty receipt and its stored link", minimal_guarantee: "A gap is recorded with its reason", open_questions: "W-PUB-02: the folder prerequisite (Geo-Grapher pack)"}}
+  - {id: UC1.3, name: Accept the screened sources, spec: acceptance, actors: [owner],
+     fields: {brief: "The Lead accepts within the mandate; reserved choices go to the Owner as one consolidated decision.", primary_actor: Lead, supporting_actors: "Owner, Core", preconditions: "The Oracle has screened the batch", trigger: "The parent's acceptance step", success_guarantee: "Committed notes, attested by who accepted them", minimal_guarantee: "Reserved choices wait on the agenda", open_questions: "—"}}
+  - id: UC2
+    name: Research a brief across a corpus
+    spec: research
+    actors: [owner, lead]
+    includes: [UC3, UC4, UC-O]
+    fields:
+      brief: "A brief over a named corpus, sized once, synthesised per question and judged against itself before the handover."
+      primary_actor: "Owner (the Lead does the work)"
+      supporting_actors: "Clerk, Scribe, Oracle, Core, Geo-Grapher"
+      preconditions: "The corpus and disqualifiers named"
+      trigger: "The Owner states the brief"
+      success_guarantee: "One judged, staged report per question"
+      minimal_guarantee: "Extra work is judged in scope or asked once"
+      open_questions: "OP4 answered: the pool is the corpus"
+  - {id: UC3, name: "Verify a report's claims", spec: verify-claims, actors: [lead, clerk],
+     fields: {brief: "Every claim resolved through its stored link, found verbatim, and reviewed; an incomplete review holds the claim.", primary_actor: Core, supporting_actors: "Clerk, Lead", preconditions: "A drafted report", trigger: "The draft is submitted", success_guarantee: "Every staged claim has a completed verdict", minimal_guarantee: "Nothing is staged unchecked", open_questions: "OP9: why reviews of full-PDF quotes failed"}}
+  - {id: UC4, name: Read and cite a paper from the graph, spec: cite-graph, actors: [lead, geo],
+     fields: {brief: "A paper is cited through the link stored at publication, from its note or its staged evidence.", primary_actor: Lead, supporting_actors: "Geo-Grapher, Core", preconditions: "The paper was published with its link", trigger: "A brief needs the paper", success_guarantee: "Cited through its stored link", minimal_guarantee: "A missing link opens a ticket", open_questions: "—"}}
+  - {id: UC-O, name: Judge a process's output, spec: oracle, actors: [oracle],
+     fields: {brief: "Tier A checks, then Tier B review, on a route distinct from every worker; the verdict is a checked claim.", primary_actor: Oracle, supporting_actors: "Core, Doctor", preconditions: "A process with a specification", trigger: "The parent's check step", success_guarantee: "A verdict with evidence, re-checked", minimal_guarantee: "No distinct route: unverified, never a pass", open_questions: "Which model is assigned to the Oracle (revisable)"}}
+  - {id: UC-D, name: Repair a failure through a ticket, spec: doctor, actors: [doctor, owner],
+     fields: {brief: "A ticket, a matching accepted remedy, a blast-radius check, the repair, then the Oracle's confirmation.", primary_actor: Doctor, supporting_actors: "Clerk, Lead, Owner, Oracle, Core", preconditions: "An open ticket", trigger: "A failure at a mapped extension", success_guarantee: "Resolved, confirmed by the Oracle", minimal_guarantee: "Never beyond the mandate without the Owner", open_questions: "The repair role's code name (W-DOC-05)"}}
+  - {id: UC-L, name: Learn a remedy, spec: learn, actors: [owner],
+     fields: {brief: "A repair tier 0 made by hand becomes a proposed remedy that the Owner accepts.", primary_actor: Owner, supporting_actors: "Overseer, Core", preconditions: "A resolved case with no remedy", trigger: "Tier 0 proposes the remedy", success_guarantee: "An accepted catalogue entry", minimal_guarantee: "Nothing is installed without acceptance", open_questions: "—"}}
+  - {id: UC5, name: Trust a relation, actors: [owner], deferred: "USE-CASES.md UC5; not yet drawn"}
+  - {id: UC6, name: Reorganise a folder into groups, actors: [owner], deferred: "PLAN.md 2.2"}
+  - {id: UC7, name: See the data in another model, actors: [owner], deferred: "PLAN.md 2.2"}

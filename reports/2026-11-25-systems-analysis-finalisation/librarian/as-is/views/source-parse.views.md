@@ -171,7 +171,7 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-PAR-01 | risk | preproject | A provisional paper projection is written before reading; if reading then fails, a catalogue-only projection remains. | preproject label (text_layer=False) | **not yet** |
+| W-PAR-01 | risk | preproject | A provisional paper projection is written before reading; if reading then fails, a catalogue-only projection remains. | preproject label (text_layer=False) | `source-parse` |
 
 ## Checks
 

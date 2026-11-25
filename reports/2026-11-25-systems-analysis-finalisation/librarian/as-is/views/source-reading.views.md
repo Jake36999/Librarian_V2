@@ -160,8 +160,8 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-REA-01 | fault | readcheck | Read completion follows the remaining-part counts, not the validity of each part's answer. | readcheck label | **not yet** |
-| W-REA-02 | gap | metadata | The metadata stage copies a few literal Data facts and lists the unknown fields; there is no semantic metadata step. | metadata label | **not yet** |
+| W-REA-01 | fault | readcheck | Read completion follows the remaining-part counts, not the validity of each part's answer. | readcheck label | `source-reading` |
+| W-REA-02 | gap | metadata | The metadata stage copies a few literal Data facts and lists the unknown fields; there is no semantic metadata step. | metadata label | `source-reading` |
 
 ## Checks
 

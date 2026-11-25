@@ -1,0 +1,74 @@
+# G4, to-be: the entities that carry state, as proposed. Each change answers an as-is weakness (handles.yaml).
+entities:
+  - id: staged-item
+    name: A staged item (a source)
+    about: "As today, plus an owner and a deadline for every waiting decision, and an Oracle check before acceptance."
+    evidence: "As-is states.yaml; AS-IS-FINDINGS T3, T5, T10"
+    initial: queued
+    final: [accepted, rejected]
+    transitions:
+      - {from: queued, to: staged, on: "the parent starts intake itself", by: Core}
+      - {from: staged, to: approved, on: "Gate 1, within the mandate, or the Owner", by: Lead (tier 1)}
+      - {from: approved, to: processing, on: "the parent's batch starts", by: Core}
+      - {from: processing, to: enriched, on: "every stage done and checked", by: Core}
+      - {from: processing, to: partial, on: "a stage partial; a ticket is open", by: Core}
+      - {from: partial, to: processing, on: "the Doctor's remedy re-runs the affected stages", by: Doctor}
+      - {from: enriched, to: judged, on: "the Oracle's verdict passes", by: Oracle}
+      - {from: partial, to: judged, on: "the Oracle accepts the permitted partial", by: Oracle}
+      - {from: judged, to: accepted, on: "accepted within the mandate, or in the Owner's one consolidated decision", by: Lead (tier 1)}
+      - {from: staged, to: accepted, on: "accept as captured: the person's explicit choice, coverage shown", by: Owner}
+      - {from: judged, to: deferred, on: "deferred, with an owner and a date", by: Owner}
+      - {from: staged, to: rejected, on: reject, by: Owner}
+  - id: folder-card
+    name: A folder card
+    about: "One meaning per state: a card is selected for the batch, or decided and applied as its own group."
+    evidence: "As-is states.yaml; AS-IS-FINDINGS T7, T10"
+    initial: staged
+    final: [decided]
+    transitions:
+      - {from: staged, to: screened, on: "a Clerk screens purpose, licence risk and sensitivity", by: Clerk (tier 2)}
+      - {from: screened, to: decided, on: "within the commission or standing policy", by: Lead (tier 1)}
+      - {from: screened, to: decided, on: "a reserved choice, in the Owner's consolidated decision", by: Owner}
+      - {from: decided, to: decided, on: "Geo-Grapher applies this card's group only", by: Geo-Grapher}
+      - {from: decided, to: staged, on: "its own root changed: re-surveyed in its own scope", by: Doctor}
+  - id: session
+    name: A session
+    about: "A brief's session: its budget comes from the envelope, and a park has an owner."
+    evidence: "As-is states.yaml; AS-IS-FINDINGS T2, T9"
+    initial: open
+    final: [closed]
+    transitions:
+      - {from: open, to: open, on: "next phase, within the envelope", by: Lead (tier 1)}
+      - {from: open, to: open, on: "extra work judged in scope by the Oracle", by: Oracle}
+      - {from: open, to: parked, on: "a reserved decision, on the agenda with its owner", by: Core}
+      - {from: parked, to: open, on: "the decision is made", by: Owner}
+      - {from: open, to: closed, on: "the Oracle's verdict is recorded and the handover made", by: Lead (tier 1)}
+  - id: offering
+    name: An offering (a drafted report)
+    about: "Staged only with every claim found, reviewed and its verdict complete."
+    evidence: "As-is states.yaml; to-be verify-claims"
+    initial: draft
+    final: [accepted, rejected]
+    transitions:
+      - {from: draft, to: staged, on: "every claim found and reviewed", by: Core}
+      - {from: draft, to: held, on: "a review could not complete on two routes", by: Core}
+      - {from: held, to: draft, on: "the claim is rewritten or dropped", by: Lead (tier 1)}
+      - {from: staged, to: judged, on: "the Oracle judges it against its brief", by: Oracle}
+      - {from: judged, to: accepted, on: promote, by: Owner}
+      - {from: judged, to: rejected, on: reject, by: Owner}
+  - id: ticket
+    name: A fault ticket (new)
+    about: "One tracked failure, from its extension point to a checked repair or a recorded decision."
+    evidence: "docs/terminology.md (fault register, fault ticket); to-be doctor"
+    initial: open
+    final: [resolved, declined, escalated]
+    transitions:
+      - {from: open, to: assigned, on: "an accepted remedy matches its extension and symptom", by: Core}
+      - {from: open, to: escalated, on: "no remedy matches: tier 0 gets it with the Clerk's diagnosis", by: Core}
+      - {from: assigned, to: repairing, on: "the blast radius is within the mandate", by: Core}
+      - {from: assigned, to: waiting, on: "the radius needs the Owner", by: Core}
+      - {from: waiting, to: repairing, on: "scope granted", by: Owner}
+      - {from: waiting, to: declined, on: "scope refused", by: Owner}
+      - {from: repairing, to: checking, on: "the remedy ran", by: Doctor}
+      - {from: checking, to: resolved, on: "the deterministic checks and the Oracle pass", by: Oracle}
+      - {from: checking, to: escalated, on: "the repair did not hold", by: Oracle}

@@ -7,15 +7,15 @@
 
 | Field | Content |
 |---|---|
-| **Use case name** | Publish a read paper to Geo-Grapher (proposed) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Publish a paper to the paper graph |
+| **Brief description** | A fully converted paper is published, and an empty claim receipt is refused. |
+| **Primary actor** | Core |
+| **Supporting actors** | Geo-Grapher |
+| **Preconditions** | Full reading and conversion |
+| **Trigger** | Stage 9 |
+| **Success guarantee** | Published with a non-empty receipt and its stored link |
+| **Minimal guarantee** | A gap is recorded with its reason |
+| **Open questions** | W-PUB-02: the folder prerequisite (Geo-Grapher pack) |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -103,5 +103,4 @@ _None recorded._
 
 Errors: none
 
-Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
+Warnings: none

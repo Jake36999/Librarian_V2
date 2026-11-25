@@ -13,14 +13,14 @@ Supersedes: `reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/l
 
 | Field | Content |
 |---|---|
-| **Use case name** | Librarian Mixed-Batch Enrichment L2 Pipeline (Proposed To-Be) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
+| **Use case name** | Run the approved batch |
+| **Brief description** | The frozen selection runs item by item under a budget reserve, folder cards drafted by a Scribe and reviewed by a Clerk, then judged by the Oracle. |
+| **Primary actor** | Core |
+| **Supporting actors** | Lead, Clerk, Scribe, Oracle, Doctor |
+| **Preconditions** | Gate 1 within the mandate |
+| **Trigger** | The parent's batch step |
+| **Success guarantee** | A verified mixed ledger |
+| **Minimal guarantee** | Sibling faults isolated; completed items kept |
 | **Open questions** | — |
 
 **Main success scenario** (generated: the guard-true path, in step order)
@@ -294,11 +294,12 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-BAT-01 (batch-enrichment): folder_describe failed in all 12 audited folder-item attempts, and no folder_data success was observed. | fscribe | A Scribe drafts the folder summary from the inventory and a Clerk reviews it; a failed folder stage is recorded per item. |
 
 ## Checks
 
 Errors: none
 
-Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
+Warnings: none

@@ -13,15 +13,15 @@ Supersedes: `reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/l
 
 | Field | Content |
 |---|---|
-| **Use case name** | Context 2: External-Project Tier 0 Accesses Librarian via MCP (Proposed To-Be) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Work for an external project through MCP (Context 2) |
+| **Brief description** | Tier 0 in another project reads, delegates bounded reading and records what it applied, within a scoped grant. |
+| **Primary actor** | Overseer (tier 0), in the external project |
+| **Supporting actors** | Clerk, Scribe, Core, Doctor |
+| **Preconditions** | MCP connected with a scoped grant |
+| **Trigger** | The external task needs the library |
+| **Success guarantee** | An Applications/ note with validated citations and locators |
+| **Minimal guarantee** | A blocked call returns a ticket at once; leads are queued, not ingested |
+| **Open questions** | What may an external project's grant include? |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -212,12 +212,16 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-ACT-02 (activation): A Broker Ask waits 150 s, then fails with PERMISSION_UNANSWERED; an unattended run stalls on each one. | mcpblocked | A blocked MCP call returns a structured ticket at once instead of a 150-second wait. |
+| W-EXT-03 (activation-external-project): A consult-tier delegate is refused, and a session Ask times out at 150 s; either ends the external task's use of the library. | parallelhelpers | Delegated reading runs within the helper budget the context grants, not at a fixed consult tier. |
+| W-EXT-02 (activation-external-project): An Applications/ note pins no snapshot hashes, locators or verification, so a later reader cannot tell exactly what was used. | recordapp | The Applications/ note validates its citations and records locators in an append-only sidecar. |
+| W-EXT-01 (activation-external-project): Recording an application with no sources used raises a TypeError instead of a refusal. | recordapp | Citations are validated first; an application with none is refused with a reason. |
 
 ## Checks
 
 Errors: none
 
 Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
 - decision dmissing ('catalogued Sources satisfy external need?') tests a quantity but declares no boundary values

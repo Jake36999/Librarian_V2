@@ -13,15 +13,15 @@ Supersedes: `reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/l
 
 | Field | Content |
 |---|---|
-| **Use case name** | Context 3: Human Uses Librarian Web UI Directly Without Tier 0 (Proposed To-Be) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Work directly in the Web UI (Context 3) |
+| **Brief description** | The Owner curates in the Web UI; the Lead delegates; results open from the Core's record. |
+| **Primary actor** | Owner |
+| **Supporting actors** | Web UI, Lead, Clerk, Oracle, Doctor, Core |
+| **Preconditions** | A Core running for the library |
+| **Trigger** | Add source, Folders, Chat or a workflow |
+| **Success guarantee** | A judged, findable note, with spend and coverage shown |
+| **Minimal guarantee** | A pause or failure shows its ticket and resume path |
+| **Open questions** | W-ACC-01: keeping the person's draft through a conflict |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -303,12 +303,14 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-WFR-02 (workflow-run): A paused run shows a static chip, with no route picker, resume or dismiss. | uiagenda | A paused run appears on the agenda with its ticket and the exact resume path. |
+| W-WFR-01 (workflow-run): The Web UI discards a run's result (app.js:8472): the person never sees what was read, what failed or why. | uinotify | The run's result, spend and coverage open in a drawer, from the Core's record. |
 
 ## Checks
 
 Errors: none
 
 Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
 - decision dgate1choice ('Gate 1 Source choice on Staging page?') tests a quantity but declares no boundary values

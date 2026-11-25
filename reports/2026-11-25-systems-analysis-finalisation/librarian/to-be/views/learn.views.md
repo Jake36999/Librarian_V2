@@ -14,14 +14,14 @@ Supersedes: `reports/2026-11-20-workflow-map/examples/ingestion/learn.spec.yaml`
 
 | Field | Content |
 |---|---|
-| **Use case name** | Learn a remedy from an escalated case |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
+| **Use case name** | Learn a remedy |
+| **Brief description** | A repair tier 0 made by hand becomes a proposed remedy that the Owner accepts. |
+| **Primary actor** | Owner |
+| **Supporting actors** | Overseer, Core |
+| **Preconditions** | A resolved case with no remedy |
+| **Trigger** | Tier 0 proposes the remedy |
+| **Success guarantee** | An accepted catalogue entry |
+| **Minimal guarantee** | Nothing is installed without acceptance |
 | **Open questions** | — |
 
 **Main success scenario** (generated: the guard-true path, in step order)
@@ -117,5 +117,4 @@ _None recorded._
 
 Errors: none
 
-Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
+Warnings: none

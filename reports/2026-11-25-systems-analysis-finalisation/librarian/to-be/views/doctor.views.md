@@ -13,15 +13,15 @@ Supersedes: `reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/l
 
 | Field | Content |
 |---|---|
-| **Use case name** | Librarian Doctor Recovery & Ticket Workflow (Proposed To-Be, Rule-8 Compliant) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Repair a failure through a ticket |
+| **Brief description** | A ticket, a matching accepted remedy, a blast-radius check, the repair, then the Oracle's confirmation. |
+| **Primary actor** | Doctor |
+| **Supporting actors** | Clerk, Lead, Owner, Oracle, Core |
+| **Preconditions** | An open ticket |
+| **Trigger** | A failure at a mapped extension |
+| **Success guarantee** | Resolved, confirmed by the Oracle |
+| **Minimal guarantee** | Never beyond the mandate without the Owner |
+| **Open questions** | The repair role's code name (W-DOC-05) |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -223,12 +223,17 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-DOC-04 (doctor): Whether a repair worked is judged by the agent that made it. | oracle | A distinct Oracle confirms a cleared ticket; the Doctor never judges its own repair. |
+| W-DOC-01 (doctor): Every repair is tier-0 work: each failure of the 19-20 November run came back to tier 0. | runremedy | The Doctor runs an accepted remedy; tier 0 gets only what no remedy covers. |
+| W-DOC-02 (doctor): A failure is a refusal code in a call's result, not a ticket: there is no register of open failures, their owners or their repairs. | intake | Every failure opens a ticket with its extension, flags, evidence, accountable actor and repair history. |
+| W-DOC-03 (doctor): Nothing checks a repair's reach before it runs: R1's re-survey re-applied every group in the library. | blast | The blast radius is computed against the parent's mandate before any remedy runs. |
+| W-DOC-05 (doctor): `doctor` already names the install capability check (doctor.py, the doctor tool); the repair role needs a distinct code name. | * | Proposed: the repair role takes a distinct code name, and `doctor` stays the install check. |
 
 ## Checks
 
 Errors: none
 
 Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
 - decision dgrant ('within parent mandate and DOC-GEO-03 bounds?') tests a quantity but declares no boundary values

@@ -119,8 +119,8 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-CIT-01 | risk | resolve | A graph paper is linked to its Source note by title, derived each time; a renamed note breaks the link. | USE-CASES.md UC4 assumption | **not yet** |
-| W-CIT-02 | gap | 6b | A read but unaccepted paper can be kept as a candidate but never quoted. | USE-CASES.md UC4 6a | **not yet** |
+| W-CIT-01 | risk | resolve | A graph paper is linked to its Source note by title, derived each time; a renamed note breaks the link. | USE-CASES.md UC4 assumption | `cite-graph` |
+| W-CIT-02 | gap | 6b | A read but unaccepted paper can be kept as a candidate but never quoted. | USE-CASES.md UC4 6a | `cite-graph` |
 
 ## Evidence
 

@@ -161,8 +161,8 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-VER-01 | gap | 3a | Claim review is off by default, so a garbled claim was staged checked only for its quote (OP7). | tools/sessions.py lines 1719-1723 | **not yet** |
-| W-VER-02 | fault | 4b | A review that does not complete marks the claim unchecked and stages it anyway; three full-PDF quotes went this way (OP9). | 81914de; USE-CASES.md UC3 4c | **not yet** |
+| W-VER-01 | gap | 3a | Claim review is off by default, so a garbled claim was staged checked only for its quote (OP7). | tools/sessions.py lines 1719-1723 | `verify-claims` |
+| W-VER-02 | fault | 4b | A review that does not complete marks the claim unchecked and stages it anyway; three full-PDF quotes went this way (OP9). | 81914de; USE-CASES.md UC3 4c | `verify-claims` |
 
 ## Evidence
 

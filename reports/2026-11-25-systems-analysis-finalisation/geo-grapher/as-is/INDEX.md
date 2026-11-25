@@ -17,7 +17,7 @@ Every weakness found in the as-is, and the to-be element that handles it.
 | Id | Kind | In | Weakness | Handled by |
 |---|---|---|---|---|
 
-0 weaknesses; 0 not yet handled by the to-be.
+0 weaknesses: 0 handled by the to-be, 0 open with a reason, 0 not yet answered.
 
 ## Checks
 

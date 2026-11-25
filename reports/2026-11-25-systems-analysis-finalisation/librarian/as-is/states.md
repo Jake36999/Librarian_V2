@@ -52,8 +52,8 @@ Evidence: src/resource_librarian/staging.py lines 80-87 (STATUSES, DECIDABLE); b
 
 Weaknesses:
 
-- **W-STI-01** (risk): A source can be accepted straight from staged ('accept as captured'), entering the library with only what intake fetched read; only its coverage label says so. Evidence: staging.py DECIDABLE['accept'] includes staged; CAPTURED. Handled by: **not yet**.
-- **W-STI-02** (gap): An enriched or partial item has no owner and no deadline: it waits until someone decides it. Evidence: OP1; 96 items waited 19-20 November; awaiting_acceptance() counts them (8489387). Handled by: **not yet**.
+- **W-STI-01** (risk): A source can be accepted straight from staged ('accept as captured'), entering the library with only what intake fetched read; only its coverage label says so. Evidence: staging.py DECIDABLE['accept'] includes staged; CAPTURED. Handled by: `state:staged-item`.
+- **W-STI-02** (gap): An enriched or partial item has no owner and no deadline: it waits until someone decides it. Evidence: OP1; 96 items waited 19-20 November; awaiting_acceptance() counts them (8489387). Handled by: `state:staged-item`.
 
 ## A folder card
 

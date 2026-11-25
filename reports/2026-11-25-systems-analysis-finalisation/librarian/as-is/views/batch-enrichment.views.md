@@ -231,8 +231,8 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-BAT-01 | fault | folderdescribe | folder_describe failed in all 12 audited folder-item attempts, and no folder_data success was observed. | batch-enrichment `observed` note (two batches) | **not yet** |
-| W-BAT-02 | gap | summary | A finished batch is not acceptance, yet nothing assigns the decisions it leaves; W7 now counts them (awaiting_acceptance) but does not route them. | summary label; OP1; 8489387 | **not yet** |
+| W-BAT-01 | fault | folderdescribe | folder_describe failed in all 12 audited folder-item attempts, and no folder_data success was observed. | batch-enrichment `observed` note (two batches) | `batch-enrichment` |
+| W-BAT-02 | gap | summary | A finished batch is not acceptance, yet nothing assigns the decisions it leaves; W7 now counts them (awaiting_acceptance) but does not route them. | summary label; OP1; 8489387 | `ingestion` |
 
 ## Checks
 

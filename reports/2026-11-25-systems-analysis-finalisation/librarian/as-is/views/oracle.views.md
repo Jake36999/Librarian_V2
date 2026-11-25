@@ -137,7 +137,7 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-ORA-01 | gap | open | Admitted contracts and Tier A checks exist only in audited sessions; ingestion, research and workflows are judged by whoever ran them. | standard/phases.yaml purposes; research_grains.py; closure_audit.py | **not yet** |
+| W-ORA-01 | gap | open | Admitted contracts and Tier A checks exist only in audited sessions; ingestion, research and workflows are judged by whoever ran them. | standard/phases.yaml purposes; research_grains.py; closure_audit.py | `oracle` |
 
 ## Evidence
 

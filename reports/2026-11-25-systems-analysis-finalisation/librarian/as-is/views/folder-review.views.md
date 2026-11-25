@@ -167,11 +167,11 @@ One test per path: the main success scenario, then each extension.
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-FOL-01 | risk | geo_folder_apply | Every accept re-applies every accepted group in the library (OP2): one folder's decision has a whole-library radius. | geo_folder_apply label; remedy-catalogue R1 scope note | **not yet** |
-| W-FOL-02 | fault | dfolder_prep | A stale card anywhere refuses this decision (FOLDER_STALE across all groups); R1 needed a re-survey of an unrelated root. | folder_review.py line 591; remedy-catalogue R1 history | **not yet** |
-| W-FOL-03 | gap | folder_draft_check | The model's draft of a folder's purpose is off by default (FOLDER_DRAFT_DISABLED); when on, it sees only file counts and bytes. | folder_draft_check and folder_clerk_draft labels | **not yet** |
-| W-FOL-04 | gap | folder_queue_sources | Accepting a folder does not start its intake: queueing its documents is a separate click or API call. | folder_queue_sources label (POST /api/folders/sources) | **not yet** |
-| W-FOL-05 | risk | folder_batch_approve | A folder card can be approved (for the batch) or accepted (applied as a group): two states with different powers that the person can confuse. | folder_review.py approve_batch (status approved) and accept (status accepted) | **not yet** |
+| W-FOL-01 | risk | geo_folder_apply | Every accept re-applies every accepted group in the library (OP2): one folder's decision has a whole-library radius. | geo_folder_apply label; remedy-catalogue R1 scope note | `folder-review` |
+| W-FOL-02 | fault | dfolder_prep | A stale card anywhere refuses this decision (FOLDER_STALE across all groups); R1 needed a re-survey of an unrelated root. | folder_review.py line 591; remedy-catalogue R1 history | `folder-review` |
+| W-FOL-03 | gap | folder_draft_check | The model's draft of a folder's purpose is off by default (FOLDER_DRAFT_DISABLED); when on, it sees only file counts and bytes. | folder_draft_check and folder_clerk_draft labels | `folder-review` |
+| W-FOL-04 | gap | folder_queue_sources | Accepting a folder does not start its intake: queueing its documents is a separate click or API call. | folder_queue_sources label (POST /api/folders/sources) | `ingestion` |
+| W-FOL-05 | risk | folder_batch_approve | A folder card can be approved (for the batch) or accepted (applied as a group): two states with different powers that the person can confuse. | folder_review.py approve_batch (status approved) and accept (status accepted) | `state:folder-card` |
 
 ## Checks
 

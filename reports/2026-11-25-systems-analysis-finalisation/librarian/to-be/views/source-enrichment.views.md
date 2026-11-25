@@ -13,14 +13,14 @@ Supersedes: `reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/l
 
 | Field | Content |
 |---|---|
-| **Use case name** | Librarian Source Enrichment L1 Workflow (Proposed To-Be) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
+| **Use case name** | Enrich one source |
+| **Brief description** | Parse, read and publish one source, then the Oracle audits its receipts. |
+| **Primary actor** | Core |
+| **Supporting actors** | Clerk, Scribe, Model host, Oracle, Doctor, Geo-Grapher |
+| **Preconditions** | Admitted by the batch, a reread or a commission |
+| **Trigger** | The item's turn |
+| **Success guarantee** | Read, checked, published where eligible, and judged |
+| **Minimal guarantee** | A partial or quarantined source returns its gaps explicitly |
 | **Open questions** | — |
 
 **Main success scenario** (generated: the guard-true path, in step order)
@@ -232,11 +232,13 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-SRC-01 (source-enrichment): A completed model call is counted as a stage done; nothing judges whether the answer is a valid answer to the task. | oracle | A distinct Oracle audits each source's raw receipts and the fidelity of what was read. |
+| W-WFR-03 (workflow-run): deep-read-staged reads each staged source but leaves its status unchanged, so nothing records that it was read. | userread | A reread from the Web UI runs through source enrichment, which records each stage's status. |
 
 ## Checks
 
 Errors: none
 
-Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
+Warnings: none

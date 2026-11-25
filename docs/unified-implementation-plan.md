@@ -7505,3 +7505,18 @@ Owner direction: stop producing swim-lane canvases (D1), start S1, build out the
 - **S4, started.** The 58-node to-be ingestion and the 57-node to-be source enrichment are split the same way (15 to-be specs, all passing). The to-be specs do not yet say which weaknesses they handle.
 
 Tests: no code changed. The full suite in a clean clone (HEAD plus S1 and S2), 2823 passed, 2 skipped, 5 deselected in 1010 s.
+
+### The to-be Librarian answers every as-is weakness (2026-11-25)
+
+S4 for the Librarian (`librarian/to-be`): 19 proposed use cases, all passing the pack checks.
+- **New to-be specs:** research (a brief scoped to its corpus, sized once, synthesised per question and judged against itself), claim review (always on; an incomplete review holds the claim), citing the graph (through a link stored at publication), and a general Oracle (Tier A, then Tier B, on a distinct route; the verdict is re-checked).
+- **States (G4):** the four entities as proposed, plus a fault ticket.
+- **[handles.yaml](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/handles.yaml)** maps 48 of the 54 as-is weaknesses to the to-be element that handles each, with how. Six are open with a reason:
+  - two Owner decisions: may a person's own surface skip the Broker; correct the attester on the 96 notes;
+  - two for the Geo-Grapher pack: publication's folder prerequisite; cleaning old paper databases;
+  - two with no to-be element yet: a ticket per quarantined sibling; keeping a person's draft through a stale-revision conflict.
+- **The renderer** checks that every as-is weakness is handled or open, never both.
+
+The 24 November to-be specs were split and relabelled only; their wording, which leans on rule and workstream codes, is unchanged. The as-is index shows, theme by theme, how much is handled.
+
+Tests: no code changed (reports only); the suite run above covers it.

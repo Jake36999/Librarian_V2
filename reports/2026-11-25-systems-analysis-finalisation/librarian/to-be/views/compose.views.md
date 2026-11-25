@@ -13,15 +13,15 @@ Supersedes: `reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/l
 
 | Field | Content |
 |---|---|
-| **Use case name** | Librarian Process Composition & Mandate Narrowing (Proposed To-Be: L0 Action -> L3 Sprint) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Compose and start a sprint |
+| **Brief description** | Whichever context starts the work, it becomes one composed sprint: an owned specification, a compiled manifest, one envelope, a rolled-up Oracle verdict. |
+| **Primary actor** | Owner, or tier 0 on the Owner's behalf |
+| **Supporting actors** | Lead, Clerk, Scribe, Oracle, Core |
+| **Preconditions** | Every action the sprint reaches is registered and declares its effects |
+| **Trigger** | A request in any context |
+| **Success guarantee** | One result, judged against the sprint's specification, with spend and coverage |
+| **Minimal guarantee** | Nothing runs outside the parent's mandate; an ungranted call is judged before anyone is asked |
+| **Open questions** | Which rules let the Oracle allow extra work without the Owner (W9)? |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -284,13 +284,16 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-ACT-04 (activation): Six surfaces enter the Core with different tiers and gates, and none reaches a common parent process for the work it starts. | dspec_owner | Every context starts the same composed sprint; contexts differ only in who owns the specification. |
+| W-CMP-01 (compose): The batch's stages and the session's phases are not compositions: stages are code, and phases are declared data that no workflow can call (OP16). | compile_manifest | Action, workflow, pipeline and sprint compile into one manifest, so ingestion is a composition like any other. |
+| W-ACT-03 (activation): The in-app Lead asks tool by tool (Ask mode, 600 s wait); there is no permission envelope for a whole run. | oracle_scope | The envelope is granted once; an ungranted call goes to the Oracle as a scope question before anyone is asked. |
 
 ## Checks
 
 Errors: none
 
 Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
 - decision dnarrow ('sub-run manifest fits parent mandate (Rules 9, 10, 16)?') tests a quantity but declares no boundary values
 - decision dscope ('within spec & parent mandate?') tests a quantity but declares no boundary values

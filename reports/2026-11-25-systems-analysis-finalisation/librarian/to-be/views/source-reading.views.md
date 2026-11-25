@@ -7,14 +7,14 @@
 
 | Field | Content |
 |---|---|
-| **Use case name** | Read one source (proposed) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
+| **Use case name** | Read a source |
+| **Brief description** | A Clerk plans the reading; Scribes read bounded parts; every part's answer is checked before it counts. |
+| **Primary actor** | Clerk |
+| **Supporting actors** | Scribe, Model host, Core |
+| **Preconditions** | Parsed text |
+| **Trigger** | Stage 3 |
+| **Success guarantee** | Every part read and checked |
+| **Minimal guarantee** | Poison text quarantined after bounded retries |
 | **Open questions** | — |
 
 **Main success scenario** (generated: the guard-true path, in step order)
@@ -139,12 +139,14 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-REA-01 (source-reading): Read completion follows the remaining-part counts, not the validity of each part's answer. | readchk | Each part's schema and quotes are verified; a part's answer counts only once it checks. |
+| W-REA-02 (source-reading): The metadata stage copies a few literal Data facts and lists the unknown fields; there is no semantic metadata step. | metapropose | A Clerk proposes semantic metadata from the evidence, Unknown where it is not supported. |
 
 ## Checks
 
 Errors: none
 
 Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
 - decision drelate ('multi-chapter document needing semantic relations?') tests a quantity but declares no boundary values

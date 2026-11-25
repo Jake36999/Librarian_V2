@@ -229,11 +229,11 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-ING-01 | gap | tell | Nothing reconciles a folder's counts (surveyed, queued, staged, enriched, accepted); the person or tier 0 does it by hand. | remedy-catalogue R3 (queued 0, then 96 across 24 subfolders) and proposed R6 | **not yet** |
-| W-ING-02 | gap | dqueue | Queued documents wait until someone runs the queue, and a queue nobody drains says nothing. | dqueue_drain in the activation map: queued refs stay status=queued | **not yet** |
-| W-ING-03 | fault | dgate1 | Tier 0 cannot approve or start a batch, so an orchestrated ingestion always hands Gate 1 back to the person. | dmanual_handover in the activation map; the 19-20 November trace | **not yet** |
-| W-ING-04 | gap | 7a | A partial item is re-run only by a fresh approval and start; resuming an unfinished run is a different path. | USE-CASES.md UC1 14a; remedy-catalogue R4 (3 of 6 stayed partial) | **not yet** |
-| W-ING-05 | cost | * | On 19-20 November control came back to tier 0 eight times on the main path, and ten on the worst (graded bad). | examples/ingestion/ingestion.views.md, tier-0 turns | **not yet** |
+| W-ING-01 | gap | tell | Nothing reconciles a folder's counts (surveyed, queued, staged, enriched, accepted); the person or tier 0 does it by hand. | remedy-catalogue R3 (queued 0, then 96 across 24 subfolders) and proposed R6 | `ingestion` |
+| W-ING-02 | gap | dqueue | Queued documents wait until someone runs the queue, and a queue nobody drains says nothing. | dqueue_drain in the activation map: queued refs stay status=queued | `ingestion` |
+| W-ING-03 | fault | dgate1 | Tier 0 cannot approve or start a batch, so an orchestrated ingestion always hands Gate 1 back to the person. | dmanual_handover in the activation map; the 19-20 November trace | `ingestion` |
+| W-ING-04 | gap | 7a | A partial item is re-run only by a fresh approval and start; resuming an unfinished run is a different path. | USE-CASES.md UC1 14a; remedy-catalogue R4 (3 of 6 stayed partial) | `ingestion` |
+| W-ING-05 | cost | * | On 19-20 November control came back to tier 0 eight times on the main path, and ten on the worst (graded bad). | examples/ingestion/ingestion.views.md, tier-0 turns | `activation-overseer` |
 
 ## Evidence
 

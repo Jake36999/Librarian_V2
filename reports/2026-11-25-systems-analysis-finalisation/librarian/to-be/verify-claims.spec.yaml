@@ -1,0 +1,56 @@
+# UC3 to-be: every claim resolved through a stored link, found verbatim, and always reviewed (AS-IS-FINDINGS T3, T8).
+diagram: verify-claims
+use_case: UC3
+status: PROPOSED_UNACCEPTED
+supersedes: []
+kind: activity
+title: Verify a report's claims (proposed)
+problem:
+  symptom: "As-is: review off by default; an incomplete review staged the claim unchecked."
+  root: "Review is part of verification, and a claim is staged only with a completed verdict."
+lanes: [Lead (tier 1), Core, Clerk (tier 2)]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: submit, kind: activity, lane: Lead (tier 1), step: 1, label: "submits the draft; each claim cites a note, a staged source, a paper or a code entity, with a quote"}
+  - {id: resolve, kind: activity, lane: Core, step: 2, label: "resolves each citation through its stored link"}
+  - {id: dlink, kind: decision, lane: Core, label: "does every link resolve?"}
+  - {id: nolink, kind: activity, lane: Core, label: "refuses the claim and names the missing link"}
+  - {id: quote, kind: activity, lane: Core, step: 3, label: "finds each quote verbatim at its locator"}
+  - {id: dquote, kind: decision, lane: Core, label: "found?"}
+  - {id: closest, kind: activity, lane: Core, label: "refuses the draft and names the closest passage"}
+  - {id: review, kind: activity, lane: Clerk (tier 2), step: 4, label: "reviews each claim against the passage around its quote; review is always on"}
+  - {id: dverdict, kind: decision, lane: Core, label: "the verdict?"}
+  - {id: retry, kind: activity, lane: Core, label: "retries once on a second qualified review route"}
+  - {id: dretry, kind: decision, lane: Core, label: "does the second review complete?"}
+  - {id: hold, kind: activity, lane: Core, label: "holds the claim, unstaged, with the reason; the rest of the report waits"}
+  - {id: challenge, kind: activity, lane: Core, label: "returns the challenge to the Lead with the words that show it"}
+  - {id: record, kind: activity, lane: Core, step: 5, label: "records each verdict on the report"}
+  - {id: stage, kind: activity, lane: Core, step: 6, label: "stages the report: every claim found and reviewed"}
+  - {id: e1, kind: end, outcome: success, label: "staged, every claim with a completed verdict"}
+  - {id: e_challenged, kind: end, outcome: challenged, label: "a claim goes beyond its passage, or is not a readable sentence"}
+  - {id: e_refused, kind: end, outcome: refused, label: "a link or a quote is missing"}
+  - {id: e_held, kind: end, outcome: held, label: "a review could not complete on two routes"}
+edges:
+  - {from: s, to: submit}
+  - {from: submit, to: resolve}
+  - {from: resolve, to: dlink}
+  - {from: dlink, to: quote, guard: "yes"}
+  - {from: dlink, to: nolink, guard: "no", ext: 2a}
+  - {from: nolink, to: e_refused}
+  - {from: quote, to: dquote}
+  - {from: dquote, to: review, guard: "yes"}
+  - {from: dquote, to: closest, guard: "no", ext: 3a}
+  - {from: closest, to: e_refused}
+  - {from: review, to: dverdict}
+  - {from: dverdict, to: record, guard: supported}
+  - {from: dverdict, to: challenge, guard: "goes beyond the passage, or not a readable sentence", ext: 4a}
+  - {from: dverdict, to: retry, guard: the review did not complete, ext: 4b}
+  - {from: retry, to: dretry}
+  - {from: dretry, to: record, guard: "yes"}
+  - {from: dretry, to: hold, guard: "no"}
+  - {from: hold, to: e_held}
+  - {from: challenge, to: e_challenged}
+  - {from: record, to: stage}
+  - {from: stage, to: e1}
+evidence:
+  - "AS-IS-FINDINGS.md T3 and T8; as-is verify-claims extensions 3a and 4b."

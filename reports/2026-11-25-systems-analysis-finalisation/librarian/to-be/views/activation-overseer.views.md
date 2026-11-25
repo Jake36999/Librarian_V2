@@ -13,15 +13,15 @@ Supersedes: `reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/l
 
 | Field | Content |
 |---|---|
-| **Use case name** | Context 1: User Directs Tier 0 Agent to Operate Librarian (Proposed To-Be Sprint) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Work for the Owner as tier 0 (Context 1) |
+| **Brief description** | The Owner instructs tier 0 once; tier 0 commissions the run, the Lead carries it out, and tier 0 hands over. |
+| **Primary actor** | Owner |
+| **Supporting actors** | Overseer (tier 0), Lead, Oracle, Doctor, Core |
+| **Preconditions** | A commission with scope, exclusions and budget |
+| **Trigger** | The Owner's instruction |
+| **Success guarantee** | A verified handover in at most two tier-0 turns on the main path |
+| **Minimal guarantee** | A malformed commission changes nothing |
+| **Open questions** | How much standing authority may a commission carry (Rule 15)? |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -272,13 +272,15 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-ING-05 (ingestion): On 19-20 November control came back to tier 0 eight times on the main path, and ten on the worst (graded bad). | * | Tier 0 commissions once and receives one handover: two tier-0 turns on the main path (ideal). |
+| W-ACT-01 (activation): Tier 0 through MCP is capped at contribute: it has no folder tools, and process_approved (curate) is refused, so each folder decision and batch start is handed back to the person. | storeenv | The commission grants tier 0 its delegated in-scope permissions, folder decisions and the batch start included. |
 
 ## Checks
 
 Errors: none
 
 Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
 - decision dpperm ('partials acceptable for sprint?') tests a quantity but declares no boundary values
 - decision dverdict ('L3 sprint obligations satisfied?') tests a quantity but declares no boundary values

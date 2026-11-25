@@ -7,14 +7,14 @@
 
 | Field | Content |
 |---|---|
-| **Use case name** | Validate and parse one source (proposed) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
+| **Use case name** | Validate and parse a source |
+| **Brief description** | Validate, extract, convert with a Clerk-assigned and Clerk-reviewed Scribe task, and mark the provisional projection. |
+| **Primary actor** | Core |
+| **Supporting actors** | Clerk, Scribe |
+| **Preconditions** | Captured evidence |
+| **Trigger** | Stage 1 |
+| **Success guarantee** | Text ready with its gaps recorded |
+| **Minimal guarantee** | Unrecoverable items quarantined |
 | **Open questions** | — |
 
 **Main success scenario** (generated: the guard-true path, in step order)
@@ -140,11 +140,12 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-PAR-01 (source-parse): A provisional paper projection is written before reading; if reading then fails, a catalogue-only projection remains. | preproj | The provisional projection is marked provisional and never counted as published. |
 
 ## Checks
 
 Errors: none
 
-Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
+Warnings: none

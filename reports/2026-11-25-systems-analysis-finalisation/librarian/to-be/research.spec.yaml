@@ -1,0 +1,78 @@
+# UC2 to-be: a research brief over a named corpus, under one envelope, judged by the Oracle (AS-IS-FINDINGS T3, T8, T9).
+diagram: research
+use_case: UC2
+status: PROPOSED_UNACCEPTED
+supersedes: []
+kind: activity
+title: Research a brief across a corpus (proposed)
+problem:
+  symptom: "As-is: the whole library as the pool, budgets that halve on return, one synthesis for every question, unchecked code placement, a broken disqualifier nobody caught."
+  root: "The brief is scoped to its corpus, sized once, synthesised per question and judged against itself before it is handed over."
+lanes: [Owner, Lead (tier 1), Clerk (tier 2), Scribe (tier 3), Oracle, Core, Geo-Grapher]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: brief, kind: activity, lane: Owner, step: 1, label: "states the brief once: its questions, its corpus, its disqualifiers and a budget"}
+  - {id: dbrief, kind: decision, lane: Core, label: "are the corpus and the disqualifiers named?"}
+  - {id: missing, kind: activity, lane: Core, label: "refuses to start and names the missing field"}
+  - {id: manifest, kind: activity, lane: Core, step: 2, label: "compiles the brief's manifest, sizes its budget from it and grants the envelope once"}
+  - {id: open, kind: activity, lane: Lead (tier 1), step: 3, label: "opens one brief per question, each scoped to the named corpus"}
+  - {id: rounds, kind: activity, lane: Scribe (tier 3), step: 4, label: "runs bounded research rounds for each brief"}
+  - {id: candidates, kind: activity, lane: Core, step: 5, label: "adds finds from the corpus only, read but unaccepted sources included and labelled"}
+  - {id: propose, kind: activity, lane: Clerk (tier 2), step: 6, label: "proposes a decision for each run of candidates, with its reason"}
+  - {id: decide, kind: activity, lane: Lead (tier 1), step: 7, label: "decides the candidates"}
+  - {id: dbudget, kind: decision, lane: Core, label: "is the work inside the envelope?"}
+  - {id: scope, kind: activity, lane: Oracle, label: "judges whether the extra work serves the brief (an in-scope verdict allows only what the mandate permits)"}
+  - {id: dscope, kind: decision, lane: Oracle, label: "in scope?"}
+  - {id: allow, kind: activity, lane: Core, label: "records the allowance for the end-of-run report"}
+  - {id: askonce, kind: activity, lane: Owner, label: "answers one consolidated question: extend, narrow or stop"}
+  - {id: downer, kind: decision, lane: Owner, label: "extends or narrows?"}
+  - {id: ref_cite, kind: ref, lane: Lead (tier 1), step: 8, use_case: cite-graph, label: "reads and cites the kept papers"}
+  - {id: synth, kind: activity, lane: Lead (tier 1), step: 9, label: "records one synthesis per brief"}
+  - {id: place, kind: activity, lane: Lead (tier 1), step: 10, label: "places each finding in our code as a claim citing a code entity"}
+  - {id: draft, kind: activity, lane: Lead (tier 1), step: 11, label: "drafts one report per brief"}
+  - {id: ref_verify, kind: ref, lane: Core, step: 12, use_case: verify-claims, label: "verifies and reviews every claim, code placements included"}
+  - {id: ref_oracle, kind: ref, lane: Oracle, step: 13, use_case: oracle, label: "judges each report against its brief: question answered, corpus kept, disqualifiers held, gaps stated"}
+  - {id: record, kind: activity, lane: Core, step: 14, label: "writes the run's result record: answers, gaps, spend and allowances"}
+  - {id: handover, kind: activity, lane: Lead (tier 1), step: 15, label: "hands over the staged reports and the result record"}
+  - {id: e1, kind: end, outcome: success, label: "one judged, staged report per question"}
+  - {id: e_paused, kind: end, outcome: paused, label: "stopped by the Owner, or waiting on a held claim"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "the graph is unavailable, or the Oracle escalates"}
+edges:
+  - {from: s, to: brief}
+  - {from: brief, to: dbrief}
+  - {from: dbrief, to: manifest, guard: "yes"}
+  - {from: dbrief, to: missing, guard: "no", ext: 2a}
+  - {from: missing, to: brief}
+  - {from: manifest, to: open}
+  - {from: open, to: rounds}
+  - {from: rounds, to: candidates}
+  - {from: candidates, to: propose}
+  - {from: propose, to: decide}
+  - {from: decide, to: dbudget}
+  - {from: dbudget, to: ref_cite, guard: inside}
+  - {from: dbudget, to: scope, guard: more is needed, ext: 8a}
+  - {from: scope, to: dscope}
+  - {from: dscope, to: allow, guard: "yes"}
+  - {from: dscope, to: askonce, guard: "no"}
+  - {from: allow, to: ref_cite}
+  - {from: askonce, to: downer}
+  - {from: downer, to: ref_cite, guard: extended or narrowed}
+  - {from: downer, to: e_paused, guard: stop}
+  - {from: ref_cite, to: synth, guard: success}
+  - {from: ref_cite, to: e_escalated, guard: unavailable, ext: 8b}
+  - {from: synth, to: place}
+  - {from: place, to: draft}
+  - {from: draft, to: ref_verify}
+  - {from: ref_verify, to: ref_oracle, guard: success}
+  - {from: ref_verify, to: draft, guard: challenged, ext: 12a}
+  - {from: ref_verify, to: draft, guard: refused, ext: 12b}
+  - {from: ref_verify, to: e_paused, guard: held, ext: 12c}
+  - {from: ref_oracle, to: record, guard: success}
+  - {from: ref_oracle, to: rounds, guard: shortfall, ext: 13a}
+  - {from: ref_oracle, to: e_paused, guard: paused, ext: 13b}
+  - {from: ref_oracle, to: e_escalated, guard: escalated, ext: 13c}
+  - {from: record, to: handover}
+  - {from: handover, to: e1}
+evidence:
+  - "AS-IS-FINDINGS.md rules T3 (Oracle), T8 (stored links), T9 (brief scoped, budget from the envelope)."
+  - "docs/proposals/plan-forward-2026-11.md W1b item 5 (permission envelope) and W9 (the Oracle's scope judgments, Rule 17)."

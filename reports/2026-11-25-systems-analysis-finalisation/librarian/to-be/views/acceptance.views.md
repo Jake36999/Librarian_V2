@@ -7,14 +7,14 @@
 
 | Field | Content |
 |---|---|
-| **Use case name** | Accept the screened sources (proposed) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
+| **Use case name** | Accept the screened sources |
+| **Brief description** | The Lead accepts within the mandate; reserved choices go to the Owner as one consolidated decision. |
+| **Primary actor** | Lead |
+| **Supporting actors** | Owner, Core |
+| **Preconditions** | The Oracle has screened the batch |
+| **Trigger** | The parent's acceptance step |
+| **Success guarantee** | Committed notes, attested by who accepted them |
+| **Minimal guarantee** | Reserved choices wait on the agenda |
 | **Open questions** | — |
 
 **Main success scenario** (generated: the guard-true path, in step order)
@@ -108,5 +108,4 @@ _None recorded._
 
 Errors: none
 
-Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
+Warnings: none

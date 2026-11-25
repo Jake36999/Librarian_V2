@@ -7,15 +7,15 @@
 
 | Field | Content |
 |---|---|
-| **Use case name** | Capture, title and stage each source (proposed) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Capture, title and stage each source |
+| **Brief description** | Immutable evidence, literal metadata, a proposed readable title and staging. |
+| **Primary actor** | Core |
+| **Supporting actors** | Clerk |
+| **Preconditions** | Source-eligible inputs |
+| **Trigger** | The parent's intake step |
+| **Success guarantee** | Staged with a readable title and its unknowns explicit |
+| **Minimal guarantee** | Duplicates reconciled; failures quarantined |
+| **Open questions** | W-INT-02: a ticket for each quarantined sibling |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -92,11 +92,12 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-INT-01 (source-intake): Titles fall back to slugs or file names, and the topic to Unfiled; nothing schedules the fix. | describe | A Clerk proposes a readable title when the header is a slug or file name, with its topics. |
 
 ## Checks
 
 Errors: none
 
-Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
+Warnings: none

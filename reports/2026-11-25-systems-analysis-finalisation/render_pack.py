@@ -98,6 +98,22 @@ class Pack:
             if uc.get("boundaries"):
                 spec.setdefault("boundaries", uc["boundaries"])
         # weaknesses.yaml is the as-is pack's register; each entry names its spec, or `state:<entity>`.
+        # handles.yaml is the to-be pack's answer to the register: where each weakness is handled, or
+        # why it is still open.
+        self.open: dict[str, str] = {}
+        answers = path / "handles.yaml"
+        if answers.exists():
+            entities = {e["id"]: e for e in (self.states or {}).get("entities", [])}
+            data = yaml.safe_load(answers.read_text(encoding="utf-8"))
+            for h in data.get("handles", []):
+                where = str(h.get("spec", ""))
+                if where in self.specs:
+                    self.specs[where].setdefault("handles", []).append(h)
+                elif where.startswith("state:") and where[6:] in entities:
+                    entities[where[6:]].setdefault("handles", []).append(h)
+                else:
+                    self.load_errors.append(f"handles {h.get('weakness')} in {where!r}, which is no spec or state here")
+            self.open = {o["weakness"]: o["reason"] for o in data.get("open", [])}
         register = path / "weaknesses.yaml"
         self.themes: list[dict] = []
         if register.exists():
@@ -217,6 +233,18 @@ def check_spec(pack: Pack, sid: str, spec: dict) -> tuple[list[str], list[str], 
     return errors, warnings, scenarios
 
 
+OPEN: dict[str, str] = {}      # the to-be pack's open weaknesses and their reasons, set by render()
+
+
+def answered(wid: str, handled: dict) -> str:
+    """Where the to-be handles a weakness, or why it is still open."""
+    if handled.get(wid):
+        return ", ".join(f"`{sid}`" for sid, _ in handled[wid])
+    if wid in OPEN:
+        return "open: " + md_cell(OPEN[wid])
+    return "**not yet**"
+
+
 def _list(value) -> list:
     if value is None:
         return []
@@ -256,7 +284,7 @@ def weakness_table(pack: Pack, spec: dict, handled: dict) -> str:
         return "_None recorded._"
     rows = ["| Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |", "|---|---|---|---|---|---|"]
     for w in items:
-        by = ", ".join(f"`{sid}`" for sid, _ in handled.get(w["id"], [])) or "**not yet**"
+        by = answered(w["id"], handled)
         rows.append(f"| {w['id']} | {w['kind']} | {md_cell(_list(w.get('at')))} | {md_cell(w['says'])} | "
                     f"{md_cell(w.get('evidence'))} | {by} |")
     return "\n".join(rows)
@@ -389,7 +417,7 @@ def states_md(pack: Pack, handled: dict, weakness_index: dict) -> str:
         if pack.state == "as-is" and ent.get("weaknesses"):
             out += ["Weaknesses:", ""]
             for w in ent["weaknesses"]:
-                by = ", ".join(f"`{s}`" for s, _ in handled.get(w["id"], [])) or "**not yet**"
+                by = answered(w["id"], handled)
                 out.append(f"- **{w['id']}** ({w['kind']}): {md_cell(w['says'])} Evidence: {md_cell(w.get('evidence'))}. "
                            f"Handled by: {by}.")
             out.append("")
@@ -436,9 +464,16 @@ def render(pack: Pack, write: bool = True) -> tuple[list[str], list[str]]:
         all_errors += [f"weakness {w} is in {c} themes" for w, c in placed.items() if c > 1]
         all_errors += [f"a theme names {w}, which is not in the register" for w in placed if w not in own_weaknesses]
     if pack.state != "as-is":
-        for wid in handled:
+        for wid in list(handled) + list(pack.open):
             if wid not in weakness_index:
-                all_errors.append(f"`handles: {wid}` names no weakness of the as-is pack")
+                all_errors.append(f"`{wid}` in handles.yaml names no weakness of the as-is pack")
+        both = sorted(set(handled) & set(pack.open))
+        all_errors += [f"{w} is both handled and open" for w in both]
+        unanswered = sorted(w for w in weakness_index if w not in handled and w not in pack.open)
+        if unanswered:
+            all_warnings.append(f"{len(unanswered)} as-is weaknesses are neither handled nor open: " + ", ".join(unanswered))
+    global OPEN
+    OPEN = pack.open if pack.state != "as-is" else (other.open if other else {})
     (pack.path / "views").mkdir(exist_ok=True) if write else None
     for sid, spec in pack.specs.items():
         errors, warnings, scenarios = check_spec(pack, sid, spec)
@@ -511,7 +546,7 @@ def index_md(pack: Pack, rows, errors, warnings, weakness_index, handled) -> str
     if pack.state == "as-is" and pack.themes:
         out += ["", "## Root causes", "", "| Theme | What goes wrong | Weaknesses | Handled |", "|---|---|---|---|"]
         for t in pack.themes:
-            done = sum(1 for w in t["weaknesses"] if w in handled)
+            done = sum(1 for w in t["weaknesses"] if handled.get(w))
             out.append(f"| **{t['id']} {t['name']}** | {md_cell(t['says'])} | {', '.join(t['weaknesses'])} | "
                        f"{done} of {len(t['weaknesses'])} |")
     if pack.state == "as-is":
@@ -519,10 +554,12 @@ def index_md(pack: Pack, rows, errors, warnings, weakness_index, handled) -> str
                 "Every weakness found in the as-is, and the to-be element that handles it.", "",
                 "| Id | Kind | In | Weakness | Handled by |", "|---|---|---|---|---|"]
         for wid, (where, w) in sorted(weakness_index.items()):
-            by = ", ".join(f"`{s}`" for s, _ in handled.get(wid, [])) or "**not yet**"
+            by = answered(wid, handled)
             out.append(f"| {wid} | {w['kind']} | `{where}` | {md_cell(w['says'])} | {by} |")
-        open_count = sum(1 for wid in weakness_index if wid not in handled)
-        out += ["", f"{len(weakness_index)} weaknesses; {open_count} not yet handled by the to-be."]
+        done = sum(1 for wid in weakness_index if handled.get(wid))
+        still_open = sum(1 for wid in weakness_index if not handled.get(wid) and wid in OPEN)
+        out += ["", f"{len(weakness_index)} weaknesses: {done} handled by the to-be, {still_open} open with a reason, "
+                    f"{len(weakness_index) - done - still_open} not yet answered."]
     out += ["", "## Checks", "", f"Errors ({len(errors)}):", *[f"- {e}" for e in errors],
             "", f"Warnings ({len(warnings)}):", *[f"- {w}" for w in warnings], ""]
     return "\n".join(out)

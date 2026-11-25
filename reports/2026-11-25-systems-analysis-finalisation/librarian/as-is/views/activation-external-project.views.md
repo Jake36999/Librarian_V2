@@ -129,9 +129,9 @@ One test per path: the main success scenario, then each extension.
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-EXT-01 | fault | c2_queue_only | Recording an application with no sources used raises a TypeError instead of a refusal. | dc2_outcome guard and c2_queue_only label | **not yet** |
-| W-EXT-02 | gap | c2_record_app | An Applications/ note pins no snapshot hashes, locators or verification, so a later reader cannot tell exactly what was used. | c2_deliver_reuse label | **not yet** |
-| W-EXT-03 | cost | c2_refusal | A consult-tier delegate is refused, and a session Ask times out at 150 s; either ends the external task's use of the library. | c2_refusal label | **not yet** |
+| W-EXT-01 | fault | c2_queue_only | Recording an application with no sources used raises a TypeError instead of a refusal. | dc2_outcome guard and c2_queue_only label | `activation-external-project` |
+| W-EXT-02 | gap | c2_record_app | An Applications/ note pins no snapshot hashes, locators or verification, so a later reader cannot tell exactly what was used. | c2_deliver_reuse label | `activation-external-project` |
+| W-EXT-03 | cost | c2_refusal | A consult-tier delegate is refused, and a session Ask times out at 150 s; either ends the external task's use of the library. | c2_refusal label | `activation-external-project` |
 
 ## Checks
 

@@ -248,12 +248,12 @@ One test per path: the main success scenario, then each extension.
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-RES-01 | cost | 7a | The candidate pool is the whole library: 82 of its own notes and folder cards had to be decided in the 20 November run (OP4). | USE-CASES.md UC2 6a | **not yet** |
-| W-RES-02 | cost | 8a | A phase's budget is per visit and halves on every return (20, 10, 5, 2, 1, then nothing): the run needed four extensions, and Synthesise reopened with one call left (OP5). | session.py lines 490-499 (budget_left); USE-CASES.md UC2 *c; remedy-catalogue R8 history | **not yet** |
-| W-RES-03 | gap | synth | A session holds one synthesis, so every report shares one Together and one Unknowns, which go stale after a redraft (OP3). | USE-CASES.md UC2 12a | **not yet** |
-| W-RES-04 | gap | 11a | Where a finding lands in our code stays prose: it is not a claim, and nothing checks it (OP10). | USE-CASES.md UC2 11b | **not yet** |
-| W-RES-05 | gap | 7b | Read papers that were never accepted are not candidates; the Lead has to find them again by graph citation. | USE-CASES.md UC2 8c; 1064cf0 | **not yet** |
-| W-RES-06 | fault | draft | A report quoting only a paper's card broke the project's disqualifier, and nothing caught it. | USE-CASES.md UC2 13a | **not yet** |
+| W-RES-01 | cost | 7a | The candidate pool is the whole library: 82 of its own notes and folder cards had to be decided in the 20 November run (OP4). | USE-CASES.md UC2 6a | `research` |
+| W-RES-02 | cost | 8a | A phase's budget is per visit and halves on every return (20, 10, 5, 2, 1, then nothing): the run needed four extensions, and Synthesise reopened with one call left (OP5). | session.py lines 490-499 (budget_left); USE-CASES.md UC2 *c; remedy-catalogue R8 history | `research` |
+| W-RES-03 | gap | synth | A session holds one synthesis, so every report shares one Together and one Unknowns, which go stale after a redraft (OP3). | USE-CASES.md UC2 12a | `research` |
+| W-RES-04 | gap | 11a | Where a finding lands in our code stays prose: it is not a claim, and nothing checks it (OP10). | USE-CASES.md UC2 11b | `research` |
+| W-RES-05 | gap | 7b | Read papers that were never accepted are not candidates; the Lead has to find them again by graph citation. | USE-CASES.md UC2 8c; 1064cf0 | `research` |
+| W-RES-06 | fault | draft | A report quoting only a paper's card broke the project's disqualifier, and nothing caught it. | USE-CASES.md UC2 13a | `research` |
 
 ## Evidence
 

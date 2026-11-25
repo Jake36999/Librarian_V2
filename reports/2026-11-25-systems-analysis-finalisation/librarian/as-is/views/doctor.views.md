@@ -135,11 +135,11 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-DOC-01 | cost | notice | Every repair is tier-0 work: each failure of the 19-20 November run came back to tier 0. | remedy-catalogue history R1-R4, R7, R8 | **not yet** |
-| W-DOC-02 | gap | fail | A failure is a refusal code in a call's result, not a ticket: there is no register of open failures, their owners or their repairs. | no fault store in src/resource_librarian; docs/terminology.md (fault register: proposed) | **not yet** |
-| W-DOC-03 | risk | repair | Nothing checks a repair's reach before it runs: R1's re-survey re-applied every group in the library. | remedy-catalogue R1 scope note | **not yet** |
-| W-DOC-04 | unverified | dpass | Whether a repair worked is judged by the agent that made it. | dpass | **not yet** |
-| W-DOC-05 | drift | * | `doctor` already names the install capability check (doctor.py, the doctor tool); the repair role needs a distinct code name. | src/resource_librarian/doctor.py docstring | **not yet** |
+| W-DOC-01 | cost | notice | Every repair is tier-0 work: each failure of the 19-20 November run came back to tier 0. | remedy-catalogue history R1-R4, R7, R8 | `doctor` |
+| W-DOC-02 | gap | fail | A failure is a refusal code in a call's result, not a ticket: there is no register of open failures, their owners or their repairs. | no fault store in src/resource_librarian; docs/terminology.md (fault register: proposed) | `doctor` |
+| W-DOC-03 | risk | repair | Nothing checks a repair's reach before it runs: R1's re-survey re-applied every group in the library. | remedy-catalogue R1 scope note | `doctor` |
+| W-DOC-04 | unverified | dpass | Whether a repair worked is judged by the agent that made it. | dpass | `doctor` |
+| W-DOC-05 | drift | * | `doctor` already names the install capability check (doctor.py, the doctor tool); the repair role needs a distinct code name. | src/resource_librarian/doctor.py docstring | `doctor` |
 
 ## Evidence
 

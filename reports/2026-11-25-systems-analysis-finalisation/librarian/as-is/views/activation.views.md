@@ -375,11 +375,11 @@ One test per path: the main success scenario, then each extension.
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-ACT-01 | gap | c1_call | Tier 0 through MCP is capped at contribute: it has no folder tools, and process_approved (curate) is refused, so each folder decision and batch start is handed back to the person. | librarian-current-activation c1_call, dc1_broker (verified at d9435e1) | **not yet** |
-| W-ACT-02 | cost | dc1_broker | A Broker Ask waits 150 s, then fails with PERMISSION_UNANSWERED; an unattended run stalls on each one. | app.py line 277 (MCP_PERMISSION_WAIT = 150.0); broker.py lines 215-236 | **not yet** |
-| W-ACT-03 | cost | chat_lead | The in-app Lead asks tool by tool (Ask mode, 600 s wait); there is no permission envelope for a whole run. | broker.py line 76 (timeout 600.0; an unanswered request parks the session); on 20 November the Lead asked once per Geo-Grapher tool (plan entry 2026-11-21, permission envelope) | **not yet** |
-| W-ACT-04 | gap | dcontext | Six surfaces enter the Core with different tiers and gates, and none reaches a common parent process for the work it starts. | dcontext's six ways out | **not yet** |
-| W-ACT-05 | risk | ui_source_intake | Add source in the Web UI ingests at curate through person_call and bypasses the Broker; the same act through MCP is gated. | ui_source_intake label | **not yet** |
+| W-ACT-01 | gap | c1_call | Tier 0 through MCP is capped at contribute: it has no folder tools, and process_approved (curate) is refused, so each folder decision and batch start is handed back to the person. | librarian-current-activation c1_call, dc1_broker (verified at d9435e1) | `activation-overseer` |
+| W-ACT-02 | cost | dc1_broker | A Broker Ask waits 150 s, then fails with PERMISSION_UNANSWERED; an unattended run stalls on each one. | app.py line 277 (MCP_PERMISSION_WAIT = 150.0); broker.py lines 215-236 | `activation-external-project` |
+| W-ACT-03 | cost | chat_lead | The in-app Lead asks tool by tool (Ask mode, 600 s wait); there is no permission envelope for a whole run. | broker.py line 76 (timeout 600.0; an unanswered request parks the session); on 20 November the Lead asked once per Geo-Grapher tool (plan entry 2026-11-21, permission envelope) | `compose` |
+| W-ACT-04 | gap | dcontext | Six surfaces enter the Core with different tiers and gates, and none reaches a common parent process for the work it starts. | dcontext's six ways out | `compose` |
+| W-ACT-05 | risk | ui_source_intake | Add source in the Web UI ingests at curate through person_call and bypasses the Broker; the same act through MCP is gated. | ui_source_intake label | open: Owner decision: may a person's own surface skip the Broker, as it does today? |
 
 ## Checks
 

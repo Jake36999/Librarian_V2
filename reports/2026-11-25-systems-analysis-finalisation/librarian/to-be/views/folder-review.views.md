@@ -7,15 +7,15 @@
 
 | Field | Content |
 |---|---|
-| **Use case name** | Review a folder and apply its group (proposed) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Review a folder and apply its group |
+| **Brief description** | Survey, screen the new or ambiguous folders, decide within the mandate or ask once, and apply only the changed group. |
+| **Primary actor** | Lead |
+| **Supporting actors** | Clerk, Owner, Doctor, Oracle, Core, Geo-Grapher |
+| **Preconditions** | Roots within the mandate |
+| **Trigger** | The ingestion parent's first step |
+| **Success guarantee** | The folder's group is applied, its inputs known |
+| **Minimal guarantee** | A stale root is repaired in its own scope or held with a ticket |
+| **Open questions** | Standing policy for folder decisions |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -206,12 +206,15 @@ _None declared._
 
 ## As-is weaknesses this handles
 
-_None recorded._
+| As-is weakness | Where here | How it is handled |
+|---|---|---|
+| W-FOL-03 (folder-review): The model's draft of a folder's purpose is off by default (FOLDER_DRAFT_DISABLED); when on, it sees only file counts and bytes. | folderscreen | A Clerk screens the new or ambiguous folders for purpose, licence risk and sensitivity. |
+| W-FOL-01 (folder-review): Every accept re-applies every accepted group in the library (OP2): one folder's decision has a whole-library radius. | folderapply | Only the changed or selected group is submitted, and Geo-Grapher indexes it incrementally. |
+| W-FOL-02 (folder-review): A stale card anywhere refuses this decision (FOLDER_STALE across all groups); R1 needed a re-survey of an unrelated root. | doctorroot | A stale root is recovered within its own scope (R1) instead of blocking every decision. |
 
 ## Checks
 
 Errors: none
 
 Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
 - decision oraclecov ('degraded parse within caller tolerance?') tests a quantity but declares no boundary values

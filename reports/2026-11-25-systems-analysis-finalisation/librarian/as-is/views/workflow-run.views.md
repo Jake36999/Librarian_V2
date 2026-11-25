@@ -132,9 +132,9 @@ One test per path: the main success scenario, then each extension.
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-WFR-01 | fault | ui_drop_result | The Web UI discards a run's result (app.js:8472): the person never sees what was read, what failed or why. | ui_drop_result label | **not yet** |
-| W-WFR-02 | gap | wf_paused_chip | A paused run shows a static chip, with no route picker, resume or dismiss. | wf_paused_chip label | **not yet** |
-| W-WFR-03 | fault | wf_deep_read | deep-read-staged reads each staged source but leaves its status unchanged, so nothing records that it was read. | wf_deep_read label; standard/workflows/deep-read-staged.yaml | **not yet** |
+| W-WFR-01 | fault | ui_drop_result | The Web UI discards a run's result (app.js:8472): the person never sees what was read, what failed or why. | ui_drop_result label | `activation-web-ui` |
+| W-WFR-02 | gap | wf_paused_chip | A paused run shows a static chip, with no route picker, resume or dismiss. | wf_paused_chip label | `activation-web-ui` |
+| W-WFR-03 | fault | wf_deep_read | deep-read-staged reads each staged source but leaves its status unchanged, so nothing records that it was read. | wf_deep_read label; standard/workflows/deep-read-staged.yaml | `source-enrichment` |
 
 ## Checks
 

@@ -1,0 +1,70 @@
+# The to-be pack's answer to the as-is register (../as-is/weaknesses.yaml).
+#   handles: the to-be element that handles a weakness: spec (or state:<entity>), node, and how
+#   open:    a weakness the to-be does not handle yet, and why
+# render_pack.py checks that every as-is weakness is in exactly one of the two lists.
+handles:
+  # T1 No parent process
+  - {weakness: W-ACT-04, spec: compose, at: dspec_owner, how: "Every context starts the same composed sprint; contexts differ only in who owns the specification."}
+  - {weakness: W-ING-01, spec: ingestion, at: ledger, how: "The parent reconciles one paginated ledger for the folder and separates the folder, source, lens and topic lists."}
+  - {weakness: W-ING-02, spec: ingestion, at: ref_source_intake, how: "The parent starts intake itself once the folder's inputs are known; no queue waits for a click."}
+  - {weakness: W-ING-04, spec: ingestion, at: doctorbatch, how: "A repairable partial is repaired on the affected subset through a ticket (R4) and merged back into the ledger."}
+  - {weakness: W-ING-05, spec: activation-overseer, at: "*", how: "Tier 0 commissions once and receives one handover: two tier-0 turns on the main path (ideal)."}
+  - {weakness: W-FOL-04, spec: ingestion, at: dinput, how: "An accepted folder's Source-eligible inputs flow straight into intake in the same parent."}
+  - {weakness: W-CMP-01, spec: compose, at: compile_manifest, how: "Action, workflow, pipeline and sprint compile into one manifest, so ingestion is a composition like any other."}
+  # T2 Authority does not fit the work
+  - {weakness: W-ACT-01, spec: activation-overseer, at: storeenv, how: "The commission grants tier 0 its delegated in-scope permissions, folder decisions and the batch start included."}
+  - {weakness: W-ACT-02, spec: activation-external-project, at: mcpblocked, how: "A blocked MCP call returns a structured ticket at once instead of a 150-second wait."}
+  - {weakness: W-ACT-03, spec: compose, at: oracle_scope, how: "The envelope is granted once; an ungranted call goes to the Oracle as a scope question before anyone is asked."}
+  - {weakness: W-ING-03, spec: ingestion, at: dgate1, how: "Gate 1 and the batch start are in the mandate; the Owner is asked only when they are not."}
+  - {weakness: W-EXT-03, spec: activation-external-project, at: parallelhelpers, how: "Delegated reading runs within the helper budget the context grants, not at a fixed consult tier."}
+  # T3 Work is counted, not judged
+  - {weakness: W-SRC-01, spec: source-enrichment, at: oracle, how: "A distinct Oracle audits each source's raw receipts and the fidelity of what was read."}
+  - {weakness: W-REA-01, spec: source-reading, at: readchk, how: "Each part's schema and quotes are verified; a part's answer counts only once it checks."}
+  - {weakness: W-ACC-03, spec: ingestion, at: oraclefinal, how: "The Oracle verifies findability and neutrality of the committed notes before the handover."}
+  - {weakness: W-VER-01, spec: verify-claims, at: review, how: "Review is always on."}
+  - {weakness: W-VER-02, spec: verify-claims, at: retry, how: "An incomplete review is retried on a second route; if that fails too, the claim is held, never staged unchecked."}
+  - {weakness: W-RES-06, spec: research, at: ref_oracle, how: "The Oracle judges each report against its brief, the disqualifiers included."}
+  - {weakness: W-ORA-01, spec: oracle, at: handin, how: "Every process's output is judged against its specification, not only audited sessions."}
+  - {weakness: W-DOC-04, spec: doctor, at: oracle, how: "A distinct Oracle confirms a cleared ticket; the Doctor never judges its own repair."}
+  # T4 Failures have no ticket and no repair loop
+  - {weakness: W-DOC-01, spec: doctor, at: runremedy, how: "The Doctor runs an accepted remedy; tier 0 gets only what no remedy covers."}
+  - {weakness: W-DOC-02, spec: doctor, at: intake, how: "Every failure opens a ticket with its extension, flags, evidence, accountable actor and repair history."}
+  - {weakness: W-DOC-03, spec: doctor, at: blast, how: "The blast radius is computed against the parent's mandate before any remedy runs."}
+  - {weakness: W-WFR-02, spec: activation-web-ui, at: uiagenda, how: "A paused run appears on the agenda with its ticket and the exact resume path."}
+  - {weakness: W-BAT-01, spec: batch-enrichment, at: fscribe, how: "A Scribe drafts the folder summary from the inventory and a Clerk reviews it; a failed folder stage is recorded per item."}
+  # T5 Decisions wait with no owner
+  - {weakness: W-BAT-02, spec: ingestion, at: ledger, how: "The ledger separates each kind of decision the batch leaves, and the acceptance child assigns them."}
+  - {weakness: W-STI-02, spec: "state:staged-item", at: "enriched, partial", how: "An enriched or partial item has an assigned decider and a place on the agenda."}
+  - {weakness: W-INT-01, spec: source-intake, at: describe, how: "A Clerk proposes a readable title when the header is a slug or file name, with its topics."}
+  - {weakness: W-FOL-03, spec: folder-review, at: folderscreen, how: "A Clerk screens the new or ambiguous folders for purpose, licence risk and sensitivity."}
+  # T6 Results do not reach the person
+  - {weakness: W-WFR-01, spec: activation-web-ui, at: uinotify, how: "The run's result, spend and coverage open in a drawer, from the Core's record."}
+  - {weakness: W-WFR-03, spec: source-enrichment, at: userread, how: "A reread from the Web UI runs through source enrichment, which records each stage's status."}
+  - {weakness: W-ACC-02, spec: ingestion, at: doctorphase, how: "An unfindable note is repaired through a ticket (R5) and re-checked by the Oracle."}
+  # T7 One decision reaches too far
+  - {weakness: W-FOL-01, spec: folder-review, at: folderapply, how: "Only the changed or selected group is submitted, and Geo-Grapher indexes it incrementally."}
+  - {weakness: W-FOL-02, spec: folder-review, at: doctorroot, how: "A stale root is recovered within its own scope (R1) instead of blocking every decision."}
+  # T8 Links between records are derived or missing
+  - {weakness: W-CIT-01, spec: cite-graph, at: resolve, how: "A citation follows the link stored at publication, not the title."}
+  - {weakness: W-CIT-02, spec: cite-graph, at: staged, how: "A read but unaccepted paper is quoted from its staged evidence, labelled as unaccepted."}
+  - {weakness: W-RES-05, spec: research, at: candidates, how: "Read but unaccepted sources of the corpus are candidates, labelled."}
+  - {weakness: W-EXT-02, spec: activation-external-project, at: recordapp, how: "The Applications/ note validates its citations and records locators in an append-only sidecar."}
+  - {weakness: W-PAR-01, spec: source-parse, at: preproj, how: "The provisional projection is marked provisional and never counted as published."}
+  # T9 The research session does not fit a brief
+  - {weakness: W-RES-01, spec: research, at: candidates, how: "Candidates come from the named corpus only."}
+  - {weakness: W-RES-02, spec: research, at: manifest, how: "The budget is sized once from the brief's manifest, and extra work goes to the Oracle's scope judgment."}
+  - {weakness: W-RES-03, spec: research, at: synth, how: "One synthesis per brief."}
+  - {weakness: W-RES-04, spec: research, at: place, how: "A code placement is a claim citing a code entity, verified with the others."}
+  # T10 Integrity and naming
+  - {weakness: W-EXT-01, spec: activation-external-project, at: recordapp, how: "Citations are validated first; an application with none is refused with a reason."}
+  - {weakness: W-FOL-05, spec: "state:folder-card", at: "*", how: "One meaning per state: a card is selected for the batch, or decided."}
+  - {weakness: W-STI-01, spec: "state:staged-item", at: "staged -> accepted", how: "Accepting a captured source needs the person's explicit choice, and its coverage stays visible."}
+  - {weakness: W-DOC-05, spec: doctor, at: "*", how: "Proposed: the repair role takes a distinct code name, and `doctor` stays the install check."}
+  - {weakness: W-REA-02, spec: source-reading, at: metapropose, how: "A Clerk proposes semantic metadata from the evidence, Unknown where it is not supported."}
+open:
+  - {weakness: W-INT-02, reason: "The to-be capture quarantines a failed sibling and carries on, but opens no ticket for it."}
+  - {weakness: W-ACC-01, reason: "No to-be element keeps the person's draft through a stale-revision conflict; a Web UI design is needed."}
+  - {weakness: W-PUB-02, reason: "Publication still requires an accepted folder; decided in the Geo-Grapher pack."}
+  - {weakness: W-PUB-01, reason: "Cleaning old and failed candidate paper databases is Geo-Grapher's; decided in its pack."}
+  - {weakness: W-ACT-05, reason: "Owner decision: may a person's own surface skip the Broker, as it does today?"}
+  - {weakness: W-ACC-04, reason: "Owner decision: whether to correct the attester on the 96 notes accepted on 20 November."}

@@ -114,8 +114,8 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-PUB-01 | cost | publishstorage | Old and failed candidate paper databases are never cleaned up. | publishstorage note | **not yet** |
-| W-PUB-02 | gap | pubcheck | Publication needs an accepted current folder, so a source added without folder review is never published. | pubgap label: awaiting accepted folder | **not yet** |
+| W-PUB-01 | cost | publishstorage | Old and failed candidate paper databases are never cleaned up. | publishstorage note | open: Cleaning old and failed candidate paper databases is Geo-Grapher's; decided in its pack. |
+| W-PUB-02 | gap | pubcheck | Publication needs an accepted current folder, so a source added without folder review is never published. | pubgap label: awaiting accepted folder | open: Publication still requires an accepted folder; decided in the Geo-Grapher pack. |
 
 ## Checks
 

@@ -155,7 +155,7 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-CMP-01 | gap | * | The batch's stages and the session's phases are not compositions: stages are code, and phases are declared data that no workflow can call (OP16). | batch.py stage chain; standard/phases.yaml | **not yet** |
+| W-CMP-01 | gap | * | The batch's stages and the session's phases are not compositions: stages are code, and phases are declared data that no workflow can call (OP16). | batch.py stage chain; standard/phases.yaml | `compose` |
 
 ## Evidence
 

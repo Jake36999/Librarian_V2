@@ -189,7 +189,7 @@ One test per path: the main success scenario, then each extension.
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-SRC-01 | unverified | summary | A completed model call is counted as a stage done; nothing judges whether the answer is a valid answer to the task. | source-enrichment problem.why | **not yet** |
+| W-SRC-01 | unverified | summary | A completed model call is counted as a stage done; nothing judges whether the answer is a valid answer to the task. | source-enrichment problem.why | `source-enrichment` |
 
 ## Checks
 

@@ -112,10 +112,10 @@ _None declared._
 
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
-| W-ACC-01 | fault | gate2_ui | A stale-revision conflict reloads the form and wipes the person's edits (F-09). | gate2_ui label | **not yet** |
-| W-ACC-02 | gap | dfind_curr | A note written but not findable needs a manual Rewrite indexes; nothing re-checks findability by itself. | ui_done label; remedy-catalogue R5 (proposed) | **not yet** |
-| W-ACC-03 | unverified | gate2_ui | The only check of an enriched source is a person reading its summary; nothing compares the note with its evidence first. | ui_done label: no Oracle or Doctor at run time | **not yet** |
-| W-ACC-04 | drift | promote_curr | The 96 notes an agent accepted on 20 November still record a person as the attester; correcting them is an Owner decision. | 8489387 (F2: attestation names who accepted) | **not yet** |
+| W-ACC-01 | fault | gate2_ui | A stale-revision conflict reloads the form and wipes the person's edits (F-09). | gate2_ui label | open: No to-be element keeps the person's draft through a stale-revision conflict; a Web UI design is needed. |
+| W-ACC-02 | gap | dfind_curr | A note written but not findable needs a manual Rewrite indexes; nothing re-checks findability by itself. | ui_done label; remedy-catalogue R5 (proposed) | `ingestion` |
+| W-ACC-03 | unverified | gate2_ui | The only check of an enriched source is a person reading its summary; nothing compares the note with its evidence first. | ui_done label: no Oracle or Doctor at run time | `ingestion` |
+| W-ACC-04 | drift | promote_curr | The 96 notes an agent accepted on 20 November still record a person as the attester; correcting them is an Owner decision. | 8489387 (F2: attestation names who accepted) | open: Owner decision: whether to correct the attester on the 96 notes accepted on 20 November. |
 
 ## Checks
 
