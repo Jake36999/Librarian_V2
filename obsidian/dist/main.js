@@ -87,6 +87,60 @@ function when(iso) {
   return text.slice(0, 16).replace("T", " ");
 }
 
+// ../ui/src/workflows.ts
+var WORKFLOWS = {
+  settings: { does: "Opens Settings: models, providers, permissions, review options and health.", result: "" },
+  search: { does: "Moves to Search and puts the cursor in the search box.", result: "" },
+  staging: { does: "Opens Staging: sources, folders, lenses, concepts, topics and offerings waiting for your review.", result: "" },
+  sessions: { does: "Opens the Sessions menu, to resume, start or branch a thread.", result: "" },
+  checkpoints: { does: "Opens Checkpoints: decisions an agent is waiting for you to make.", result: "" },
+  intake: {
+    does: "Opens the paperclip, to attach a file or link a note to this library.",
+    result: "After you ask the librarian to capture it, the source waits in Staging for your review."
+  },
+  "clear-enrichment-backlog": {
+    does: "Fetches each queued reference, drafts a short description of it and stages it for review. Runs in the background; you can cancel it.",
+    result: "Every queued source moves to Staging \u2192 Sources, Captured, to review. Nothing joins the library until you accept it."
+  },
+  "deep-read-staged": {
+    does: "Reads the whole text of each captured source, part by part: claims and limits with the pages they come from, and any reasoning stance worth keeping as a lens. Runs in the background; you can cancel it.",
+    result: "Each source gets its claims, limits and proposed lenses, ready for review in Staging (Sources and Lenses). Nothing is accepted for you."
+  },
+  "review-conversation": {
+    does: "Takes a bounded snapshot of the recent conversation and suggests sources that would help.",
+    result: "A list of suggested sources to consider. It writes nothing to the library."
+  },
+  "review-due": {
+    does: "Finds concepts whose review is due and opens a parked learning session for each (up to five; reviews already open are skipped).",
+    result: "Parked sessions appear under Sessions, ready to resume. Nothing is written until you work through them."
+  },
+  "weekly-review": {
+    does: "Reads one pursuit's tasks, what was read and written, and its desk, then drafts a reflection.",
+    result: "A drafted weekly reflection for you to read. It is written only if you accept it."
+  },
+  approved: {
+    does: "Runs the batch for sources you approved for ingestion: reads each in full, describes it and stages the result.",
+    result: "Approved sources move to Staging \u2192 Sources, Ingested, ready to accept."
+  },
+  retry: {
+    does: "Runs only the reading steps that waited because no model was available, now that models are chosen.",
+    result: "Those sources are updated in Staging and leave the list of sources waiting for a model."
+  },
+  resume: {
+    does: "Carries on a batch that failed, was cancelled or was interrupted, from the stage where it stopped. Finished work is not repeated.",
+    result: "The batch completes and its sources are updated in Staging."
+  },
+  stop: {
+    does: "Lets the running batch finish its current stage, then stops it.",
+    result: "The batch halts cleanly and can be resumed later."
+  }
+};
+function workflowHint(id) {
+  const info = WORKFLOWS[id];
+  return info ? info.result ? `${info.does}
+Result: ${info.result}` : info.does : "";
+}
+
 // ../ui/src/commands.ts
 var COMMANDS = {
   settings: "Open Settings",
@@ -152,7 +206,14 @@ function shortcutPage(native, open, api, state) {
       open(id);
     } }, "Open");
     controls.set(id, { hint, button });
-    return h("div", { class: "settings-role" }, h("div", {}, h("strong", {}, label), hint), native ? null : binding, button);
+    const info = WORKFLOWS[id];
+    const what = info ? h(
+      "small",
+      { class: "cmd-desc" },
+      info.does,
+      info.result ? h("span", {}, " ", h("strong", {}, "Result: "), info.result) : null
+    ) : null;
+    return h("div", { class: "settings-role" }, h("div", {}, h("strong", {}, label), what, hint), native ? null : binding, button);
   };
   clear(
     panel,
@@ -320,6 +381,19 @@ var Api = class {
   post(path2, body = {}) {
     return this.request("POST", path2, body);
   }
+  async downloadOriginal(source, filename) {
+    const response = await fetch(
+      `${this.opts.base}/api/source-original?source=${encodeURIComponent(source)}`,
+      { headers: { "X-Librarian-Token": this.opts.token } }
+    );
+    if (!response.ok) throw new ApiError(response.status, await response.json().catch(() => ({})));
+    const url = URL.createObjectURL(await response.blob());
+    const link2 = document.createElement("a");
+    link2.href = url;
+    link2.download = filename;
+    link2.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1e3);
+  }
   /** The composer's paperclip: raw bytes, not JSON - too large and the wrong shape. */
   async attach(file, dir = "Inbox") {
     const qs = `dir=${encodeURIComponent(dir)}&name=${encodeURIComponent(file.name)}`;
@@ -396,6 +470,7 @@ var EVENT_TYPES = [
   "action_started",
   "action_progress",
   "action_done",
+  "action_dismissed",
   "library_switched",
   "reply_reviewed",
   "checkpoint_created",
@@ -408,12 +483,14 @@ var EVENT_TYPES = [
 // ../ui/src/attach.ts
 var AttachPanel = class {
   constructor(pop, api, insert, onFileAttached = () => {
-  }) {
+  }, hooks = { pickFile() {
+  }, openRegistry() {
+  }, workflows: () => [] }) {
     this.pop = pop;
     this.api = api;
     this.insert = insert;
     this.onFileAttached = onFileAttached;
-    this.browsing = "";
+    this.hooks = hooks;
     this.status = h("p", { class: "dim" });
     this.fileInput = h("input", {
       type: "file",
@@ -427,10 +504,9 @@ var AttachPanel = class {
   dispose() {
     this.fileInput.remove();
   }
-  /** Called each time the popover opens: start back at the vault root. */
+  /** Called each time the popover opens. */
   render() {
-    this.browsing = "";
-    void this.paint();
+    this.paint();
   }
   async chosen() {
     const file = this.fileInput.files?.[0];
@@ -447,50 +523,44 @@ var AttachPanel = class {
       clear(this.status, h("span", { class: "error" }, `Could not attach ${file.name}: ${e.message}`));
     }
   }
-  item(label, action) {
-    return h("button", { class: "menuitem", role: "menuitem", onclick: action }, label);
+  item(label, hint, action) {
+    return h(
+      "button",
+      { class: "menuitem", role: "menuitem", onclick: action },
+      label,
+      hint ? h("small", {}, hint) : null
+    );
   }
-  async paint() {
-    const folder = h("div", {}, h("p", { class: "dim" }, "Loading\u2026"));
+  paint() {
     clear(
       this.pop.el,
-      this.item("\u{1F4CE} Attach a file from this computer", () => {
-        this.pop.show(false);
-        this.fileInput.click();
-      }),
+      this.item(
+        "\u{1F4CE} Attach a file from this computer",
+        "Copies it into this library's Inbox and adds its path to your message.",
+        () => {
+          this.pop.show(false);
+          this.fileInput.click();
+        }
+      ),
+      this.item(
+        "\u{1F517} Link a note or folder from the library",
+        "Opens the library beside the chat: pick a file to add to the chat.",
+        () => {
+          this.pop.show(false);
+          this.hooks.pickFile();
+        }
+      ),
       this.status,
-      h("h4", { class: "gap" }, "Link a note or folder"),
-      folder
+      this.item(
+        "Open skill registry",
+        "Skills, \u201C/\u201D commands and where to read about installed plugins.",
+        () => {
+          this.pop.show(false);
+          this.hooks.openRegistry();
+        }
+      ),
+      ...this.hooks.workflows(() => this.paint())
     );
-    try {
-      const listing = await this.api.get(`/api/files?dir=${encodeURIComponent(this.browsing)}`);
-      const up = listing.dir ? listing.dir.split("/").slice(0, -1).join("/") : null;
-      clear(
-        folder,
-        h("div", { class: "folder-path" }, `/${listing.dir}`),
-        up !== null ? this.item(
-          `\u2191 ${up ? up.split("/").pop() : "the vault"}`,
-          () => {
-            this.browsing = up;
-            void this.paint();
-          }
-        ) : null,
-        listing.dir ? this.item("Link this folder", () => {
-          this.pop.show(false);
-          this.insert(`\`${listing.dir}/\``);
-        }) : null,
-        listing.entries.map((e) => e.kind === "dir" ? this.item(`${e.name}/`, () => {
-          this.browsing = e.path;
-          void this.paint();
-        }) : this.item(e.name, () => {
-          this.pop.show(false);
-          this.insert(`[[${e.name}]]`);
-        })),
-        listing.entries.length ? null : h("p", { class: "dim" }, "No notes here.")
-      );
-    } catch (e) {
-      clear(folder, h("p", { class: "error" }, e.message));
-    }
   }
 };
 
@@ -910,6 +980,9 @@ var Chat = class {
    *  live stream picks up - the log itself, not the `handle()` event path
    *  (that path also flips `working`/rail state meant for a turn in progress). */
   replay(messages, minRewind = 0) {
+    const wasWorking = this.working !== null;
+    this.working = null;
+    this.cards.clear();
     clear(this.log);
     messages.forEach((m, i) => {
       const dangling = m.role === "user" && i === messages.length - 1;
@@ -921,7 +994,12 @@ var Chat = class {
       if (dangling) this.lastUserText = String(m.text ?? "");
     });
     if (!messages.length) this.empty();
+    if (wasWorking) this.setWorking(true);
     this.scroll();
+  }
+  /** Question numbers start again in every thread, so a card is keyed by its thread too. */
+  questionKey(sessionId, id) {
+    return `q:${sessionId}:${id}`;
   }
   setWorking(on) {
     if (on && !this.working) {
@@ -1150,6 +1228,13 @@ var Chat = class {
         this.setWorking(false);
         if (event.stopped === "cancelled") {
           this.append(h("div", { class: "tool" }, "Reply stopped."));
+        } else if (event.stopped === "no_progress") {
+          this.append(h(
+            "div",
+            { class: "error" },
+            String(event.error ?? "The same step was refused again and again, so this turn stopped. "),
+            " Look at the Plan pane for what the thread still needs."
+          ));
         } else if (event.stopped === "max_steps") {
           this.append(h(
             "div",
@@ -1200,6 +1285,7 @@ var Chat = class {
       case "conversation_reset":
         this.rail.clear();
         this.setWorking(false);
+        this.cards.clear();
         this.empty();
         this.hooks.onSession(null);
         break;
@@ -1234,7 +1320,7 @@ var Chat = class {
         this.questionCard(event);
         break;
       case "question_answered": {
-        const card = this.cards.get(`q:${String(event.question_id ?? "")}`);
+        const card = this.cards.get(this.questionKey(String(event.session ?? ""), String(event.question_id ?? "")));
         if (card && !card.classList.contains(cls("done"))) {
           card.classList.add(cls("done"));
           const row = card.querySelector(sel(".row"));
@@ -1651,6 +1737,8 @@ var Chat = class {
     return out;
   }
   permission(event) {
+    const existing = this.cards.get(String(event.id));
+    if (existing && existing.isConnected) return;
     const args = event.arguments ?? {};
     const preview = event.preview ?? null;
     const detail = preview ? `${preview.path ?? ""}` : Object.entries(args).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(" \xB7 ");
@@ -1699,9 +1787,9 @@ var Chat = class {
    *  turn's own blocked call directly. */
   questionCard(event) {
     const id = String(event.question_id ?? "");
-    if (!id || this.cards.has(`q:${id}`)) return;
-    const options = event.options ?? null;
     const sessionId = String(event.session ?? "");
+    if (!id || this.cards.has(this.questionKey(sessionId, id))) return;
+    const options = event.options ?? null;
     const row = h("div", { class: "row" });
     const send = async (value) => {
       if (!value.trim()) return;
@@ -1709,9 +1797,10 @@ var Chat = class {
       try {
         const out = await this.api.tool("answer", { question_id: id, answer: value }, sessionId);
         if (out.error) throw new Error(String(out.detail ?? out.error));
-        clear(row, h("em", {}, out.resumed ? `Answered: \u201C${value}\u201D` : `Recorded: \u201C${value}\u201D - send a message to carry the thread on.`));
+        clear(row, h("em", {}, out.resumed ? `Answered: \u201C${value}\u201D` : `Answered: \u201C${value}\u201D - carrying the thread on.`));
         card.classList.add(cls("done"));
         if (out.session) this.hooks.onSession(out.session);
+        if (!out.resumed) this.hooks.resend("Carry on from my answer.");
       } catch (e) {
         clear(
           row,
@@ -1749,7 +1838,7 @@ var Chat = class {
       h("div", {}, String(event.question ?? "")),
       row
     );
-    this.cards.set(`q:${id}`, card);
+    this.cards.set(this.questionKey(sessionId, id), card);
     this.append(card);
     card.querySelector("input, button")?.focus();
   }
@@ -1808,7 +1897,8 @@ var Chat = class {
         (c.next_targets ?? []).length ? h("li", {}, `Next: ${(c.next_targets ?? []).join(", ")}`) : null
       )),
       (session.writes ?? []).length ? h("h3", {}, "Written") : null,
-      (session.writes ?? []).length ? h("ul", {}, session.writes.map((w) => h("li", {}, w.path ? link(w.path, pathName(w.path), this.hooks.openNote) : w.tool))) : null
+      // One line per note: a note written twice in a thread is listed once.
+      (session.writes ?? []).length ? h("ul", {}, session.writes.filter((w, i, all) => !w.path || all.findIndex((x) => x.path === w.path) === i).map((w) => h("li", {}, w.path ? link(w.path, pathName(w.path), this.hooks.openNote) : w.tool))) : null
     );
   }
   question(session, q) {
@@ -1818,6 +1908,7 @@ var Chat = class {
         const out = await this.api.tool("answer", { question_id: q.id, answer }, session?.session ?? "");
         if (out.error) throw new Error(String(out.detail ?? out.error));
         this.hooks.onSession(out.session ?? session);
+        if (!out.resumed) this.hooks.resend("Carry on from my answer.");
       } catch (e) {
         box.append(h("div", { class: "error" }, e.message));
       }
@@ -2007,6 +2098,16 @@ function summarise(tool, r, openNote) {
   return h("span", {}, "done");
 }
 
+// ../ui/src/model_order.ts
+function orderModels(models, slot) {
+  const recommended = (m) => slot > 0 && String(m.profile?.suggested_tier ?? "") === `Tier_${slot}`;
+  const rank = (m) => {
+    const r = m.profile?.recommendation_rank;
+    return recommended(m) && Number.isInteger(r) && r > 0 ? r : Number.POSITIVE_INFINITY;
+  };
+  return models.map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || rank(a.m) - rank(b.m) || a.i - b.i).map(({ m }) => m);
+}
+
 // ../ui/src/panels.ts
 var MODES = [
   ["plan", "Plan", "Reads and searches. Writes are refused: the librarian proposes instead."],
@@ -2014,11 +2115,9 @@ var MODES = [
   ["auto", "Auto", "Writes within the phase gate and the vault's settings. Sensitive material still waits for you."]
 ];
 var ACTIONS = {
-  "review-due": [COMMANDS["review-due"], "Open parked learning sessions for concepts due for review."],
-  "clear-enrichment-backlog": [COMMANDS["clear-enrichment-backlog"], "Fetch, describe and stage everything queued. Background, cancellable."],
-  "deep-read-staged": ["Deep-read staged sources", "Read each staged source's whole text: claims and limits with pages, and lenses to review. Background, cancellable."],
-  "review-conversation": ["Review this conversation for sources", "A bounded snapshot of recent turns \u2192 suggested sources. Writes nothing."],
-  "weekly-review": ["Weekly review of a pursuit", "Its tasks, what was read and written, its desk \u2192 a drafted reflection for you to read. Writes nothing until you accept it."]
+  "deep-read-staged": ["Deep-read staged sources", ""],
+  "review-conversation": ["Review this conversation for sources", ""],
+  "weekly-review": ["Weekly review of a pursuit", ""]
 };
 var PROVIDERS = {
   deepinfra: "DeepInfra",
@@ -2033,6 +2132,7 @@ function profileMeta(m) {
   if (!p) return "unprofiled";
   const parts = p.shared ? ["shared profile"] : [];
   if (p.suggested_tier) parts.push(String(p.suggested_tier).replace(/_/g, " "));
+  if (p.task_class) parts.push(`${p.field_authorship?.task_class === "owner_created" ? "Owner" : "Card"} class: ${String(p.task_class).replace(/_/g, " ")}`);
   const bestFor = p.best_for ?? [];
   if (bestFor.length) parts.push(bestFor.map((t) => String(t).replace(/_/g, " ")).join(", "));
   if (p.context_length) parts.push(`${Math.round(p.context_length / 1e3)}k ctx`);
@@ -2097,7 +2197,7 @@ var Popover = class {
     this.observer = null;
   }
 };
-function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radioName = "librarian-mode", scope = "") {
+function renderModes(pop, api, mode, report, radioName = "librarian-mode") {
   let confirmed = mode;
   const group = h(
     "div",
@@ -2126,6 +2226,14 @@ function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radi
       h("span", {}, label, h("small", {}, help))
     ))
   );
+  clear(
+    pop.el,
+    h("h4", {}, "Permission mode"),
+    group,
+    h("p", { class: "note" }, "Starting a workflow from the paperclip menu is the permission for its steps: they are not asked about again. Everything else follows this mode.")
+  );
+}
+function renderWorkflows(pop, api, queued, pipelines, report, needs = {}, radioName = "librarian-workflow", scope = "", back = () => void 0) {
   const extra = pipelines.filter((p) => !queued.includes(p) && !p.startsWith("review-item"));
   const run = async (name, inputs = {}) => {
     pop.show(false);
@@ -2162,6 +2270,8 @@ function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radi
     clear(
       pop.el,
       h("h4", {}, (ACTIONS[name] ?? [name])[0]),
+      WORKFLOWS[name] ? h("p", { class: "note" }, WORKFLOWS[name].does) : null,
+      WORKFLOWS[name]?.result ? h("p", { class: "note" }, h("strong", {}, "Result: "), WORKFLOWS[name].result) : null,
       rows,
       h(
         "div",
@@ -2174,28 +2284,46 @@ function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radi
           }
           void run(name, inputs);
         } }, "Start"),
-        h("button", { class: "ghost", onclick: () => renderModes(pop, api, mode, queued, pipelines, report, needs, radioName, scope) }, "Back")
+        h("button", { class: "ghost", onclick: () => back() }, "Back")
       )
     );
   };
-  clear(
-    pop.el,
-    h("h4", {}, "Permission mode"),
-    group,
-    h("h4", { class: "gap" }, "Queue an action"),
+  return [
+    h("h4", { class: "gap" }, "Run a workflow"),
     scope ? h("p", { class: "note" }, scope) : null,
-    queued.map((name) => h(
+    // What it does is the hint (hover or focus); what it leaves behind is always in view.
+    ...queued.map((name) => h(
       "button",
-      { class: "menuitem", "data-command": name, onclick: start2(name) },
+      {
+        class: "menuitem",
+        "data-command": name,
+        onclick: start2(name),
+        title: workflowHint(name) || void 0
+      },
       COMMANDS[name] ?? (ACTIONS[name] ?? [name])[0],
-      h("small", {}, (ACTIONS[name] ?? ["", "A pipeline."])[1])
+      WORKFLOWS[name]?.result ? h("small", { class: "outcome" }, h("strong", {}, "Result: "), WORKFLOWS[name].result) : h("small", {}, (ACTIONS[name] ?? ["", "A pipeline."])[1])
     )),
     extra.length ? h("h4", { class: "gap" }, "This vault's pipelines") : null,
-    extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start2(name) }, COMMANDS[name] ?? name))
-  );
+    // A pipeline this vault holds is not part of the shipped set: it is not trusted to write
+    // unasked, so starting it is not the permission for its steps (the mode still asks).
+    ...extra.map((name) => h(
+      "button",
+      {
+        class: "menuitem",
+        "data-command": name,
+        onclick: start2(name),
+        title: "Defined in this vault. Its writes still follow your permission mode."
+      },
+      COMMANDS[name] ?? name,
+      h("small", {}, "Its writes still follow your permission mode.")
+    ))
+  ].filter((e) => e !== null);
 }
 var VISION = /(-vl\b|vl-|vision|ocr|gemma-[34]|qwen3\.[5-9]|llama-4|pixtral|llava|inkling|glimmer)/i;
 var EMBED = /(bge|embed|e5-|gte-|nomic|minilm|mpnet|potion|jina|arctic)/i;
+var NOT_CHAT_MODALITY = /Embedding|Speech|Audio|Text_To_Image|Text_To_Video|Image_To_Image|Image_To_Video|Video/i;
+var NOT_CHAT_NAME = /(^|\/)(bge|embed|e5-|gte-|nomic|minilm|mpnet|jina|arctic)|bria\/|pixverse|lightricks|seedream|seedance|[-_\/](t2v|i2v|t2i)([-_.\/]|$)|image-max|p-image|p-video|asr|whisper|voxtral|transcrib|tts|kokoro|chatterbox|orpheus|higgs/i;
+var isChatModel = (m) => m.profile?.modality ? !NOT_CHAT_MODALITY.test(String(m.profile.modality)) : !NOT_CHAT_NAME.test(String(m.id));
 var SLOT_KIND = {
   ocr: { label: "Vision models", fits: (m) => m.profile?.modality === "Image_To_Text" || VISION.test(String(m.id)) },
   embeddings: { label: "Embedding models", fits: (m) => m.profile?.modality === "Embeddings" || EMBED.test(String(m.id)) },
@@ -2518,14 +2646,14 @@ var ModelTile = class {
           "div",
           { class: "tierbar" },
           h("strong", {}, `Choose the ${slot.label} model`),
-          slot.role !== void 0 ? null : h("span", { class: "dim" }, this.showAll ? "Every model is listed. Click one." : `${SLOT_KIND[slot.name]?.label ?? "Matching models"} are listed (by profile, or by name). Click one.`),
-          slot.role !== void 0 ? null : h(
+          h("span", { class: "dim" }, this.showAll ? "Every model is listed. Click one." : slot.role !== void 0 ? "Chat models are listed (embedding, image, video and speech models are hidden). Click one." : `${SLOT_KIND[slot.name]?.label ?? "Matching models"} are listed (by profile, or by name). Click one.`),
+          h(
             "button",
             { class: "ghost", onclick: () => {
               this.showAll = !this.showAll;
               this.render();
             } },
-            this.showAll ? `${SLOT_KIND[slot.name]?.label ?? "Matching models"} only` : "Show all"
+            this.showAll ? slot.role !== void 0 ? "Chat models only" : `${SLOT_KIND[slot.name]?.label ?? "Matching models"} only` : "Show all"
           ),
           h("button", { class: "ghost", onclick: () => {
             this.endSlot();
@@ -2582,7 +2710,7 @@ var ModelTile = class {
     const recommended = (m) => next > 0 && String(m.profile?.suggested_tier ?? "") === `Tier_${next}`;
     clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
       const listing = this.listings.get(p) ?? { status: "\u2026", models: [] };
-      const models = listing.models.filter(matches).filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true)).map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || a.i - b.i).map(({ m }) => m);
+      const models = orderModels(listing.models.filter(matches).filter((m) => this.showAll || (this.slot && SLOT_KIND[this.slot.name] ? SLOT_KIND[this.slot.name].fits(m) : isChatModel(m))), next);
       const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}` : listing.status === "no key" ? "no key saved (Settings \u2192 Providers & keys)" : listing.status === "offline" ? "offline: the local server is not running" : listing.error ? `error: ${listing.error}` : listing.status;
       return h(
         "section",
@@ -2901,6 +3029,7 @@ var GROUPS = [
     ["models", "Models & services"],
     ["context", "Chat behaviour"],
     ["review", "Review & promotion"],
+    ["permissions", "Permissions"],
     ["projects", "Project access"],
     ["methods", "Methods & lenses"],
     ["topics", "Topics & organisation"]
@@ -3145,6 +3274,7 @@ var Settings = class {
       profiles: () => this.agentProfiles(),
       review: () => this.library(false),
       health: () => h("div", {}, this.coreHealth(), this.library(true)),
+      permissions: () => this.permissionsPage(),
       topics: () => {
         const host = h("div", { class: "topics" });
         void this.paintTopics(host);
@@ -3165,6 +3295,35 @@ var Settings = class {
     } }, "Discard unsaved edits"));
     this.syncState();
     this.body.scrollTop = 0;
+  }
+  permissionsPage() {
+    const host = h("div", {}, h("p", {}, "Tool permissions for the current library. Allowing a tool does not start it or remove its budget and safety checks."));
+    const status = h("p", { role: "status" });
+    host.append(status);
+    void this.api.get("/api/state").then((state) => {
+      const names = [.../* @__PURE__ */ new Set(["intake_run", ...Object.keys(state.tool_settings ?? {})])].sort();
+      for (const tool of names) {
+        const select = h("select", { "aria-label": `Permission for ${tool}` }, ["ask", "allow", "deny"].map((value) => h("option", { value }, value)));
+        select.value = state.tool_settings?.[tool] ?? "ask";
+        select.onchange = async () => {
+          select.disabled = true;
+          try {
+            const result = await this.api.post("/api/tool-setting", { tool, setting: select.value });
+            select.value = result.tool_settings[tool];
+            status.textContent = "Saved for this library.";
+          } catch (error) {
+            select.value = state.tool_settings?.[tool] ?? "ask";
+            status.textContent = error.message;
+          } finally {
+            select.disabled = false;
+          }
+        };
+        host.append(h("label", { class: "f" }, tool, select));
+      }
+    }).catch((error) => {
+      status.textContent = error.message;
+    });
+    return host;
   }
   modelsPage() {
     const catalogues = h("div", { class: "model-catalogs" });
@@ -4693,7 +4852,41 @@ var Settings = class {
       paint();
       return h("div", { class: "row2 tight" }, h("span", { class: "dim" }, tool.replace(/^mcp__/, "")), seg);
     };
-    const serverRows = Object.entries(servers).map(([name, s]) => h(
+    const ownedRow = (name, s) => {
+      const svc = s.service ?? {};
+      const state = s.connected ? "running" : svc.state || "not running";
+      const why = s.connected ? "" : svc.state === "starting" ? "Starting; its tools appear when it is ready." : svc.state === "failed" ? svc.error || "It could not start; see .librarian/logs/geographer.log." : svc.configured === false ? "Not set up for this library: it has no Geo-Grapher runtime in .librarian/geographer.json, so these tools are not offered here." : "Not running. Start it here, or open the Geo-Grapher button at the top.";
+      const canStart = !s.connected && svc.configured !== false && svc.state !== "starting";
+      return h(
+        "div",
+        { class: "srv-block" },
+        h(
+          "div",
+          { class: "srv" },
+          h("span", { class: `dot ${s.connected ? "" : svc.state === "failed" ? "off" : "nokey"}` }),
+          h(
+            "span",
+            {},
+            h("strong", {}, name),
+            h("span", { class: "dim" }, ` \xB7 this library's own service \xB7 ${state} \xB7 ${s.tools ?? 0} tool${s.tools === 1 ? "" : "s"}`)
+          ),
+          canStart ? h("button", { class: "primary", onclick: async () => {
+            busy("Starting Geo-Grapher\u2026");
+            try {
+              await this.api.post("/api/geographer/start");
+              status.textContent = "";
+              setTimeout(reload, 1500);
+            } catch (e) {
+              fail(e);
+            }
+          } }, "Start") : null
+        ),
+        why ? h("p", { class: svc.state === "failed" ? "note err" : "note" }, why) : null,
+        s.shadows_mcp_json ? h("p", { class: "note" }, 'An older hand-added "' + name + `" entry in your MCP file is ignored: this library's service replaces it.`) : null,
+        (s.tool_names ?? []).length ? h("details", { class: "tool-perms" }, h("summary", {}, `Permissions for ${name} (${s.tool_names.length} tools)`), s.tool_names.map(toolRow)) : null
+      );
+    };
+    const serverRows = Object.entries(servers).map(([name, s]) => s.library_owned ? ownedRow(name, s) : h(
       "div",
       { class: "srv-block" },
       h(
@@ -5156,6 +5349,44 @@ var Settings = class {
   }
 };
 
+// ../ui/src/catalogue.ts
+function renderCatalogue(data, openOriginal) {
+  const status = h("p", { role: "status" });
+  const original = data.original ?? {};
+  const use = data.use_rollup ?? {};
+  return h(
+    "section",
+    { class: "catalogue-navigation", "aria-label": "Source navigator" },
+    h("h2", {}, "Source navigator"),
+    h("h3", {}, "When it\u2019s relevant"),
+    h("p", {}, data.when_relevant || "Not recorded."),
+    h("h3", {}, "How it\u2019s been used"),
+    h("p", {}, `${use.log_use_count ?? 0} recorded uses; ${use.application_count ?? 0} applications. Recorded history, not proof of efficacy.`),
+    ...(use.recent_uses ?? []).map((row) => h("p", {}, String(row.used_for ?? ""))),
+    ...(use.applications ?? []).map((row) => h("p", {}, `${row.name}: ${row.outcome || "outcome not recorded"}`)),
+    original.available ? h("button", { class: "ghost", onclick: async () => {
+      status.textContent = "Opening the original\u2026";
+      try {
+        await openOriginal(original.download_source, original.name);
+        status.textContent = "Original download requested.";
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    } }, "Open original") : h("p", {}, "Original unavailable; catalogue only."),
+    status,
+    h("h3", {}, "Chapter summaries"),
+    ...(data.chapters ?? []).map((chapter) => h(
+      "details",
+      {},
+      h("summary", {}, `${chapter.title} \xB7 ${chapter.locator ?? ""}`),
+      h("p", {}, chapter.status === "not examined" ? "Not examined; no summary." : `Reading coverage: ${chapter.coverage ?? "not recorded"}. Generated summary; verify original pages.`),
+      ...(chapter.summary ?? []).map((text) => h("p", {}, text)),
+      chapter.summary_truncated ? h("p", {}, "Summary excerpt; use the graph to locate further evidence.") : null
+    )),
+    data.chapters_truncated ? h("p", {}, `Showing ${(data.chapters ?? []).length} of ${data.chapters_total} chapters.`) : null
+  );
+}
+
 // ../ui/src/pane.ts
 var RECENT = 8;
 var DocPane = class {
@@ -5207,6 +5438,8 @@ var DocPane = class {
     this.compact = h("select", { "aria-label": "Pane view" });
     this.current = { kind: "plan" };
     this.browsing = "";
+    /** While the person is choosing a file for the chat: a click on a file hands it back. */
+    this.pick = null;
     this.onDocumentClick = (e) => {
       if (!this.menu.hidden && !e.composedPath().includes(this.menu) && !e.composedPath().includes(this.menuButton)) {
         this.showMenu(false);
@@ -5268,8 +5501,42 @@ var DocPane = class {
   get showingPlan() {
     return this.current.kind === "plan";
   }
+  /** Browse the library to choose one file for the chat. The pane opens on Browse with `prompt`
+   *  as its hint; a click on a file (or "Link this folder") hands back its reference instead of
+   *  opening it, and Cancel leaves. This is the one place to navigate to a file. */
+  pickFile(prompt, done) {
+    this.pick = { prompt, done };
+    this.showMenu(false);
+    void this.showBrowse();
+  }
+  /** The pane closed or the library changed: a pick that was waiting is over (stress F-14). */
+  cancelPick() {
+    this.pick = null;
+  }
+  finishPick(reference) {
+    const picked = this.pick;
+    this.pick = null;
+    void this.showBrowse();
+    picked?.done(reference);
+  }
+  /** A generated page (the skill registry): Markdown shown like a note, its links opening notes here. */
+  showPage(title, markdown) {
+    this.pick = null;
+    this.mark("Note");
+    this.current = { kind: "page" };
+    this.menuButton.hidden = this.speakButton.hidden = this.runButton.hidden = true;
+    clear(this.crumbs, h("span", { class: "crumb-here" }, title));
+    clear(this.body, h(
+      "article",
+      { class: "doc" },
+      h("h1", { class: "doc-title" }, title),
+      render(markdown, (t) => void this.open(t), { frontmatter: false })
+    ));
+    this.body.scrollTop = 0;
+  }
   mark(view) {
     this.version++;
+    if (view !== "Browse") this.pick = null;
     this.compact.value = view;
     this.compact.options[0].disabled = !this.recent.length && view !== "Note";
     this.switcher.querySelectorAll("button").forEach((b) => {
@@ -5364,14 +5631,21 @@ var DocPane = class {
     }
     if (version !== this.version) return;
     this.mark("Note");
-    this.current = { kind: "doc", path: doc.path, name: doc.name };
-    this.speakButton.hidden = Boolean(doc.script);
+    this.current = {
+      kind: "doc",
+      path: doc.path,
+      name: doc.name,
+      readOnly: Boolean(doc.read_only),
+      sourcePath: doc.source_path || doc.path
+    };
+    this.speakButton.hidden = Boolean(doc.script) || Boolean(doc.read_only);
     this.runButton.hidden = !doc.script;
     this.browsing = doc.path.split("/").slice(0, -1).join("/");
     this.recent = [{ path: doc.path, name: doc.name }, ...this.recent.filter((r) => r.path !== doc.path)].slice(0, RECENT);
     const project = this.currentProject();
     if (project) this.api.tool("desk_touch", { project, note: doc.name }).catch(() => void 0);
-    this.paintCrumbs(doc.path);
+    if (doc.read_only) clear(this.crumbs, h("span", { class: "crumb-here" }, doc.source_path || doc.name));
+    else this.paintCrumbs(doc.path);
     if (doc.script) {
       clear(this.runOutput);
       clear(this.body, h(
@@ -5388,7 +5662,14 @@ var DocPane = class {
     const own2 = Array.from(rendered.children).find((el) => !el.matches(sel("table.props")));
     const titled = own2?.tagName === "H2" && own2.textContent?.trim().toLowerCase() === String(doc.name).toLowerCase();
     if (titled) own2.remove();
-    clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name), rendered));
+    clear(this.body, h(
+      "article",
+      { class: "doc" },
+      h("h1", { class: "doc-title" }, doc.name),
+      doc.read_only ? h("p", { class: "note" }, "Read-only attached document") : null,
+      doc.catalogue ? renderCatalogue(doc.catalogue, (source, filename) => this.api.downloadOriginal(source, filename)) : null,
+      rendered
+    ));
     this.body.scrollTop = 0;
   }
   /** Run the open script in the sandbox, as the person's own action, and show what came
@@ -5458,20 +5739,20 @@ var DocPane = class {
       onclick: action
     }, label, small ? h("small", {}, small) : null);
     const vault = this.vaultName();
-    const obsidian = this.current.kind === "doc" && vault ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(this.current.path)}` : "";
+    const obsidian = this.current.kind === "doc" && !this.current.readOnly && vault ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(this.current.path)}` : "";
     const doc = this.current.kind === "doc" ? this.current : null;
     if (!doc) return;
     clear(
       this.menu,
       obsidian ? h("a", { class: "menuitem", href: obsidian, role: "menuitem" }, "Open this note in Obsidian") : null,
-      item("Rename or move\u2026", "Links follow the note", () => this.paintMove(doc), "move"),
-      item("Copy path", doc.path, async () => {
+      doc.readOnly ? null : item("Rename or move\u2026", "Links follow the note", () => this.paintMove(doc), "move"),
+      item("Copy path", doc.sourcePath || doc.path, async () => {
         try {
-          await navigator.clipboard.writeText(doc.path);
+          await navigator.clipboard.writeText(doc.sourcePath || doc.path);
           this.showMenu(false);
           this.menuButton.focus();
         } catch {
-          this.menu.append(h("p", { role: "status" }, doc.path));
+          this.menu.append(h("p", { role: "status" }, doc.sourcePath || doc.path));
         }
       })
     );
@@ -5487,9 +5768,19 @@ var DocPane = class {
     clear(this.body, browser);
     const item = (label, small, action, cls2 = "") => h("button", { class: "menuitem " + cls2, onclick: action }, label, small ? h("small", {}, small) : null);
     const folder = h("div", { class: "pane-folder" }), desk = h("div", { class: "pane-desk" }), lenses = h("div", { class: "pane-lenses" });
-    const project = this.currentProject(), session = this.currentSession();
+    const picking = this.pick !== null;
+    const project = picking ? "" : this.currentProject(), session = picking ? "" : this.currentSession();
     clear(
       browser,
+      this.pick ? h(
+        "div",
+        { class: "pane-pick", role: "status" },
+        h("strong", {}, this.pick.prompt),
+        h("button", { class: "ghost", onclick: () => {
+          this.pick = null;
+          void this.showBrowse();
+        } }, "Cancel")
+      ) : null,
       project ? h("h4", {}, `Desk \u2014 ${project}`) : null,
       project ? desk : null,
       session ? h("h4", {}, "Lenses \u2014 this thread") : null,
@@ -5497,7 +5788,8 @@ var DocPane = class {
       this.recent.length ? h("h4", {}, "Recent") : null,
       this.recent.map((r) => item(r.name, r.path, () => {
         this.showMenu(false);
-        void this.open(r.path);
+        if (this.pick) this.finishPick(`[[${r.name}]]`);
+        else void this.open(r.path);
       })),
       h("h4", {}, "Browse"),
       folder
@@ -5512,12 +5804,14 @@ var DocPane = class {
           this.browsing = up;
           void this.showBrowse();
         }, "dir up") : null,
+        this.pick && listing.dir ? item("Link this folder", "", () => this.finishPick(`\`${listing.dir}/\``), "dir") : null,
         listing.entries.map((e) => e.kind === "dir" ? item(`${e.name}/`, "", () => {
           this.browsing = e.path;
           void this.showBrowse();
         }, "dir") : item(e.name, "", () => {
           this.showMenu(false);
-          void this.open(e.path);
+          if (this.pick) this.finishPick(`[[${e.name}]]`);
+          else void this.open(e.path);
         }, "file")),
         listing.entries.length ? null : h("p", { class: "dim" }, "No notes here.")
       );
@@ -5569,7 +5863,7 @@ var DocPane = class {
           },
           adopted.has(l.id) ? "\u2713" : "+"
         )
-      )) : h("p", { class: "dim" }, "No accepted lenses yet - accept one in Staging, or a lens pack in Settings \u2192 Library."));
+      )) : h("p", { class: "dim" }, "No accepted lenses yet - accept one in Staging, or a lens pack in Settings \u2192 Methods & lenses."));
     } catch (e) {
       clear(host, h("p", { class: "error" }, e.message));
     }
@@ -5731,6 +6025,220 @@ var DocPane = class {
   }
 };
 
+// ../ui/src/folders.ts
+var purposes = [
+  "own-current",
+  "own-legacy",
+  "own-docs",
+  "research-docs",
+  "third-party",
+  "data",
+  "logs/transcripts",
+  "exclude"
+];
+var folderFilter = "waiting";
+async function folderReview(api, container, notice = "", onDecided = () => {
+}) {
+  const out = await api.get("/api/folders");
+  const rerender = (message = "") => folderReview(api, container, message, onDecided);
+  const status = h("p", { role: "status" }, notice);
+  const filter = h("select", { "aria-label": "Which folders", onchange: () => {
+    folderFilter = filter.value;
+    void rerender();
+  } }, h("option", { value: "waiting" }, "Waiting for a person"), h("option", { value: "accepted" }, "Accepted"));
+  filter.value = folderFilter;
+  const source = h("input", { type: "text", "aria-label": "Folder to survey", placeholder: "Full path to an attached source folder" });
+  const scan = h("button", { type: "button", disabled: !out.enabled, onclick: async () => {
+    scan.disabled = true;
+    status.textContent = "Surveying metadata\u2026";
+    try {
+      await api.post("/api/folders/survey", { path: source.value });
+      await rerender();
+    } catch (e) {
+      status.textContent = e.message;
+    } finally {
+      scan.disabled = false;
+    }
+  } }, "Survey folders");
+  const refused = out.credential_refusals ?? { count: 0, paths: [] };
+  const selected = /* @__PURE__ */ new Set();
+  const approveBatch = h("button", { type: "button", onclick: async () => {
+    if (!selected.size) {
+      status.textContent = "Select folder cards first.";
+      return;
+    }
+    try {
+      await api.post("/api/folders/approve-batch", { items: [...selected] });
+      status.textContent = "Selected for the description batch: start it in Staging. Nothing is decided yet; each folder is still accepted on its own.";
+    } catch (e) {
+      status.textContent = e.message;
+    }
+  } }, "Select for the description batch");
+  const acceptPolicy = h("button", {
+    type: "button",
+    title: "Library promotion mode must be agent. Sensitive, unchecked, data and log folders stay for you.",
+    onclick: async () => {
+      if (!source.value.trim()) {
+        status.textContent = "Enter the surveyed folder first.";
+        return;
+      }
+      status.textContent = "Accepting unambiguous folders\u2026";
+      try {
+        const out2 = await api.post("/api/folders/accept-policy", { root: source.value.trim() });
+        onDecided();
+        await rerender(`Accepted ${out2.accepted.length} as suggested; ${out2.held.length} held for you.`);
+      } catch (e) {
+        status.textContent = e.message;
+      }
+    }
+  }, "Accept unambiguous folders");
+  clear(
+    container,
+    h("h2", {}, "Folder purposes"),
+    h("p", { class: "note" }, "Suggestions are not decisions. Accept each folder to assign its graph and access. Attached sources always remain read-only."),
+    !out.enabled ? h("p", { class: "note" }, "Geo-Grapher is disabled. An operator can enable the pinned installed wheel for this library.") : null,
+    h("div", { class: "view-head" }, source, scan, approveBatch, acceptPolicy),
+    filter,
+    status,
+    h(
+      "details",
+      {},
+      h("summary", {}, `${refused.count} credential-like paths refused \u2014 names only`),
+      h("ul", {}, refused.paths.map((path2) => h("li", {}, path2)))
+    )
+  );
+  const cards = h("div", { class: "folder-cards" });
+  container.append(cards);
+  const all = out.cards ?? [];
+  const covered = all.filter((c) => c.inherited && c.status !== "accepted" && !c.decision);
+  const inheritedCards = h("div", { class: "folder-cards" });
+  if (covered.length) container.append(h(
+    "details",
+    { class: "inherited-folders" },
+    h("summary", {}, `${covered.length} subfolders inherit their parent's suggestion \u2014 covered by the parent's decision; open to override one`),
+    inheritedCards
+  ));
+  const shown = all.filter((c) => c.status === "accepted" === (folderFilter === "accepted"));
+  for (const card of shown) {
+    const accepted = card.status === "accepted";
+    const article = h("article", { class: "folder-card", "aria-label": card.path });
+    const include = h("input", {
+      type: "checkbox",
+      "aria-label": `Select ${card.path} for the description batch`,
+      disabled: accepted || card.sensitivity?.sensitivity === "review_required",
+      onchange: (event) => {
+        if (event.target.checked) selected.add(card.id);
+        else selected.delete(card.id);
+      }
+    });
+    const purpose = h("select", { "aria-label": "Purpose" }, purposes.map((p) => h("option", { value: p }, p)));
+    purpose.value = card.decision?.purpose ?? card.suggested_purpose;
+    const authorship = h(
+      "select",
+      { "aria-label": "Authorship" },
+      h("option", { value: "" }, "Choose authorship"),
+      ...["owner_created", "generated", "third_party"].map((value) => h("option", { value }, value))
+    );
+    const derived = {
+      "own-current": "owner_created",
+      "own-legacy": "owner_created",
+      "own-docs": "owner_created",
+      "research-docs": "third_party",
+      "third-party": "third_party"
+    };
+    const updateAuthorship = () => {
+      authorship.value = derived[purpose.value] ?? "";
+      authorship.disabled = accepted || purpose.value === "exclude" || !!derived[purpose.value];
+    };
+    updateAuthorship();
+    if (!derived[purpose.value] && card.decision?.authorship) authorship.value = card.decision.authorship;
+    purpose.addEventListener("change", updateAuthorship);
+    const graph = h("input", { type: "text", "aria-label": "Graph", maxlength: 120 });
+    graph.value = card.decision?.graph ?? card.suggested_graph;
+    const description = h("textarea", { "aria-label": "Brief description", rows: 2, maxlength: 400 });
+    description.value = card.decision?.description ?? card.description.text;
+    const outcome = h("p", { role: "status" }, card.state_label ?? (accepted ? "Decided and applied" : "Waiting for a decision"));
+    const accept = h("button", { type: "button", class: "primary", disabled: accepted, onclick: async () => {
+      accept.disabled = true;
+      outcome.textContent = "Applying the reviewed decision\u2026";
+      try {
+        await api.post("/api/folders/accept", {
+          id: card.id,
+          folder_fingerprint: card.folder_fingerprint,
+          purpose: purpose.value,
+          graph: graph.value,
+          description: description.value,
+          authorship: authorship.value || null
+        });
+        onDecided();
+        await rerender(`Accepted ${card.path}. It now appears under Accepted.`);
+      } catch (e) {
+        outcome.textContent = e.message;
+        accept.disabled = false;
+      }
+    } }, "Accept folder decision");
+    const draftStatus = h("p", { class: "note" }, accepted ? "Person-reviewed description" : card.description.state === "model_draft" ? "Draft \u2014 not accepted" : "Awaiting a model draft \u2014 no model called");
+    const approval = h("input", { type: "checkbox", "aria-label": "Approve one paid folder draft" });
+    const draft = h("button", { type: "button", disabled: accepted || !out.drafting_available, onclick: async () => {
+      if (!approval.checked) {
+        outcome.textContent = "Approve the bounded model call first.";
+        return;
+      }
+      draft.disabled = true;
+      try {
+        const updated = await api.post("/api/folders/draft", { id: card.id, approve_spend: true });
+        description.value = updated.description.text;
+        draftStatus.textContent = "Draft \u2014 not accepted";
+        outcome.textContent = "Draft staged for your review";
+        approval.checked = false;
+      } catch (e) {
+        outcome.textContent = e.message;
+      } finally {
+        draft.disabled = accepted || !out.drafting_available;
+      }
+    } }, "Draft from inventory metadata");
+    article.append(
+      h("h3", {}, card.path),
+      h("label", {}, include, " Select for the description batch"),
+      h("p", { class: "dim" }, card.source_root),
+      h("p", { class: "note" }, "Inventory metadata observed; content not examined."),
+      h("p", {}, `${card.bytes.toLocaleString()} bytes \xB7 ` + Object.entries(card.file_counts).map(([kind, n]) => `${kind}: ${n}`).join(" \xB7 ")),
+      h("p", { class: "note" }, card.reasons.join("; ")),
+      h("label", {}, "Purpose ", purpose),
+      h("label", {}, "Authorship ", authorship),
+      h("label", {}, "Graph ", graph),
+      draftStatus,
+      ...card.queueable === true ? [h("button", {
+        type: "button",
+        title: "Queue the documents of this reference folder for intake as Sources (no model call until processing)",
+        onclick: async () => {
+          try {
+            const root = card.path === "." ? card.source_root : `${card.source_root}/${card.path}`;
+            const out2 = await api.post("/api/folders/sources", { folder: root, limit: 200 });
+            outcome.textContent = `Queued ${out2.queued} of ${out2.documents} documents as Sources; ${out2.remaining} remaining.`;
+          } catch (e) {
+            outcome.textContent = e.message;
+          }
+        }
+      }, "Queue documents as Sources")] : [],
+      h("label", {}, "Brief description ", description),
+      h(
+        "details",
+        {},
+        h("summary", {}, "Optional model draft"),
+        h("p", {}, "Production drafting is disabled pending owner approval of a qualified Clerk. Drafting checks inventory arithmetic and sensitivity; source text is never sent."),
+        h("label", {}, approval, " Approve one paid folder draft"),
+        draft
+      ),
+      outcome,
+      accept
+    );
+    (covered.includes(card) ? inheritedCards : cards).append(article);
+  }
+  if (!all.length) container.append(h("p", { class: "dim" }, "No folder cards yet. Survey an attached content root to stage its suggestions."));
+  else if (!shown.length) container.append(h("p", { class: "dim" }, folderFilter === "waiting" ? `0 waiting. Nothing here. ${all.length} accepted: choose Accepted to see them.` : "No accepted folders yet."));
+}
+
 // ../ui/src/views.ts
 var BEST_FOR_TAGS = [
   "Talking_Fast",
@@ -5773,6 +6281,8 @@ var Staging = class {
     // opens something else or explicitly refreshes: an automatic reload (the
     // SSE echo of this same decision, or someone else's) must not wipe it.
     this.detailLocked = false;
+    // A person's Source draft, kept across an explicit reload after a stale-revision refusal.
+    this.keptDrafts = /* @__PURE__ */ new Map();
     this.restoredLibrary = "";
     this.resumeScroll = null;
     // Several sources decided at once: the person ticks the ones they mean, never an
@@ -5809,6 +6319,8 @@ var Staging = class {
     );
     this.bulkStatusFilter = "";
     this.listRequest = 0;
+    this.listLimit = 50;
+    // how many rows the list asks for; "Show more" raises it
     this.paintKinds = () => {
     };
     this.evidenceMode = h("select", { "aria-label": "Review evidence layout" }, h("option", { value: "beside" }, "Evidence beside draft"), h("option", { value: "demand" }, "Evidence on demand"));
@@ -5818,32 +6330,44 @@ var Staging = class {
     const statuses = h("select", { "aria-label": "Which sources", onchange: () => {
       this.status = statuses.value;
       this.selected = "";
+      this.listLimit = 50;
       this.savePosition();
       void this.load(true);
     } }, [
       ["staged", "Captured, to review"],
       ["approved", "Approved, awaiting ingestion"],
+      // Every status staging_list accepts is reachable (M1a): processing and accepted items
+      // were in the library's counts but could not be listed here.
+      ["processing", "Being ingested"],
       ["enriched", "Ingested, ready to accept"],
       ["partial", "Ingested with gaps"],
       ["queued", "Queued for capture"],
       ["failed", "Failed"],
-      ["deferred", "Deferred"]
+      ["deferred", "Deferred"],
+      ["accepted", "Accepted into the library"]
     ].map(([v, label]) => h("option", { value: v }, label)));
     this.statuses = statuses;
     this.el.addEventListener("scroll", () => this.savePosition(), { passive: true });
+    const sourceWaiting = () => Object.entries(this.counts?.source ?? {}).filter(([status]) => ["queued", "staged", "approved", "partial", "enriched", "failed", "deferred"].includes(status)).reduce((n, [, count]) => n + count, 0);
     const paint = () => {
       const focusedKind = kinds.contains(document.activeElement) ? document.activeElement.dataset.kind : "";
-      clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => {
+      clear(kinds, [["source", "Sources"], ["folder", "Folders"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => {
         this.selected = "";
         this.kind = v;
+        this.listLimit = 50;
         this.savePosition();
         paint();
         void this.load(true);
-      } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources in selected filter" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "\u2026" : this.counts ? this.counts[v]?.[v === "source" ? this.status : "staged"] ?? 0 : "\u2026")))));
+      } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources across all waiting states; choose a filter below" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "\u2026" : this.counts ? v === "source" ? sourceWaiting() : this.counts[v]?.staged ?? 0 : "\u2026")))));
       if (focusedKind) kinds.querySelector(`[data-kind="${focusedKind}"]`)?.focus({ preventScroll: true });
       scan.style.display = this.kind === "concept" ? "" : "none";
       propose.style.display = this.kind === "topic" ? "" : "none";
       statuses.style.display = this.kind === "source" ? "" : "none";
+      add.style.display = this.kind === "source" ? "" : "none";
+      if (this.kind !== "source") {
+        addForm.hidden = true;
+        add.setAttribute("aria-expanded", "false");
+      }
     };
     const propose = h("button", {
       class: "ghost",
@@ -5876,6 +6400,68 @@ var Staging = class {
         }
       }
     }, "Scan for concepts");
+    const addStatus = h("span", { role: "status", class: "dim" });
+    const addRef = h("input", {
+      type: "text",
+      placeholder: "URL, arXiv id, DOI or GitHub repo",
+      "aria-label": "Reference to add"
+    });
+    const addFile = document.createElement("input");
+    addFile.type = "file";
+    const ingest = async (ref, label) => {
+      addStatus.textContent = `Adding ${label}\u2026`;
+      try {
+        const out = await this.api.tool("ingest", { ref });
+        if (out.error) throw new Error(String(out.detail ?? out.refused ?? out.error));
+        addStatus.textContent = out.state === "failed" || out.status === "failed" ? `Not added: ${out.reason ?? out.detail ?? "the fetch failed"} (Queued for capture lists it).` : `Staged ${out.name ?? label}.`;
+        addRef.value = "";
+        this.kind = "source";
+        this.status = this.statuses.value = "staged";
+        paint();
+        await this.load(true);
+      } catch (e) {
+        addStatus.textContent = `Not added: ${e.message}`;
+      }
+    };
+    addFile.onchange = async () => {
+      const file = addFile.files?.[0];
+      addFile.value = "";
+      if (!file) return;
+      addStatus.textContent = `Uploading ${file.name}\u2026`;
+      try {
+        const saved = await this.api.attach(file);
+        await ingest(saved.path, saved.name);
+      } catch (e) {
+        addStatus.textContent = `Not added: ${e.message}`;
+      }
+    };
+    const addForm = h(
+      "form",
+      {
+        class: "add-source",
+        hidden: true,
+        "aria-label": "Add a source",
+        onsubmit: (e) => {
+          e.preventDefault();
+          const ref = addRef.value.trim();
+          if (ref) void ingest(ref, ref);
+        }
+      },
+      addRef,
+      h("button", { type: "submit", class: "primary" }, "Fetch and stage"),
+      h("button", { type: "button", class: "ghost", onclick: () => addFile.click() }, "Choose a file\u2026"),
+      addStatus
+    );
+    const add = h("button", {
+      class: "ghost",
+      title: "Add a source to Staging: a reference or a file",
+      "aria-expanded": "false",
+      onclick: () => {
+        addForm.hidden = !addForm.hidden;
+        add.setAttribute("aria-expanded", String(!addForm.hidden));
+        if (!addForm.hidden) addRef.focus();
+      }
+    }, "Add source");
     paint();
     this.paintKinds = paint;
     this.evidenceMode.value = preference("evidence", "beside");
@@ -5897,8 +6483,10 @@ var Staging = class {
         this.evidenceMode,
         h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"),
         scan,
-        propose
+        propose,
+        add
       ),
+      addForm,
       this.banner,
       this.bulk,
       h("div", { class: "split" }, this.list, this.detail)
@@ -5924,7 +6512,7 @@ var Staging = class {
     if (this.pending) return;
     try {
       const saved = JSON.parse(sessionStorage.getItem("librarian.queue." + key) ?? "null");
-      if (!saved || !["source", "lens", "concept", "topic", "offering", "import"].includes(saved.kind) || !Array.from(this.statuses.options).some((option) => option.value === saved.status)) return;
+      if (!saved || !["source", "lens", "concept", "topic", "offering", "import", "folder"].includes(saved.kind) || !Array.from(this.statuses.options).some((option) => option.value === saved.status)) return;
       this.kind = saved.kind;
       this.statuses.value = this.status = saved.status;
       this.selected = String(saved.selected ?? "");
@@ -6020,10 +6608,38 @@ var Staging = class {
     clear(this.list, h("p", { class: "dim" }, "Loading\u2026"));
     this.bulkStatusFilter = this.kind === "source" ? this.status : "";
     this.paintBulk();
+    if (this.kind === "folder") {
+      clear(this.detail);
+      this.list.style.gridColumn = "1 / -1";
+      const folderHost = h("div");
+      const refreshCounts = () => void this.api.tool("staging_list", { kind: "folder", status: "staged", limit: 1 }).then((counted) => {
+        if (!this.stopped && counted.counts) {
+          this.counts = counted.counts;
+          this.paintKinds();
+        }
+      }).catch(() => {
+      });
+      try {
+        refreshCounts();
+        await folderReview(this.api, folderHost, "", refreshCounts);
+        if (request === this.listRequest && this.kind === "folder" && !this.stopped) clear(this.list, folderHost);
+      } catch (e) {
+        if (request === this.listRequest) clear(this.list, h("p", { class: "error" }, e.message));
+      }
+      return;
+    }
+    this.list.style.gridColumn = "";
     if (this.kind === "offering") return this.loadOfferings(request);
     try {
       const status = this.kind === "source" ? this.status : "staged";
-      const out = await this.api.tool("staging_list", { kind: this.kind, status, limit: 50 });
+      let out = await this.api.tool("staging_list", { kind: this.kind, status, limit: Math.min(50, this.listLimit), offset: 0 });
+      while (!out.error && (out.items ?? []).length < Math.min(this.listLimit, Number(out.total ?? 0))) {
+        const have = (out.items ?? []).length;
+        const more = await this.api.tool("staging_list", { kind: this.kind, status, limit: Math.min(50, this.listLimit - have), offset: have });
+        if (more.error || !(more.items ?? []).length) break;
+        out = { ...out, items: [...out.items, ...more.items], total: more.total ?? out.total };
+        if (request !== this.listRequest || this.stopped) return;
+      }
       if (request !== this.listRequest || this.stopped) return;
       if (out.error) throw new Error(String(out.detail ?? out.error));
       this.counts = out.counts;
@@ -6037,6 +6653,7 @@ var Staging = class {
         });
       }
       const items = out.items ?? [];
+      const total = Number(out.total ?? items.length);
       this.rows = new Map(items.map((item) => [String(item.id), item]));
       this.bulkStatusFilter = status;
       for (const id of [...this.picked]) if (!this.rows.has(id)) this.picked.delete(id);
@@ -6080,7 +6697,21 @@ var Staging = class {
             item.deep_read ? `read ${item.deep_read}` : "",
             item.fit
           ]).filter(Boolean).join(" \xB7 "))
-        ))) : h("p", { class: "dim" }, "Nothing here.")
+        ))) : h("p", { class: "dim" }, "Nothing here."),
+        // The list is a page: say so, and let the rest be reached (the header counts them all).
+        total > items.length ? h(
+          "p",
+          { class: "note" },
+          `Showing ${items.length} of ${total}. `,
+          h(
+            "button",
+            { class: "ghost", type: "button", onclick: () => {
+              this.listLimit += 50;
+              void this.load();
+            } },
+            "Show 50 more"
+          )
+        ) : null
       );
       await this.finishRestore(items.map((item) => item.id));
       if (!this.selected && !this.detailLocked) {
@@ -6303,7 +6934,13 @@ var Staging = class {
         rows.push(h(
           "div",
           { class: "row2 tight" },
-          h("span", {}, `${onModel} source${onModel === 1 ? " has" : "s have"} reading steps that waited for a model. With models chosen (Choose models), run just those steps:`),
+          h(
+            "span",
+            {},
+            `${onModel} source${onModel === 1 ? " has" : "s have"} reading steps that waited for a model. With models chosen (`,
+            h("button", { class: "link", type: "button", onclick: () => this.openModels() }, "Choose models"),
+            "), run just those steps:"
+          ),
           start2("retry", "Run the waiting steps", { retry_waiting: true }, "ghost")
         ));
       }
@@ -6316,15 +6953,14 @@ var Staging = class {
     else if (this.wasRunning && this.kind === "source") void this.load();
     this.wasRunning = running;
   }
-  decisionError(status, id, error) {
+  decisionError(status, id, error, keep) {
     clear(
       status,
       h("p", { class: "error" }, error.message),
-      h(
-        "button",
-        { class: "ghost", onclick: () => this.show(id) },
-        "Reload item (discards form edits)"
-      )
+      h("button", { class: "ghost", onclick: () => {
+        if (keep) this.keptDrafts.set(id, keep());
+        void this.show(id);
+      } }, keep ? "Reload item, keeping your edits" : "Reload item (discards form edits)")
     );
   }
   async show(id) {
@@ -6360,6 +6996,19 @@ var Staging = class {
     solves.value = draft.what_it_solves ?? "";
     const reason = h("input", { type: "text", placeholder: "Reason (for a rejection or deferral)", "aria-label": "Reason" });
     const status = h("div", { role: "status" });
+    const kept = this.keptDrafts.get(id);
+    if (kept) {
+      this.keptDrafts.delete(id);
+      bottom.value = kept.bottom_line;
+      solves.value = kept.what_it_solves;
+      reason.value = kept.reason;
+      status.append(h(
+        "p",
+        { class: "note" },
+        "Your edits were kept over the reloaded item. Check them against what changed, then decide again."
+      ));
+    }
+    const keep = () => ({ bottom_line: bottom.value, what_it_solves: solves.value, reason: reason.value });
     const isModel = item.source_kind === "model";
     const bestFor = new Set(item.fields?.best_for ?? []);
     let suggestedTier = item.fields?.suggested_tier ?? "";
@@ -6411,7 +7060,7 @@ var Staging = class {
           (r.embedding_warnings ?? []).map((w) => h("p", { class: "warn" }, `Derived embeddings \xB7 ${w.stage}: ${w.error}. ${w.next}`))
         );
       } catch (e) {
-        this.decisionError(status, id, e);
+        this.decisionError(status, id, e, keep);
       }
     };
     const draftIt = async () => {
@@ -6419,8 +7068,15 @@ var Staging = class {
       try {
         const out = await this.api.tool("staging_review", { item_id: id });
         if (out.error) throw new Error(String(out.detail ?? out.error));
-        if (out.draft?.status === "queued") clear(status, h("p", { class: "dim" }, "Queued: no clerk model is available. Choose a tier 3 model, or run the clerk agent."));
-        else await this.show(id);
+        await this.show(id);
+        if (out.draft?.status === "queued") {
+          const why = out.draft.reason ? String(out.draft.reason) : "no clerk model is available";
+          this.detail.prepend(h(
+            "p",
+            { class: "warn", role: "status" },
+            `Queued: the clerk could not run (${why}). Choose or qualify a Small tasks model in Settings \u2192 Models & services, or run the clerk agent.`
+          ));
+        }
       } catch (e) {
         clear(status, h("p", { class: "error" }, e.message));
       }
@@ -6478,7 +7134,9 @@ var Staging = class {
       {},
       Object.keys(intakeInfo.stages ?? {}).length ? h("p", { class: "dim" }, `Capture \u2014 ${ledger(intakeInfo.stages)}`) : null,
       Object.keys(proc.stages ?? {}).length ? h("p", { class: "dim" }, `Batch \u2014 ${ledger(proc.stages)}`) : null,
-      q.verdict && q.verdict !== "usable" ? h("p", { class: "warn" }, `${q.reason}. Next: ${q.next}.`) : null,
+      // What capture found stays true, but its "Next:" is advice for a source the batch has not
+      // yet run on. Once every batch stage is complete the step has happened.
+      q.verdict && q.verdict !== "usable" ? Object.keys(proc.stages ?? {}).length && Object.values(proc.stages).every((v) => v === "complete") ? h("p", { class: "note" }, `At capture: ${q.reason}. The batch has since run.`) : h("p", { class: "warn" }, `${q.reason}. Next: ${q.next}.`) : null,
       item.possible_duplicate_of ? h("p", { class: "warn" }, `Possibly the same work as ${item.possible_duplicate_of}.`) : null,
       item.fit_screen ? h(
         "p",
@@ -6542,6 +7200,9 @@ var Staging = class {
           "div",
           {},
           h("label", { class: "f", for: "lib-bl" }, interrupted ? "Bottom Line (previously approved; review it)" : draft.bottom_line ? `Bottom Line (drafted by ${draft.model || "the clerk"}; edit it)` : "Bottom Line"),
+          // ACCEPT-02, 2026-11-19: a draft the clerk was not confident in is kept, not hidden; a
+          // person confirms or rewrites it before it is accepted.
+          draft.status === "not_confident" && draft.bottom_line ? h("p", { class: "warn" }, "The clerk drafted this but was not confident in it. Check it against the evidence before accepting.") : null,
           bottom,
           h("label", { class: "f", for: "lib-solves" }, "What it solves"),
           solves,
@@ -6864,7 +7525,7 @@ var Staging = class {
     );
   }
   /** A proposed topic, as the library's own sources suggest it (R8). It is reviewed here;
-   * accepting, renaming or merging it into the taxonomy is done in Settings → Library. */
+   * accepting, renaming or merging it into the taxonomy is done in Settings → Topics & organisation. */
   /** V1's Applications and branch offerings: the note as V1 wrote it, into its V2 folder. */
   showImport(item) {
     const reason = h("input", {
@@ -6939,7 +7600,7 @@ var Staging = class {
       item.acceptance_progress ? h(
         "p",
         { class: "warn" },
-        `Partly applied. Completed: ${(item.acceptance_progress.completed_paths ?? []).join(", ")}. Finish acceptance in Settings \u2192 Library after review. Rejecting or deferring does not undo those writes.`
+        `Partly applied. Completed: ${(item.acceptance_progress.completed_paths ?? []).join(", ")}. Finish acceptance in Settings \u2192 Topics & organisation after review. Rejecting or deferring does not undo those writes.`
       ) : null,
       item.duplicate_of ? h("p", { class: "warn" }, `Close to a topic you already have: ${item.duplicate_of}. Merge rather than add?`) : null,
       h("p", { class: "dim" }, `${item.coverage?.sources ?? members.length} of the ${item.coverage?.of ?? "?"} sources considered \xB7 proposed by ${item.proposed_by ?? "the clerk"}`),
@@ -6953,7 +7614,7 @@ var Staging = class {
           this.openNote(s);
         }
       }, s)])),
-      h("p", { class: "note" }, "A proposal only: the topic list changes when you accept, rename or merge it in Settings \u2192 Library."),
+      h("p", { class: "note" }, "A proposal only: the topic list changes when you accept, rename or merge it in Settings \u2192 Topics & organisation."),
       reason,
       h(
         "div",
@@ -7261,6 +7922,11 @@ var Search = class {
 };
 
 // ../ui/src/main.ts
+function actionOutputs(outputs) {
+  if (!outputs || typeof outputs !== "object") return "";
+  const parts = Object.entries(outputs).filter(([k, v]) => k !== "errors" && v !== null && v !== void 0 && v !== "").slice(0, 6).map(([k, v]) => `${k} ${Array.isArray(v) ? v.length : typeof v === "object" ? Object.keys(v).length : String(v).length > 40 ? `${String(v).slice(0, 39)}\u2026` : String(v)}`);
+  return parts.length ? ` \xB7 ${parts.join(", ")}` : "";
+}
 function relinkChat(log, oldName, newName, open) {
   log.querySelectorAll(sel("a.wl")).forEach((a) => {
     const target = a.title;
@@ -7285,11 +7951,30 @@ var App = class {
     this.session = null;
     this.view = "chat";
     this.libraryButton = h("button", { class: "ghost lib-switch", title: "Switch library" }, "Library \u25BE");
+    // This library's own Geo-Grapher, run by this Core (one library, one Geo service).
+    this.geoButton = h("button", {
+      class: "ghost geo-open",
+      title: "Open this library's graphs in Geo-Grapher",
+      onclick: () => void this.openGeo()
+    }, "Geo-Grapher \u2197");
     this.checkpointButton = h("button", { class: "ghost", title: "Decisions waiting for you" }, "Checkpoints \u25BE");
+    // AR-F03: permission requests waiting for an answer, shown on the Chat tab from any view.
+    this.waiting = /* @__PURE__ */ new Set();
+    // Close controls (owner, 2026-11-17): this library's Geo-Grapher, or the whole library
+    // (its Core, which stops Geo-Grapher with it), each closed gracefully.
+    // An icon so the header does not wrap on narrow hosts (the smoke run's 497 px pane).
+    this.closeButton = h("button", {
+      class: "ghost lib-close",
+      title: "Close Geo-Grapher or this library",
+      "aria-label": "Close Geo-Grapher or this library"
+    }, "\u23FB");
     this.title = h("span", { class: "title" }, "Librarian");
     this.crumb = h("span", { class: "crumb" });
     this.live = h("span", { class: "live", role: "status", title: "Connection to the core" });
     this.chips = h("div", { class: "chips", "aria-label": "Queued actions" });
+    // A run's full record, opened from its chip (M1a, W-WFR-01): the chip shows a summary, and dismissing
+    // it no longer loses what the run did, what failed and why.
+    this.runDialog = h("dialog", { class: "lib-dialog run-record", "aria-label": "Run record" });
     this.input = h("textarea", {
       id: this.ids.id("lib-msg"),
       class: "composer-text",
@@ -7347,7 +8032,7 @@ var App = class {
     };
     this.onDocumentClick = (e) => {
       const path2 = e.composedPath();
-      for (const p of [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]) {
+      for (const p of this.popovers()) {
         if (p.open && !path2.includes(p.el) && !path2.includes(p.button)) {
           if (p !== this.models || !this.tile.cancelSlot()) p.show(false);
         }
@@ -7439,6 +8124,11 @@ var App = class {
     this.sessions = new Popover(this.ids.id("lib-sessions"), "Sessions", sessionsButton, "lib-sessions");
     this.libraries = new Popover(this.ids.id("lib-libraries"), "Libraries", this.libraryButton, "lib-libraries");
     this.checkpoints = new Popover(this.ids.id("lib-checkpoints"), "Checkpoints", this.checkpointButton, "lib-checkpoints");
+    this.closeMenu = new Popover(this.ids.id("lib-close"), "Close", this.closeButton, "lib-close-menu");
+    this.closeButton.onclick = () => {
+      this.toggle(this.closeMenu);
+      if (this.closeMenu.open) void this.renderClose();
+    };
     this.libraryButton.onclick = () => {
       this.toggle(this.libraries);
       if (this.libraries.open) void renderLibraries(this.libraries, this.api, this.libraryName());
@@ -7463,7 +8153,29 @@ var App = class {
       this.attachPop,
       this.api,
       (text) => this.insertIntoComposer(text),
-      (file, raw) => this.addAttachment(file.name, raw)
+      (file, raw) => this.addAttachment(file.name, raw),
+      {
+        // The pane is the one place to navigate to a file: it opens on Browse with a hint.
+        pickFile: () => {
+          this.showPane(true);
+          this.pane.pickFile(
+            "Pick a file to add to the chat",
+            (reference) => this.insertIntoComposer(reference)
+          );
+        },
+        openRegistry: () => void this.openSkillRegistry(),
+        workflows: (rerender) => renderWorkflows(
+          this.attachPop,
+          this.api,
+          this.state.queued_actions ?? [],
+          this.pipelines,
+          (msg) => this.warn(msg),
+          this.state.queued_inputs ?? {},
+          this.ids.id("librarian-workflow"),
+          this.libraryName() + " \xB7 " + (this.session?.session ?? "no active conversation"),
+          rerender
+        )
+      }
     );
     attachButton.onclick = () => {
       this.toggle(this.attachPop);
@@ -7600,11 +8312,14 @@ var App = class {
           settingsButton,
           h("button", { class: "ghost", onclick: () => this.settings.open("models") }, "Models"),
           this.live,
-          this.paneButton
+          this.geoButton,
+          this.paneButton,
+          h("div", { class: "anchor" }, this.closeButton, this.closeMenu.el)
         ),
         this.body
       ),
-      this.settings.dialog
+      this.settings.dialog,
+      this.runDialog
     );
     this.composer = composer;
     document.addEventListener("keydown", this.onDocumentKey);
@@ -7618,12 +8333,38 @@ var App = class {
     }
     const saved = recall("pane");
     this.showPane(saved === "open");
+    void this.openGuideOnFirstVisit(saved);
+  }
+  /** A new library carries "About the Librarian and how to use it" at its root. The first time
+   *  this browser opens the library (and the pane has not been opened or closed on purpose), the
+   *  pane opens on it, so the way in is on screen. Its links lead to the formal notes beside it.
+   *  An older library has no such note: nothing opens. Obsidian shows notes itself, so it is left alone. */
+  async openGuideOnFirstVisit(savedPane) {
+    if (this.opts.openNote || savedPane || recall("guide-seen")) return;
+    try {
+      await this.api.get(`/api/file?path=${encodeURIComponent(GUIDE_NOTE + ".md")}`);
+    } catch {
+      return;
+    }
+    remember2("guide-seen", "1");
+    this.showPane(true);
+    await this.pane.open(GUIDE_NOTE);
   }
   popovers() {
-    return [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop];
+    return [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop, this.closeMenu];
   }
   // -- the document pane -------------------------------------------------------
   /** A [[link]]: in Obsidian the real note opens; elsewhere it opens beside the chat. */
+  /** The skill registry: built by the Core on request, shown in the pane like a note. */
+  async openSkillRegistry() {
+    try {
+      const page = await this.api.get("/api/skills");
+      this.showPane(true);
+      this.pane.showPage(String(page.title ?? "Skill registry"), String(page.markdown ?? ""));
+    } catch (e) {
+      this.warn(`The skill registry did not open: ${e.message}`);
+    }
+  }
   async openDoc(target) {
     if (this.opts.openNote) {
       try {
@@ -7637,6 +8378,7 @@ var App = class {
     await this.pane.open(target);
   }
   showPane(on) {
+    if (!on) this.pane.cancelPick();
     this.paneOpen = on;
     this.body.classList.toggle(cls("pane-open"), on);
     this.body.classList.toggle(cls("pane-closed"), !on);
@@ -7711,6 +8453,16 @@ var App = class {
     this.paintChips();
     if (this.state.busy) this.chat.setWorking(true);
     for (const request of this.state.pending ?? []) this.chat.handle({ seq: 0, type: "permission_request", ...request });
+    this.waiting = new Set((this.state.pending ?? []).map((r) => String(r.id)));
+    this.paintWaiting();
+  }
+  /** The Chat tab says when a request waits for a person, so a call blocked in Chat is seen
+   *  from Staging or Search (AR-F03). */
+  paintWaiting() {
+    const n = this.waiting.size, tab = this.nav.chat;
+    clear(tab, "Chat", n ? h("span", { class: "badge waiting", "aria-hidden": "true" }, String(n)) : null);
+    tab.setAttribute("aria-label", n ? `Chat, ${n} permission request${n === 1 ? "" : "s"} waiting` : "Chat");
+    tab.title = n ? `${n} permission request${n === 1 ? " is" : "s are"} waiting for you in Chat` : "";
   }
   onEvent(event) {
     if (event.type === "resync_required") {
@@ -7719,6 +8471,14 @@ var App = class {
     }
     this.chat.handle(event);
     switch (event.type) {
+      case "permission_request":
+        this.waiting.add(String(event.id));
+        this.paintWaiting();
+        break;
+      case "permission_decided":
+        this.waiting.delete(String(event.id));
+        this.paintWaiting();
+        break;
       case "mode_changed":
         this.state.mode = event.to;
         this.paintToolbar();
@@ -7741,7 +8501,7 @@ var App = class {
       case "action_done": {
         const actions = this.state.actions ?? [];
         const at = actions.findIndex((a) => a.id === event.id);
-        const row = { id: event.id, name: event.name, status: event.status, steps: event.steps, reason: event.reason };
+        const { type: _type, result: _result, at: _at, ...row } = event;
         if (at >= 0) actions[at] = row;
         else actions.push(row);
         this.state.actions = actions;
@@ -7749,6 +8509,10 @@ var App = class {
         if (event.type === "action_done" && this.view === "staging") void this.staging.load();
         break;
       }
+      case "action_dismissed":
+        this.state.actions = (this.state.actions ?? []).filter((a) => a.id !== event.id);
+        this.paintChips();
+        break;
       case "person_acted":
         if (event.session) this.setSession(event.session);
         if (this.view === "staging") void this.staging.load();
@@ -7760,6 +8524,14 @@ var App = class {
       case "route_health_changed":
       case "workflow_preflight":
         if (this.models.open) void this.tile.refresh();
+        if (event.type === "route_health_changed") {
+          const lead = (this.state.tiers ?? [])[0];
+          const ev = event;
+          if (lead && [lead.host_id, lead.provider, `preset-${lead.provider}`].includes(ev.host_id)) {
+            this.state.lead_route_health = { host_id: ev.host_id, ...ev.health ?? {} };
+            this.paintToolbar();
+          }
+        }
         break;
       case "library_switched":
         window.location.reload();
@@ -7779,18 +8551,15 @@ var App = class {
     const mode = MODES.find(([v]) => v === this.state.mode);
     clear(this.modeButton, "Modes: ", h("strong", {}, mode ? mode[1].split(" ")[0] : "?"), " \u25BE");
     const tier = (this.state.tiers ?? [])[0];
-    clear(this.modelButton, tier ? [h("span", { class: "badge" }, "1"), ` ${tier.model} \xB7 ${PROVIDERS[tier.provider] ?? tier.provider}`] : "Choose models", " \u25BE");
-    renderModes(
-      this.modes,
-      this.api,
-      this.state.mode,
-      this.state.queued_actions ?? [],
-      this.pipelines,
-      (msg) => this.warn(msg),
-      this.state.queued_inputs ?? {},
-      this.ids.id("librarian-mode"),
-      this.libraryName() + " \xB7 " + (this.session?.session ?? "no active conversation")
-    );
+    const health = this.state.lead_route_health ?? {};
+    const broken = !!tier && health.status === "error" && (!health.model || health.model === tier.model);
+    clear(this.modelButton, tier ? [
+      h("span", { class: "badge" }, "1"),
+      broken ? h("span", { class: "route-warning", "aria-label": "route problem" }, " \u26A0") : null,
+      ` ${tier.model} \xB7 ${PROVIDERS[tier.provider] ?? tier.provider}`
+    ] : "Choose models", " \u25BE");
+    this.modelButton.title = broken ? `This model's route failed: ${health.detail ?? ""}` : "";
+    renderModes(this.modes, this.api, this.state.mode, (msg) => this.warn(msg), this.ids.id("librarian-mode"));
     const pending = (this.state.pending_checkpoints ?? []).length;
     this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) \u25BE` : "Checkpoints \u25BE";
     if (this.checkpoints.open) this.renderCheckpoints();
@@ -7811,7 +8580,12 @@ var App = class {
   renderCheckpoints() {
     const rows = this.state.pending_checkpoints ?? [];
     const card = (row) => {
-      const evidence = row.evidence && Object.keys(row.evidence).length ? h("pre", { class: "checkpoint-evidence" }, JSON.stringify(row.evidence, null, 2)) : null;
+      const evidence = row.evidence && Object.keys(row.evidence).length ? h(
+        "details",
+        { class: "checkpoint-details" },
+        h("summary", {}, "Details"),
+        h("pre", { class: "checkpoint-evidence" }, JSON.stringify(row.evidence, null, 2))
+      ) : null;
       const writeConflictHelp = row.type === "write_conflict" ? h(
         "p",
         { class: "checkpoint-help" },
@@ -7841,6 +8615,8 @@ var App = class {
         "section",
         { class: "checkpoint" },
         h("strong", {}, String(row.type ?? "Decision").replace(/_/g, " ")),
+        // Every card names itself, so an agent and a person can be talking about the same one.
+        h("small", { class: "dim" }, ` \xB7 ${String(row.id ?? "")}`),
         h("p", {}, String(row.scope ?? "")),
         evidence,
         writeConflictHelp,
@@ -7865,26 +8641,98 @@ var App = class {
     );
   }
   paintChips() {
-    const running = (this.state.actions ?? []).filter((a) => a.status === "running" || a.status === "paused");
+    const actions = (this.state.actions ?? []).filter((a) => ["running", "paused", "finished", "failed"].includes(a.status));
     for (const id of [...this.cancelling]) {
-      if (!running.some((a) => a.id === id && a.status === "running")) this.cancelling.delete(id);
+      if (!actions.some((a) => a.id === id && a.status === "running")) this.cancelling.delete(id);
     }
-    clear(this.chips, running.map((a) => h(
-      "span",
-      { class: "chip" },
-      `${a.name} \xB7 ${a.status === "paused" ? `paused${a.reason ? `: ${a.reason}` : ""}` : `${a.steps} steps`}`,
-      a.status !== "running" ? null : this.cancelling.has(a.id) ? h("button", { "aria-label": `Cancelling ${a.name}`, "aria-busy": "true", disabled: true }, "Cancelling\u2026") : h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
-        this.cancelling.add(a.id);
-        this.paintChips();
-        try {
-          await this.api.post(`/api/actions/${a.id}/cancel`);
-        } catch (e) {
-          this.cancelling.delete(a.id);
+    const post = async (a, verb, body) => {
+      try {
+        await this.api.post(`/api/actions/${a.id}/${verb}`, body);
+      } catch (e) {
+        this.warn(`${a.name}: ${e.message}`);
+      }
+    };
+    const dismiss = (a) => h("button", {
+      "aria-label": `Dismiss ${a.name}`,
+      title: "Dismiss",
+      onclick: () => void post(a, "dismiss")
+    }, "\u2715");
+    clear(this.chips, actions.map((a) => {
+      if (a.status === "running") return h(
+        "span",
+        { class: "chip" },
+        `${a.name} \xB7 ${a.steps} steps`,
+        this.cancelling.has(a.id) ? h("button", { "aria-label": `Cancelling ${a.name}`, "aria-busy": "true", disabled: true }, "Cancelling\u2026") : h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
+          this.cancelling.add(a.id);
           this.paintChips();
-          this.warn(`${a.name} was not cancelled: ${e.message}`);
-        }
-      } }, "\u2715")
-    )));
+          try {
+            await this.api.post(`/api/actions/${a.id}/cancel`);
+          } catch (e) {
+            this.cancelling.delete(a.id);
+            this.paintChips();
+            this.warn(`${a.name} was not cancelled: ${e.message}`);
+          }
+        } }, "\u2715")
+      );
+      if (a.status === "paused") {
+        const options = Array.isArray(a.options) ? a.options : [];
+        return h(
+          "span",
+          { class: "chip action-paused", role: "group", "aria-label": `${a.name} is paused` },
+          `${a.name} \xB7 paused${a.reason ? `: ${a.reason}` : ""}`,
+          a.question && options.length ? h("span", { class: "dim" }, ` ${a.question}`) : null,
+          ...options.map((option) => h("button", {
+            class: "action-choice",
+            title: `Continue with "${option}" for this step`,
+            onclick: () => void post(a, "resume", { choices: { [a.paused_step]: option } })
+          }, option)),
+          h("button", {
+            class: "action-choice",
+            title: "Continue: a routing model set since then decides",
+            onclick: () => void post(a, "resume")
+          }, "Resume"),
+          dismiss(a)
+        );
+      }
+      const summary = a.status === "failed" ? `failed${a.error ? `: ${a.error}` : ""}` : `finished${actionOutputs(a.outputs)}`;
+      const errors = Array.isArray(a.outputs?.errors) ? a.outputs.errors : [];
+      const details = a.run ? h("button", {
+        class: "action-choice",
+        "aria-label": `Details of ${a.name}`,
+        title: "Open this run's full record: each step, what it returned and why it stopped",
+        onclick: () => void this.openRun(a)
+      }, "Details") : null;
+      return h(
+        "span",
+        {
+          class: `chip action-${a.status}`,
+          role: "status",
+          title: [summary, ...errors.map((e) => `\u2022 ${e}`)].join("\n")
+        },
+        `${a.name} \xB7 ${summary}`,
+        details,
+        dismiss(a)
+      );
+    }));
+  }
+  /** The run's record as the Core keeps it (run_status), bounded for the page. */
+  async openRun(a) {
+    let record;
+    try {
+      record = await this.api.tool("run_status", { run_id: a.run });
+    } catch (e) {
+      this.warn(`${a.name}: the run record could not be read: ${e.message}`);
+      return;
+    }
+    const text = JSON.stringify(record, null, 2);
+    clear(
+      this.runDialog,
+      h("h3", {}, `${a.name} \xB7 ${a.status}`),
+      h("pre", { class: "run-record-body" }, text.length > 2e4 ? `${text.slice(0, 2e4)}
+\u2026` : text),
+      h("button", { type: "button", onclick: () => this.runDialog.close() }, "Close")
+    );
+    if (!this.runDialog.open) this.runDialog.showModal();
   }
   setSession(session) {
     if (session && this.session && session.session === this.session.session)
@@ -7932,8 +8780,11 @@ var App = class {
       this.warn("Attach a source file for this library, then ask the librarian to capture it for review in Staging.");
       return;
     }
-    if (!this.modes.open) this.toggle(this.modes);
-    const button = this.modes.el.querySelector(`[data-command="${id}"]`);
+    if (!this.attachPop.open) {
+      this.toggle(this.attachPop);
+      this.attachPanel.render();
+    }
+    const button = this.attachPop.el.querySelector(`[data-command="${id}"]`);
     if (button) {
       button.focus();
       button.scrollIntoView({ block: "nearest" });
@@ -7967,7 +8818,7 @@ var App = class {
   }
   toggle(pop) {
     const open = !pop.open;
-    [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop].forEach((p) => p.show(false));
+    [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop, this.closeMenu].forEach((p) => p.show(false));
     pop.show(open);
   }
   /** A file just attached: a chip above the composer, its icon standing for
@@ -8009,6 +8860,109 @@ var App = class {
     const caret = start2 + insertion.length;
     el.focus();
     el.setSelectionRange(caret, caret);
+  }
+  /** The Close menu: this library's Geo-Grapher, then the library itself. */
+  async renderClose() {
+    const pop = this.closeMenu;
+    const status = h("p", { class: "dim", role: "status" }, "");
+    let geo = {};
+    try {
+      geo = await this.api.get("/api/geographer");
+    } catch {
+      geo = { state: "unknown" };
+    }
+    const running = geo.state === "running" || geo.state === "starting";
+    const geoButton = h("button", {
+      class: "ghost",
+      disabled: geo.state === "disabled" || geo.state === "unknown",
+      onclick: async () => {
+        status.textContent = running ? "Closing Geo-Grapher\u2026" : "Starting Geo-Grapher\u2026";
+        try {
+          await this.api.post(running ? "/api/geographer/stop" : "/api/geographer/start");
+          status.textContent = running ? "Geo-Grapher is closed. The library keeps running." : "Geo-Grapher is starting.";
+          window.setTimeout(() => {
+            if (pop.open) void this.renderClose();
+          }, 1200);
+        } catch (e) {
+          status.textContent = `Not done: ${e.message}`;
+        }
+      }
+    }, running ? "Close Geo-Grapher" : "Start Geo-Grapher");
+    const libraryButton = h(
+      "button",
+      { class: "ghost danger", onclick: () => void this.closeLibrary(false, status, body) },
+      "Close this library"
+    );
+    const body = h("div", { class: "close-body" });
+    clear(
+      pop.el,
+      h("h4", {}, "Geo-Grapher"),
+      h("p", { class: "dim" }, geo.state === "disabled" ? "Not enabled for this library." : running ? "Running for this library." : geo.state === "failed" ? `Stopped with an error${geo.error ? `: ${geo.error}` : "."}` : "Closed."),
+      geoButton,
+      h("h4", {}, "This library"),
+      h("p", { class: "dim" }, "Stops its Core gracefully: no new work is admitted, current work finishes or is listed for you first, then its Geo-Grapher and the vault lease are released."),
+      libraryButton,
+      body,
+      status
+    );
+  }
+  /** Ask this library's Core to stop. Active work is shown first; only an explicit
+   * second choice forces the stop (the Core records it as a forced engagement close). */
+  async closeLibrary(force, status, body) {
+    status.textContent = force ? "Stopping after the current step\u2026" : "Asking the library to stop\u2026";
+    try {
+      await this.api.post("/api/host/stop", { force });
+      this.stopping = true;
+      clear(this.root, h(
+        "div",
+        { class: "lib-closed", role: "status" },
+        h("h2", {}, `${this.libraryName()} is closed`),
+        h("p", {}, "Its Core and Geo-Grapher have stopped and the vault is released. You can close this tab, or start the library again from the Librarian Host.")
+      ));
+    } catch (e) {
+      const err = e;
+      if (err.status === 409) {
+        const active = err.body?.active ?? {};
+        const rows = Object.entries(active).filter(([, v]) => v && (!Array.isArray(v) || v.length));
+        status.textContent = "";
+        clear(
+          body,
+          h("p", { class: "warn" }, "This library has work in progress:"),
+          h("ul", {}, rows.length ? rows.map(([k, v]) => h("li", {}, `${k.replace(/_/g, " ")}: ${Array.isArray(v) ? v.length : typeof v === "object" ? Object.keys(v).length : String(v)}`)) : h("li", {}, "a running action")),
+          h("button", { class: "ghost danger", onclick: () => {
+            if (window.confirm("Stop the library now? Work in progress is cancelled at its next safe point."))
+              void this.closeLibrary(true, status, body);
+          } }, "Stop anyway"),
+          h("button", { class: "ghost", onclick: () => {
+            clear(body);
+            this.closeMenu.show(false);
+          } }, "Keep it running")
+        );
+      } else if (err.status === 404) {
+        status.textContent = "This Core was not started by the Librarian Host; stop it where it was started.";
+      } else {
+        status.textContent = `Not stopped: ${err.message}`;
+      }
+    }
+  }
+  async openGeo() {
+    try {
+      let geo = await this.api.get("/api/geographer");
+      if (geo.state === "stopped" || geo.state === "failed") {
+        geo = await this.api.post("/api/geographer/start");
+        for (let i = 0; i < 40 && !geo.open_url && geo.state === "starting"; i++) {
+          await new Promise((r) => window.setTimeout(r, 500));
+          geo = await this.api.get("/api/geographer");
+        }
+      }
+      if (geo.open_url) {
+        window.open(geo.open_url, "_blank", "noopener");
+        return;
+      }
+      this.warn(geo.state === "disabled" ? "Geo-Grapher is not enabled for this library." : geo.state === "starting" ? "Geo-Grapher is still starting for this library; try again in a moment." : `Geo-Grapher is not running for this library${geo.error ? `: ${geo.error}` : "."}`);
+    } catch (error) {
+      this.warn(`Could not reach this library's Geo-Grapher: ${String(error)}`);
+    }
   }
   warn(message) {
     this.notice.hidden = false;
@@ -8196,6 +9150,7 @@ function remember2(key, value) {
   } catch {
   }
 }
+var GUIDE_NOTE = "About the Librarian and how to use it";
 function recall(key) {
   try {
     return localStorage.getItem(`librarian:${key}`) ?? "";
