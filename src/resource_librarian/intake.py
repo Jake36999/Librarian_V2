@@ -584,6 +584,7 @@ def ingest(vault: Vault, engine: Engine | None, ref: str, *, endpoint: clerk.End
             fetched = FETCHERS[reference.kind](reference.key, fetcher, store)
     except (FetchError, ET.ParseError, ValueError, KeyError) as exc:
         return _quarantine(vault, ref, "fetch", str(exc))
+    _close_quarantine_ticket(vault, ref)
 
     # This is the only SQLite work before the Clerk/network phase.  A
     # Core-backed caller supplies a callback gateway, so no Engine can escape
@@ -851,7 +852,30 @@ def _quarantine(vault: Vault, ref: str, stage: str, reason: str) -> IntakeResult
     name = f"{hashlib.sha256(ref.encode()).hexdigest()[:12]}.json"
     atomic_write_text(folder / name, json.dumps({"ref": ref, "stage": stage, "reason": reason,
                                                    "at": now_iso()}, ensure_ascii=False, indent=1))
+    # A quarantined capture is a ticket with an owner and a review date (M3, as-is W-INT-02): it
+    # used to wait for someone to retry it, and nobody was told.
+    try:
+        from .tickets import TicketStore
+        TicketStore(vault).ensure("quarantined_capture", f"intake:{name[:-5]}",
+                                  summary=f"{ref[:200]} failed at {stage}", opened_by="intake",
+                                  evidence={"ref": ref[:500], "stage": stage, "reason": reason[:500],
+                                            "record": f"quarantine/intake/{name}"})
+    except Exception:                     # noqa: BLE001 - a ticket never hides the quarantine itself
+        pass
     return IntakeResult(ref, "quarantined", detail=f"{stage}: {reason}")
+
+
+def _close_quarantine_ticket(vault: Vault, ref: str) -> None:
+    """A capture that now succeeds closes its quarantine ticket: the Core's own recheck."""
+    try:
+        from .tickets import TicketStore
+        store = TicketStore(vault)
+        scope = f"intake:{hashlib.sha256(ref.encode()).hexdigest()[:12]}"
+        for ticket in store.all(open_only=True):
+            if ticket["class"] == "quarantined_capture" and ticket["scope"] == scope:
+                store.close(ticket["id"], "core-recheck", "captured on a later attempt")
+    except Exception:                     # noqa: BLE001 - never blocks the capture
+        pass
 
 
 def _ingest_folder(vault, ref, review, surveyed):

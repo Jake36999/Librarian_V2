@@ -39,6 +39,10 @@ def test_a_failed_intake_catalogues_stages_and_records_nothing(library):  # noqa
     # No note, no evidence, nothing staged for review: only the failed capture is
     # kept, marked failed, for a person to retry or remove (intake.settle).
     assert {k: v for k, v in after.items() if k not in new} == before
+    # M3 (W-INT-02): the failure is also a ticket with an owner and a review date.
+    tickets = [k for k in new if k == ".librarian/tickets.json"]
+    new = [k for k in new if k not in tickets]
+    assert tickets and "quarantined_capture" in (library.root / tickets[0]).read_text(encoding="utf-8")
     assert len(new) == 1 and new[0].startswith(".librarian/staging/source/queued-")
     record = json.loads((library.root / new[0]).read_text(encoding="utf-8"))
     assert record["status"] == "failed"

@@ -89,6 +89,15 @@ CAPTURED = ("accepted as captured: only what intake fetched was read (a page's t
             "file's opening, a repository's README and tree), not the whole source")
 
 
+def _acceptance_review(oldest_days: int | None) -> dict[str, Any]:
+    """When read work waiting for acceptance is due for a decision (standard/tickets.yaml)."""
+    from .tickets import routing
+    days = (routing()["classes"].get("partial_or_unmet") or {}).get("review_days")
+    if days is None or oldest_days is None:
+        return {}
+    return {"review_days": days, "overdue": oldest_days > days}
+
+
 def coverage_of(item: dict[str, Any]) -> tuple[str, list[str]]:
     """How much of a source was read when it is accepted, and what was not examined - kept
     on its note (Research Pipeline §7): `full`, `partial n/m`, or `captured` for a source
@@ -236,6 +245,10 @@ class StagingStore:
                 "sample": [s["id"] for s in waiting[:sample]],
                 "decides": "a person" if mode != "agent" else "a person, or an agent under this "
                                                               "library's agent promotion mode",
+                # An owner and a review date (M3, as-is W-STI-02): read work no longer waits
+                # with no one named and no date. The review period is the partial class's.
+                "owner": "owner" if mode != "agent" else "owner, or an agent under the agent policy",
+                **_acceptance_review(oldest),
                 "next": "staging_decide(item_ids=[...], decision='accept'): they are not in the "
                         "library until accepted"}
 

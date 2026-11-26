@@ -7830,3 +7830,33 @@ Not changed:
 - High-risk holds on the agenda wait for M3.
 
 Tests: `test_envelope.py` (+7), `test_handoff.py` (strengthened); access declarations for `request_envelope` and `record_application`.
+
+### M3: the agenda and tickets (2026-11-26)
+
+Tickets are a service, not a bit mask (policy, fault register; as-is W-DOC-02):
+- `tickets.py` keeps them in `.librarian/tickets.json`, beside the checkpoints.
+- `standard/tickets.yaml` declares the to-be ticket-routing table's 13 classes, each with its owner, queue and review period (plan section 5's proposed defaults), and the escalation path: doctor, lead, overseer, owner.
+- A ticket carries its class, scope, summary, evidence, owner, review date and a history of notes and handovers.
+- Opening is idempotent per class and scope while a ticket is open.
+- A worker never closes its own ticket: only the person or a recheck does.
+- Past its review date, a ticket shows under its next owner, one step per period. This is computed when read, with no daemon and no write on read.
+
+New tools:
+- `tickets` (read);
+- `ticket_note` (contribute): a note, or a handover to the next owner;
+- `ticket_close` (curate).
+
+The checkpoint store is hardened:
+- One lock per file guards every rewrite of `checkpoints.json`; a test with three concurrent writers loses no row.
+- Three new types: `high_risk_hold`, `folder_sensitivity` and `ticket_escalation`.
+- Existing records read as before.
+
+One agenda (UC9): the existing `agenda` tool also lists the person's pending decisions (checkpoints) and the open tickets, with each ticket's current owner and review date. A pursuit's scoped agenda is unchanged.
+
+Tickets for things that used to wait silently:
+- A quarantined capture opens a `quarantined_capture` ticket owned by the doctor (W-INT-02). A later successful capture of the same reference closes it as the Core's recheck.
+- Read work awaiting acceptance now carries an owner and a review date, overdue after 7 days (W-STI-02). This is one entry, not a ticket per paper.
+
+Waiting: consolidating an overseen run's decisions into one question needs the commission.
+
+Tests: `test_tickets.py` (+11); `test_accept_failures.py` now expects the failed intake's ticket beside its failed queued record; access declarations for the three tools and the changed `agenda`.

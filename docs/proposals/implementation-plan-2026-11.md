@@ -188,6 +188,10 @@ Waiting:
 
 ### M3. The agenda and tickets (T4, T5; UC9; alongside M1a and M1b)
 
+**Status, 26 November: delivered except item 4** (see §19).
+- Consolidating an overseen run's decisions into one question (item 4) needs the commission, which is still to come in M2.
+- Re-screening an item whose inputs changed (item 1) stays as the checkpoints already do it: a checkpoint is scoped to its exact operation, and a changed operation gets a new decision.
+
 1. **One agenda:** the existing `agenda` tool, extended to show pending checkpoints, read work awaiting acceptance, and open tickets.
    - Each item is decided once and recorded as the person's.
    - An item whose inputs changed is re-screened, and its run resumes at its recorded point.

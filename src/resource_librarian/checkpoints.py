@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .coordination import atomic_write_text
+from .tickets import lock_for
 from .vault import now_iso
 
 
@@ -16,6 +17,10 @@ CHECKPOINT_TYPES = frozenset({
     "staging_promotion", "sensitive_source", "host_model_override", "cross_model_failover",
     "evaluation_spend", "macro_expansion", "write_conflict", "docker_execution",
     "non_isolated_execution", "forced_engagement_close", "operation_recovery", "publication_taint", "raw_source_access",
+    # M3 (2026-11-26): a high-risk decision held for the Owner when no tier 0 oversees the run
+    # (policy, "High risk when no tier 0 oversees"); a folder's sensitivity review; a ticket
+    # raised to the Owner.
+    "high_risk_hold", "folder_sensitivity", "ticket_escalation",
 })
 
 
@@ -64,9 +69,11 @@ class CheckpointStore:
             raise ValueError("checkpoint default must be one of its choices")
         row = Checkpoint(secrets.token_hex(8), type[:80], scope[:200], dict(evidence or {}),
                          resolved_choices, selected_default, requester[:80], now_iso(), expires_at[:40])
-        rows = self._load()
-        rows.append(row)
-        self._save(rows)
+        # One file, rewritten whole: two writers at once must not lose a row (M3).
+        with lock_for(self.path):
+            rows = self._load()
+            rows.append(row)
+            self._save(rows)
         return self._public(row)
 
     def ensure(self, type: str, scope: str, **kwargs: Any) -> dict[str, Any]:
@@ -76,10 +83,11 @@ class CheckpointStore:
         card.  A resolved checkpoint is intentionally not reused: a later
         operation needs a fresh person decision.
         """
-        for row in self._load():
-            if row.type == type and row.scope == scope and not row.resolution and not self._expired(row):
-                return self._public(row)
-        return self.create(type, scope, **kwargs)
+        with lock_for(self.path):
+            for row in self._load():
+                if row.type == type and row.scope == scope and not row.resolution and not self._expired(row):
+                    return self._public(row)
+            return self.create(type, scope, **kwargs)
 
     def ensure_historical(self, type: str, scope: str, **kwargs: Any) -> dict[str, Any]:
         """Return the one durable disposition for a historical incident.
@@ -91,10 +99,11 @@ class CheckpointStore:
         new mutation.  Recovery therefore uses this separate, idempotent
         lookup which reuses both pending and resolved records.
         """
-        for row in self._load():
-            if row.type == type and row.scope == scope:
-                return self._public(row)
-        return self.create(type, scope, **kwargs)
+        with lock_for(self.path):
+            for row in self._load():
+                if row.type == type and row.scope == scope:
+                    return self._public(row)
+            return self.create(type, scope, **kwargs)
 
     def get(self, checkpoint_id: str) -> dict[str, Any]:
         for row in self._load():
@@ -103,6 +112,10 @@ class CheckpointStore:
         raise KeyError(f"no checkpoint {checkpoint_id!r}")
 
     def resolve(self, checkpoint_id: str, choice: str) -> dict[str, Any]:
+        with lock_for(self.path):
+            return self._resolve(checkpoint_id, choice)
+
+    def _resolve(self, checkpoint_id: str, choice: str) -> dict[str, Any]:
         rows = self._load()
         for row in rows:
             if row.id == checkpoint_id:

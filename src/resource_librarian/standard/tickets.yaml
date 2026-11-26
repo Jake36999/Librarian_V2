@@ -1,0 +1,41 @@
+# Ticket classes: who owns each, and when an open ticket is raised (implementation plan M3).
+# From the to-be pack's ticket-routing table (librarian/to-be/ticket-routing.md) and the policy's
+# fault register (docs/policy/agent-roles-and-authority.md): a ticket service, not a bit mask.
+#
+# For each class:
+#   owner        who owns it first: doctor, lead, overseer or owner (the person)
+#   queue        where it is shown: agenda (the person's), lead, tickets (the service), alert
+#   review_days  days until an open ticket is raised to the next owner; 0 = at once (critical);
+#                omitted = it waits for its owner with no review date (a reserved decision)
+#
+# Past its review date a ticket is raised along `escalation`, one step per period, and shown under
+# its new owner. The review dates are proposed defaults (plan section 5) until the Owner decides.
+version: 1
+escalation: [doctor, lead, overseer, owner]
+classes:
+  mapped_shortfall:      {owner: doctor,   queue: tickets, review_days: 1,
+                          title: "A mapped shortfall with an accepted remedy"}
+  radius_exceeds_mandate: {owner: owner,   queue: agenda,
+                          title: "Mapped, but the blast radius exceeds the mandate"}
+  unmapped_failure:      {owner: lead,     queue: lead,    review_days: 7,
+                          title: "An unmapped failure or a misalignment"}
+  code_change:           {owner: overseer, queue: agenda,  review_days: 7,
+                          title: "A failure that needs a code change"}
+  critical:              {owner: owner,    queue: alert,   review_days: 0,
+                          title: "Critical: security, data loss, a boundary crossed"}
+  reserved_decision:     {owner: owner,    queue: agenda,
+                          title: "A reserved decision"}
+  oracle_unavailable:    {owner: owner,    queue: agenda,
+                          title: "The Oracle is unavailable, or has no route distinct from the workers'"}
+  quarantined_capture:   {owner: doctor,   queue: tickets, review_days: 1,
+                          title: "A quarantined capture"}
+  recheck_failed:        {owner: owner,    queue: agenda,
+                          title: "A repair that failed its recheck"}
+  held_claim:            {owner: lead,     queue: lead,    review_days: 7,
+                          title: "A held claim: no review completed on two routes"}
+  unlinked_paper:        {owner: doctor,   queue: tickets, review_days: 1,
+                          title: "A published paper with no stored link"}
+  partial_or_unmet:      {owner: lead,     queue: agenda,  review_days: 7,
+                          title: "A permitted partial, or unmet tasks"}
+  remedy_unavailable:    {owner: owner,    queue: agenda,  review_days: 7,
+                          title: "A ticket whose remedy is unavailable or declined"}

@@ -208,7 +208,7 @@
         "symbol": "agenda_tool"
       },
       "fingerprint": {
-        "source_sha256": "19cb52481ca3738d04a4c91d5c46fc11dca74516730f8683d0968ca1d21e259b",
+        "source_sha256": "4724f4104aa7de7d7672d57a874a3e0c011bf39e38e562d86b9ea6938867b410",
         "schema_sha256": "b76e7a0d8e67a8dbe3de9cbc8aee278fd95c3c5a2d6b7069930f7e66f98571e8",
         "effect": "read",
         "open_world": false,
@@ -6090,6 +6090,85 @@
       "fingerprint": {
         "source_sha256": "1087400a15c9c25d13107c7c9e2f77a0e0973ff9c1b0461179c482d8a3f7c623",
         "schema_sha256": "54e1fb6fd6d6ea2ae1854a0165c0cef91e42cff1e5a1be46805a3213d0574dd0",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "ticket_close",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/tickets.py",
+        "line": 45,
+        "symbol": "ticket_close"
+      },
+      "fingerprint": {
+        "source_sha256": "d1501ae4b33e50efb7212e269cd1ee8a636d256f313b532018a887c723b13b62",
+        "schema_sha256": "c08e7d50f0e19497c735a1c20045f27d9d8dc1f44c0a5c83e412de228ac7bb49",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "ticket_note",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/tickets.py",
+        "line": 33,
+        "symbol": "ticket_note"
+      },
+      "fingerprint": {
+        "source_sha256": "af734960339a2371e06898ddda81f4437516ed7b6f7eb678c8fcffaf8fc6c29c",
+        "schema_sha256": "c35f602167d785f070ef46f588a1f8f776081bc48bcf3321a90579a4d202d699",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "tickets",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/tickets.py",
+        "line": 21,
+        "symbol": "tickets"
+      },
+      "fingerprint": {
+        "source_sha256": "c8529a370ad73f237ef15dae2d90e8cad6fd1c50310152f6acbcc7e8d128a7fd",
+        "schema_sha256": "ccbfb486db1a6e3a6917aa5971e88b27df49c1ab061fe49898bd4b16999a76de",
         "effect": "read",
         "open_world": false,
         "external": false,
