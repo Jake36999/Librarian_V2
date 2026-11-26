@@ -7860,3 +7860,12 @@ Tickets for things that used to wait silently:
 Waiting: consolidating an overseen run's decisions into one question needs the commission.
 
 Tests: `test_tickets.py` (+11); `test_accept_failures.py` now expects the failed intake's ticket beside its failed queued record; access declarations for the three tools and the changed `agenda`.
+
+### G6 inventory and four-defect triage (2026-11-26)
+
+Read-only code audit comparing Geo-Grapher Phase 6–7 (`e71967a`) and v1.1 contracts against GT6 (`query-graph`) and GT5 (`federated-search`), plus triage of the four deferred defects from the systems-analysis README ([report](../reports/2026-11-26-geo-grapher-inventory/README.md)):
+- **GT6:** graph discovery (`list_graphs`), label/alias resolution, consumer-role/profile enforcement, paginated `search_entities`, token budgets/profile ceilings/`GreedyPacker`, `compile_task_packet`, and `cite_as` handles **exist**; `list_graphs` paging (`G-QRY-01`, **partly**) and single-item outline + part-handle fallback (`G-QRY-02`, **missing**) remain open.
+- **GT5:** bounded 2–8 graph `federated_search` (`pc-mckp-v1`), bridge candidate scoring, catalog/HTTP `bridge_proposals` review + declared `bridges` + `lineage.py` staleness, and `cross_graph` analysis **exist**; inline accepted bridges in `federated_search` (**partly**), Oracle Tier A witness gate (**missing**), and standing-policy auto-approval (**partly**) remain open.
+- **Four defects:** `t4/recon-25` (Python function deps) **confirmed** for flat MCP `direction='incoming'` lock and `DEFAULT_FILTER` dropping `candidate` edges (direct incoming calls exist); `t4/recon-26` (omitted `repo_ids`) **not reproduced** on flat MCP/`federated_search`; `t4/recon-29` (conversions persisting a source graph) **not reproduced**; `t4/recon-30` (attached repos read-only) **confirmed** on `init`/`deploy_survey` allowing direct opening/adoption of `.git` repos (attached content roots are enforced read-only).
+
+Verified: report reviewed via DeepInfra (`deepseek-ai/DeepSeek-V4.1-Flash`, run `20261126T211011-9f8dfdb2`, \$0.00265) and locally checked against exact source lines; clean-clone full `pytest tests/test_*.py` run before commit. No source files modified.
