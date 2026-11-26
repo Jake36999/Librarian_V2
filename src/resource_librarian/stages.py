@@ -20,11 +20,52 @@ import yaml
 RISKS = ("routine", "bounded", "high")
 ROLES = ("core", "clerk", "scribe")
 ENFORCE = ("report", "refuse")
-# Named checks a stage's result must pass before the item moves on. Each reads the stage's result.
-GATES: dict[str, Callable[[dict[str, Any]], str]] = {
-    "result_status": lambda result: "" if result.get("status") in (
+def _complete(result: dict[str, Any]) -> bool:
+    return result.get("status") == "complete"
+
+
+def _text_extracted(result: dict[str, Any], item: dict[str, Any]) -> str:
+    if not _complete(result) or not str(item.get("file") or "").lower().endswith(".pdf"):
+        return ""                                    # nothing to convert: a URL, Markdown or text source
+    return "" if (item.get("clean_file") or item.get("ocr")) else "parse completed without a text file"
+
+
+def _read_progress(result: dict[str, Any], item: dict[str, Any]) -> str:
+    if not _complete(result):
+        return ""
+    from .deep_read import progress
+    read = progress(item)
+    if not read["chunks"]:
+        return "read completed with no parts recorded"
+    if read["stale"]:
+        return "read completed but its progress records counts, not text"
+    return "" if read["read"] >= read["chunks"] else f"read completed with {read['chunks'] - read['read']} parts unread"
+
+
+def _draft_present(result: dict[str, Any], item: dict[str, Any]) -> str:
+    if not _complete(result):
+        return ""
+    draft = (item.get("review") or {}).get("draft") or {}
+    return "" if str(draft.get("bottom_line") or "").strip() else "review completed without a Bottom Line draft"
+
+
+def _publication_receipt(result: dict[str, Any], item: dict[str, Any]) -> str:
+    if not _complete(result) or "publication" not in result:
+        return ""
+    return "" if (result.get("publication") or {}).get("graph_id") else "publication completed without a graph id"
+
+
+# Named checks a stage's result must pass before the item moves on (the Oracle's deterministic
+# checks at each exit gate, M4). Each reads the stage's result and the item as the stage left it, and
+# returns the shortfall in words, or "". They report on the result (`gate`); none changes a status.
+GATES: dict[str, Callable[[dict[str, Any], dict[str, Any]], str]] = {
+    "result_status": lambda result, item: "" if result.get("status") in (
         "complete", "partial", "skipped", "queued", "reused") else
         f"stage ended {result.get('status')!r}",
+    "text_extracted": _text_extracted,
+    "read_progress": _read_progress,
+    "draft_present": _draft_present,
+    "publication_receipt": _publication_receipt,
 }
 
 

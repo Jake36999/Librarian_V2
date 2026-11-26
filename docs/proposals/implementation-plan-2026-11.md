@@ -219,10 +219,14 @@ Done:
 - Claim review on an independent oracle.
 - Held claims as tickets (W-VER-02, reported, nothing refused).
 
+Second part, the same day:
+- Typed exit checks at four stages: parse, read, review and publish. They report, and refuse nothing.
+- The acceptance check against evidence (W-ACC-03), in report mode.
+- OP9 investigated: not reproduced (§19).
+
 Still to do:
-- Typed stage obligations and validity checks (items 2 and 3).
+- Judging the validity of a model's individual answers beyond these checks.
 - Verdicts as rebuttable claims with rechecks (item 4).
-- OP9's cause.
 - Scope judgments for the envelope (item 5).
 
 1. **An oracle role slot and a repair role slot,** in `role_routes`, each with its own profile and qualification rule.

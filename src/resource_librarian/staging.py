@@ -990,6 +990,23 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
                               f"leave accepting it as captured to a person")
             entry["entry_receipt"] = (f"accepted by an agent while {item.get('status')!r}, before the "
                                       f"batch read it (standard/stages.yaml acceptance)")
+    if decision == "accept" and item["kind"] == "source" and not item.get("revision_of"):
+        # The note compared with its evidence before it is accepted (M4, as-is W-ACC-03): a number
+        # the Bottom Line states about the source that its own evidence contradicts is recorded on
+        # the decision. Report first: the acceptance goes ahead, as before.
+        try:
+            from . import provenance
+            draft = (item.get("review") or {}).get("draft") or {}
+            sections = {"Bottom Line": bottom_line or str(draft.get("bottom_line") or ""),
+                        "What It Solves": what_it_solves or str(draft.get("what_it_solves") or "")}
+            contradicted = [c for c in provenance.check_sections(
+                store.vault, sections, {"evidence": list(item.get("evidence") or [])})
+                if c.get("outcome") == "contradicted"]
+            if contradicted:
+                entry["provenance"] = [{"claim": c["claim"][:200], "stated": c["stated"],
+                                        "recorded": c.get("recorded")} for c in contradicted[:10]]
+        except Exception:                    # noqa: BLE001 - a check never blocks the decision
+            pass
     if decision == "approve":
         if item.get("promotion_progress"):
             raise TypeError("review and finish interrupted acceptance, or defer/reject it; do not re-ingest partial writes")

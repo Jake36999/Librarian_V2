@@ -849,8 +849,12 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                 finally:
                     ctx.extras.pop("stage_guard", None)
                 gate = CONTRACT.stage(stage)
+                try:
+                    left = store.load(item_id)
+                except (OSError, TypeError, ValueError):
+                    left = {}
                 unmet = [problem for check in (gate.gate if gate else ())
-                         if (problem := stage_contracts.GATES[check](result))]
+                         if (problem := stage_contracts.GATES[check](result, left))]
                 if unmet:
                     result = {**result, "gate": unmet}
                 # The source changed while this stage waited (a model, a fetch): what

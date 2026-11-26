@@ -7884,3 +7884,30 @@ Tests:
 - `tests/walks.py` masks ticket ids, which are random as session ids are, when it compares two runs' files.
 
 Still to do: typed stage obligations and validity checks, verdicts as rebuttable claims with rechecks, OP9's cause, and scope judgments for the envelope.
+
+### M4, second part: exit checks, the note against its evidence, and OP9 (2026-11-26)
+
+**Typed exit checks** (`stages.GATES`, declared per stage in `standard/stages.yaml`). Each check now reads the stage's result and the item as the stage left it, and applies only to a stage that reports complete:
+- `text_extracted` (parse): a PDF has a text file;
+- `read_progress` (read): parts were recorded, the progress records text and not only counts, and none is left unread;
+- `draft_present` (review): a Bottom Line draft exists;
+- `publication_receipt` (publish): the publication has a graph id.
+
+A shortfall is recorded on the stage's result (`gate`). No status changes.
+
+**The note against its evidence at acceptance** (as-is W-ACC-03). When a source is accepted, the number checks that folder review already uses (`provenance.check_sections`) run on its Bottom Line and "what it solves". A figure the evidence contradicts is recorded on the decision (`provenance`), and the acceptance goes ahead.
+
+**OP9, why three claim reviews did not complete on 20 November: not reproduced.**
+- The run's evidence (Resource-Library session `20261120-0911-8f0aa5`, the usage log):
+  - all 24 review calls completed at the provider, on `google/gemma-4-26B-A4B-it`;
+  - two verdicts came back `unchecked` with an empty reason;
+  - the library's configured reviewer is `route_review = zai-org/GLM-5.3`, so inside the Core the reviews ran on the Core's Clerk instead (OP8, fixed in `8489387`).
+- Re-running the two claims today, with their passages rebuilt from the source PDF as `_review_claims` builds them: 20 of 20 hold on Gemma and 4 of 4 on GLM-5.3, for a few cents within the approved DeepInfra pool.
+- The quote locator (`clerk.locate`) is unchanged since then and finds both quotes.
+- The likeliest cause is an occasional malformed reply from the Clerk's model. It cannot be confirmed, because the reason was not recorded until `81914de` (19:38 that day, after the run).
+- What now guards against it:
+  - the reason is recorded;
+  - the review runs on the library's own route inside the Core;
+  - an unfinished review opens a `held_claim` ticket (M4, first part).
+
+Tests: `test_stages.py` (+2).

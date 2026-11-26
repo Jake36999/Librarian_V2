@@ -111,3 +111,34 @@ def test_with_enforce_refuse_only_a_person_accepts_a_captured_source(staged, mon
     accepted = REGISTRY.call("staging_decide", {"item_ids": ["s-a"], "decision": "accept"},
                              ctx(staged))["results"][0]                  # a person, as captured
     assert accepted["status"] == "accepted", accepted
+
+
+def test_the_exit_checks_report_a_completed_stage_that_left_nothing_behind():
+    # M4: the Oracle's deterministic checks at each exit gate; they report, and change no status.
+    g = stages.GATES
+    done = {"status": "complete"}
+    assert g["text_extracted"](done, {"file": "Inbox/paper.pdf"}) == "parse completed without a text file"
+    assert g["text_extracted"](done, {"file": "Inbox/paper.pdf", "clean_file": "x.md"}) == ""
+    assert g["text_extracted"](done, {"file": "Inbox/notes.md"}) == ""
+    assert g["draft_present"](done, {"review": {"draft": {"bottom_line": ""}}}).startswith("review completed")
+    assert g["draft_present"](done, {"review": {"draft": {"bottom_line": "A paper."}}}) == ""
+    assert g["publication_receipt"]({**done, "publication": {"graph_id": ""}}, {}).startswith("publication")
+    assert g["publication_receipt"]({**done, "publication": {"graph_id": "g1"}}, {}) == ""
+    # A stage that did not complete is judged by its status, not by these.
+    assert g["draft_present"]({"status": "partial"}, {}) == ""
+    contract = stages.load()
+    assert "read_progress" in contract.stage("read").gate
+    assert "publication_receipt" in contract.stage("publish").gate
+
+
+def test_an_acceptance_records_a_number_its_evidence_contradicts(staged, monkeypatch):
+    # M4 (as-is W-ACC-03): the note is compared with its evidence; the acceptance still goes ahead.
+    from resource_librarian import provenance, staging
+    from test_staging import ctx
+    monkeypatch.setattr(provenance, "check_sections", lambda vault, sections, fm: [
+        {"claim": "it has 12 files", "stated": 12, "recorded": 9, "outcome": "contradicted"}])
+    REGISTRY.call("staging_review", {"item_id": "s-a"}, ctx(staged))
+    out = REGISTRY.call("staging_decide", {"item_ids": ["s-a"], "decision": "accept"}, ctx(staged))["results"][0]
+    assert out["status"] == "accepted", out
+    entry = staging.StagingStore(staged).load("s-a")["history"][-1]
+    assert entry["provenance"] == [{"claim": "it has 12 files", "stated": 12, "recorded": 9}]

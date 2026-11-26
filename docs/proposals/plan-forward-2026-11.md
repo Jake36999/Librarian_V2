@@ -16,7 +16,7 @@
 |---|---|
 | W1 Workflows as data | Done for phases, macros and step fields (`f6a85d6`, `f61e30c`, `af45e7c`). **Not done: the coded flows** (intake, batch stages, folder review) are still Python, not pipelines. OP16 is only partly closed; see W1b. |
 | W2 Canvas service | Done (`0cb1e7e`, `2829afb`). The diagram-workflows proposal builds on it (W2b). |
-| W7 Research-session fixes | Partial: OP1, F2 and OP8 implemented in `8489387`. OP3–OP5, OP7, OP9 and the remaining failure-branch checks are open. The live GLM-5.3 review-route confirmation remains open. |
+| W7 Research-session fixes | Partial: OP1, F2 and OP8 implemented in `8489387`. OP9 investigated 26 November: not reproduced (unified plan §19, M4). OP3–OP5, OP7 and the remaining failure-branch checks are open. The live GLM-5.3 review-route confirmation remains open. |
 | W1b, W2b, W3–W6, W8 and W9 | Runtime implementation not started. The existing manifest and diagram examples are prototypes, not enforcement. |
 
 **Current authorised work:** a requirements/evidence baseline followed by one comprehensive,
