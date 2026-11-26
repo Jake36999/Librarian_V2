@@ -381,4 +381,4 @@ use_cases:
       minimal_guarantee: "A missing routing model or crash before done (outcome_unknown) pauses at the step; failed steps show compensations newest-first without auto-running them"
       open_questions: "Where do high-risk holds or paused steps go when no interactive caller or tier 0 is present?"
     boundaries:
-      - {at: dpin, values: ["list = 200 items", "201 items", "closure altered mid-run"], expect: "loops truncate at MAX_EACH = 200; altered closure or unaccepted workflow refuses run/resume"}
+      - {at: runsteps, values: ["200 items in each-list", "201 items in each-list", "closure altered mid-run"], expect: "200 runs all 200 with truncated=false; 201 slices to first 200 with considered=200, truncated=true (never refused at admission); altered closure refuses run/resume"}

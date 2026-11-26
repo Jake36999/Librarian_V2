@@ -12,12 +12,12 @@ nodes:
   - {id: cand, kind: activity, lane: Overseer (tier 0), step: 1, label: "opens add_capability session and names candidate from capability_candidates or user URL (candidate phase)"}
   - {id: ingest, kind: ref, lane: Core, step: 2, use_case: source-intake, label: "ingests candidate repository so it is read as a source (assess phase)"}
   - {id: assess, kind: activity, lane: Overseer (tier 0), step: 3, label: "records licence, maintenance, claims and caveats in plan.assessment (mandatory ingest before exit)"}
-  - {id: propose, kind: activity, lane: Core, step: 4, label: "records exact pinned command, args and ${ENV} secret names via capability_propose (propose phase)"}
+  - {id: propose, kind: activity, lane: Overseer (tier 0), step: 4, label: "submits capability_propose; Core validates pinned command, args and ${ENV} secret names (propose phase)"}
   - {id: ask, kind: activity, lane: Owner, step: 5, label: "answers capability_install prompt (yes/no) — only person decision installs or declines"}
-  - {id: dinstall, kind: decision, lane: Owner, label: "did the person confirm install ('yes')?"}
+  - {id: dinstall, kind: decision, lane: Core, label: "did the person confirm install ('yes') and is the [mcp] extra available?"}
   - {id: enable, kind: activity, lane: Core, step: 6, label: "enables server in McpManager for this library only and returns connected/tools status"}
   - {id: decline, kind: activity, lane: Core, label: "marks capability status='declined' (finished outcome)"}
-  - {id: hold, kind: activity, lane: Core, label: "returns waiting_for person answer; install gate stays open"}
+  - {id: hold, kind: activity, lane: Core, label: "returns waiting_for person answer or PERMISSION_DENIED (missing [mcp] extra); install gate stays open"}
   - {id: close, kind: activity, lane: Overseer (tier 0), step: 7, label: "closes add_capability session (check_out)"}
   - {id: e1, kind: end, outcome: success, label: "MCP capability enabled for this library, or cleanly declined by person"}
   - {id: e_paused, kind: end, outcome: paused, label: "waiting on source capture, person install decision, or [mcp] extra"}
@@ -30,9 +30,9 @@ edges:
   - {from: assess, to: propose}
   - {from: propose, to: ask}
   - {from: ask, to: dinstall}
-  - {from: dinstall, to: enable, guard: "yes: installed"}
+  - {from: dinstall, to: enable, guard: "yes: installed and [mcp] available"}
   - {from: dinstall, to: decline, guard: "no: declined", ext: 5a}
-  - {from: dinstall, to: hold, guard: "unanswered / awaiting yes-no", ext: 5b}
+  - {from: dinstall, to: hold, guard: "unanswered / awaiting yes-no, or [mcp] extra missing (PERMISSION_DENIED)", ext: 5b}
   - {from: decline, to: close}
   - {from: enable, to: close}
   - {from: hold, to: e_paused}

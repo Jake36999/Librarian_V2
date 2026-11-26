@@ -14,14 +14,14 @@ nodes:
   - {id: query, kind: activity, lane: Core, step: 2, label: "runs Search engine (filters eliminate first, then SQLite FTS + optional RRF vectors, one entry per note; zero generative calls)"}
   - {id: work, kind: activity, lane: Core, label: "runs search_work across staging/sessions/activity (requires >= 2/3 of query words)"}
   - {id: dthird, kind: decision, lane: Core, label: "is third-party raw source access permitted (route configured or person_call)?"}
-  - {id: refused, kind: activity, lane: Core, label: "refuses with THIRD_PARTY_ROUTE_REQUIRED or CONSTRAINTS_ELIMINATE error"}
+  - {id: refused, kind: activity, lane: Core, label: "refuses unpermitted raw third-party source read (THIRD_PARTY_ROUTE_REQUIRED)"}
   - {id: dhit, kind: decision, lane: Core, label: "did any candidate match filters and score above zero?"}
-  - {id: empty, kind: activity, lane: Core, label: "returns empty results with coverage='uncovered' and removed_by_filters names (no guess filled in)"}
+  - {id: empty, kind: activity, lane: Core, label: "returns empty results (search returns coverage='uncovered' and removed_by_filters; search_work returns empty results list; no guess filled in)"}
   - {id: read, kind: activity, lane: Core, step: 3, label: "returns ranked hits with why-matched explanations; caller opens note (get_note) or verified section"}
   - {id: show, kind: activity, lane: Web UI, step: 4, label: "displays results, verdict, facets and note text to the person"}
   - {id: e1, kind: end, outcome: success, label: "findable notes or sources read read-only with zero generative calls on search"}
   - {id: e_empty, kind: end, outcome: partial, label: "no matching notes; honest uncovered verdict returned"}
-  - {id: e_refused, kind: end, outcome: refused, label: "invalid filter or unconfigured third-party raw access refused"}
+  - {id: e_refused, kind: end, outcome: refused, label: "unconfigured third-party raw access refused"}
 edges:
   - {from: s, to: ask}
   - {from: ask, to: dsurface}

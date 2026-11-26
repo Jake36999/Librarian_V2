@@ -20,25 +20,25 @@ nodes:
   - {id: indexsearch, kind: activity, lane: Core, step: 2, label: "applies CONSTRAINTS_ELIMINATE filters, runs deterministic index + RRF search (one entry per note)"}
   - {id: ref_graph, kind: ref, lane: Geo-Grapher, use_case: geo-grapher/to-be/query-graph, label: "queries graph entity or paper section by cite_as handle (UC-G3)"}
   - {id: dperm, kind: decision, lane: Core, label: "are index healthy and source access permitted?"}
-  - {id: refused, kind: activity, lane: Core, label: "refuses invalid filter or unpermitted raw third-party source cleanly"}
+  - {id: refused, kind: activity, lane: Core, label: "refuses invalid filter/query or unpermitted raw third-party source cleanly"}
   - {id: ref_doctor, kind: ref, lane: Doctor, use_case: doctor, label: "repairs broken index or unreadable local source through a ticket"}
   - {id: dhit, kind: decision, lane: Core, label: "at least 1 matching result found?"}
   - {id: empty, kind: activity, lane: Core, label: "returns empty result with coverage='uncovered' and removed_by_filters list"}
   - {id: pack, kind: activity, lane: Core, step: 3, label: "assembles note/passage payload with why-matched, pinned source_refs, and revision"}
   - {id: show, kind: activity, lane: Web UI, step: 4, label: "renders ranked hits, source locators and readable note text to person"}
   - {id: e1, kind: end, outcome: success, label: "findable note, passage or graph entity returned read-only with locators"}
-  - {id: e_partial, kind: end, outcome: partial, label: "no hits match constraints or graph unreadable; honest gap shown"}
-  - {id: e_refused, kind: end, outcome: refused, label: "invalid filter, missing graph permission, or unresolved ticket refused cleanly"}
+  - {id: e_partial, kind: end, outcome: partial, label: "no hits match constraints; honest uncovered gap shown"}
+  - {id: e_refused, kind: end, outcome: refused, label: "invalid filter, missing graph/source permission, or unresolved ticket refused cleanly"}
 edges:
   - {from: s, to: query}
   - {from: query, to: droute}
   - {from: droute, to: indexsearch, guard: "library index or work search / note read"}
   - {from: droute, to: ref_graph, guard: "code or paper graph lookup", ext: 2a}
   - {from: ref_graph, to: pack, guard: "success"}
-  - {from: ref_graph, to: e_partial, guard: "refused"}
+  - {from: ref_graph, to: e_refused, guard: "refused"}
   - {from: indexsearch, to: dperm}
   - {from: dperm, to: dhit, guard: "ok"}
-  - {from: dperm, to: refused, guard: "CONSTRAINTS_ELIMINATE or THIRD_PARTY_ROUTE_REQUIRED", ext: 3a}
+  - {from: dperm, to: refused, guard: "invalid filter/query or THIRD_PARTY_ROUTE_REQUIRED", ext: 3a}
   - {from: refused, to: e_refused}
   - {from: dperm, to: ref_doctor, guard: "corrupt index or unreadable note", ext: 3b}
   - {from: ref_doctor, to: indexsearch, guard: "resolved"}

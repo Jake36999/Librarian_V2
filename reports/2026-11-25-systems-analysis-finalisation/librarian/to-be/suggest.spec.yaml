@@ -6,7 +6,7 @@ kind: activity
 title: Suggest work for the vault (proposed)
 problem:
   symptom: "As-is: silent fallback if read_project fails, halving phase budgets, and blocking on Owner promotion."
-  root: "Compile a single envelope, read project files strictly read-only with explicit gap if unavailable, research and verify suggestions through the Oracle, and land promotion on the Owner's agenda."
+  root: "Compile a single envelope, read project files strictly read-only with explicit gap if unavailable, research and verify suggestions through the Oracle before agenda promotion, and never allow an unverified or empty agenda alone to declare success."
 lanes:
   - Owner
   - Overseer (tier 0)
@@ -21,10 +21,13 @@ nodes:
   - {id: noteonly, kind: activity, lane: Core, label: "records explicit workspace_access gap and reads Project note only (no silent drop)"}
   - {id: research, kind: activity, lane: Lead (tier 1), step: 3, label: "searches corpus within manifest budget, judges candidates with reasons, and drafts suggestion Offering"}
   - {id: ref_oracle, kind: ref, lane: Oracle, step: 4, use_case: oracle, label: "verifies quotes, source_refs and grounding of suggested work on a distinct route"}
-  - {id: ref_agenda, kind: ref, lane: Owner, step: 5, use_case: agenda, label: "presents staged suggestion Offering on Owner's agenda for promotion decision"}
+  - {id: ref_agenda, kind: ref, lane: Owner, step: 5, use_case: agenda, label: "presents staged Oracle-verified suggestion Offering on Owner's agenda for promotion decision"}
+  - {id: dpromote, kind: decision, lane: Core, label: "did the Owner approve promotion of the Oracle-verified suggestion Offering?"}
+  - {id: dprom_ev, kind: decision, lane: Core, label: "does Core hold verified promotion evidence for this Offering?"}
   - {id: deliver, kind: activity, lane: Overseer (tier 0), step: 6, label: "delivers verified suggestions, explicit gaps and spend"}
-  - {id: e1, kind: end, outcome: success, label: "Oracle-checked work suggestions delivered and decided on agenda"}
-  - {id: e_paused, kind: end, outcome: paused, label: "paused on agenda decision or missing Oracle route"}
+  - {id: e1, kind: end, outcome: success, label: "Oracle-checked work suggestions promoted and delivered"}
+  - {id: e_partial, kind: end, outcome: partial, label: "Oracle-verified suggestions delivered with Offering declined or deferred on agenda"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused awaiting agenda decision, completion evidence, or distinct Oracle route"}
   - {id: e_escalated, kind: end, outcome: escalated, label: "critical fault escalated with ticket"}
 edges:
   - {from: s, to: ask}
@@ -36,12 +39,16 @@ edges:
   - {from: research, to: ref_oracle}
   - {from: ref_oracle, to: ref_agenda, guard: "success"}
   - {from: ref_oracle, to: research, guard: "shortfall", ext: 4a}
-  - {from: ref_oracle, to: ref_agenda, guard: "paused", ext: 4b}
+  - {from: ref_oracle, to: e_paused, guard: "paused", ext: 4b}
   - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 4c}
-  - {from: ref_agenda, to: deliver, guard: "success"}
-  - {from: ref_agenda, to: deliver, guard: "nothing held"}
-  - {from: ref_agenda, to: e_paused, guard: "paused"}
-  - {from: ref_agenda, to: e_escalated, guard: "escalated"}
+  - {from: ref_agenda, to: dpromote, guard: "success"}
+  - {from: dpromote, to: deliver, guard: "approved and promoted"}
+  - {from: dpromote, to: e_partial, guard: "declined or deferred", ext: 5a}
+  - {from: ref_agenda, to: dprom_ev, guard: "nothing held", ext: 5b}
+  - {from: dprom_ev, to: deliver, guard: "yes: verified already promoted"}
+  - {from: dprom_ev, to: e_paused, guard: "no: no promotion evidence; keep paused"}
+  - {from: ref_agenda, to: e_paused, guard: "paused", ext: 5c}
+  - {from: ref_agenda, to: e_escalated, guard: "escalated", ext: 5d}
   - {from: deliver, to: e1}
 evidence:
   - "builds-on.md; phases.yaml suggest; initiators.table.yaml UC12; oracle & agenda specs."

@@ -6,7 +6,7 @@ kind: activity
 title: Add a capability (an MCP server) (proposed)
 problem:
   symptom: "As-is: capability assessment relies on ad-hoc source reads, and unattended/chat install asks timeout instead of landing cleanly on the Owner's agenda."
-  root: "Assess the candidate repository as an ingested source under UC1, have the Oracle check licence/scope/security risks, hold the high-risk install always on the Owner's agenda, and verify connection post-install."
+  root: "Assess the candidate repository as an ingested source under UC1, require assessment and Oracle security/licence check before agenda holding (never bypassing assessment or Oracle on pre-Oracle pauses), hold the high-risk install always on the Owner's agenda, and verify connection post-install."
 lanes:
   - Owner
   - Overseer (tier 0)
@@ -17,24 +17,26 @@ nodes:
   - {id: s, kind: start, label: start}
   - {id: cand, kind: activity, lane: Overseer (tier 0), step: 1, label: "names candidate from curated capability_candidates or user-given URL"}
   - {id: ref_ingest, kind: ref, lane: Core, step: 2, use_case: ingestion, label: "ingests and screens candidate repository read-only as a third-party source (UC1)"}
+  - {id: hold_ingest, kind: activity, lane: Core, label: "holds paused candidate-repo ingestion at recorded resume point on Owner's agenda before assessment"}
   - {id: assess, kind: activity, lane: Lead (tier 1), step: 3, label: "compiles capability manifest proposal (pinned command, args, ${ENV} secrets only, scope)"}
   - {id: ref_oracle, kind: ref, lane: Oracle, step: 4, use_case: oracle, label: "checks security/licence assessment and secret-free definition on a distinct route"}
   - {id: hold, kind: activity, lane: Core, step: 5, label: "places high-risk install decision on Owner's agenda (never bypassed by standing policy or agent)"}
-  - {id: ref_agenda, kind: ref, lane: Owner, step: 6, use_case: agenda, label: "Owner explicitly approves or declines MCP server installation on agenda"}
-  - {id: dinstall, kind: decision, lane: Core, label: "did Owner approve installation and did McpManager enable cleanly?"}
+  - {id: ref_agenda, kind: ref, lane: Owner, step: 6, use_case: agenda, label: "Owner explicitly approves, declines, or defers MCP server installation on agenda"}
+  - {id: dinstall, kind: decision, lane: Core, label: "did Owner approve installation on the agenda and is the [mcp] extra available?"}
   - {id: enable, kind: activity, lane: Core, step: 7, label: "pins capability definition in McpManager for this library and verifies health; closes session"}
   - {id: declined, kind: activity, lane: Core, label: "records declined decision and closes session cleanly"}
   - {id: e1, kind: end, outcome: success, label: "approved MCP capability pinned and active"}
   - {id: e_declined, kind: end, outcome: declined, label: "capability install cleanly declined by Owner"}
-  - {id: e_paused, kind: end, outcome: paused, label: "held on Owner agenda awaiting install decision or Oracle route"}
-  - {id: e_escalated, kind: end, outcome: escalated, label: "security finding or install failure escalated with ticket"}
+  - {id: e_paused, kind: end, outcome: paused, label: "held on Owner agenda awaiting intake/install decision or distinct Oracle route"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "security finding, missing [mcp] extra, or install failure escalated with ticket"}
 edges:
   - {from: s, to: cand}
   - {from: cand, to: ref_ingest}
   - {from: ref_ingest, to: assess, guard: "success"}
   - {from: ref_ingest, to: assess, guard: "reused"}
   - {from: ref_ingest, to: assess, guard: "partial", ext: 2a}
-  - {from: ref_ingest, to: ref_agenda, guard: "paused", ext: 2b}
+  - {from: ref_ingest, to: hold_ingest, guard: "paused", ext: 2b}
+  - {from: hold_ingest, to: e_paused}
   - {from: ref_ingest, to: e_escalated, guard: "escalated", ext: 2c}
   - {from: assess, to: ref_oracle}
   - {from: ref_oracle, to: hold, guard: "success"}
@@ -43,11 +45,13 @@ edges:
   - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 4c}
   - {from: hold, to: ref_agenda}
   - {from: ref_agenda, to: dinstall, guard: "success"}
-  - {from: ref_agenda, to: e_paused, guard: "nothing held"}
-  - {from: ref_agenda, to: e_paused, guard: "paused"}
-  - {from: ref_agenda, to: e_escalated, guard: "escalated"}
-  - {from: dinstall, to: enable, guard: "approved"}
-  - {from: dinstall, to: declined, guard: "declined or [mcp] unavailable", ext: 6a}
+  - {from: ref_agenda, to: e_paused, guard: "nothing held", ext: 6a}
+  - {from: ref_agenda, to: e_paused, guard: "paused", ext: 6b}
+  - {from: ref_agenda, to: e_escalated, guard: "escalated", ext: 6c}
+  - {from: dinstall, to: enable, guard: "approved by Owner and [mcp] available"}
+  - {from: dinstall, to: declined, guard: "declined by Owner", ext: 6d}
+  - {from: dinstall, to: e_paused, guard: "deferred by Owner", ext: 6e}
+  - {from: dinstall, to: e_escalated, guard: "approved, but [mcp] extra unavailable or connection failed", ext: 6f}
   - {from: declined, to: e_declined}
   - {from: enable, to: e1}
 evidence:

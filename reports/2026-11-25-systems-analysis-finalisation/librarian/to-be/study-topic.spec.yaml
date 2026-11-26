@@ -16,7 +16,7 @@ nodes:
   - {id: s, kind: start, label: start}
   - {id: goal, kind: activity, lane: Owner, step: 1, label: "states learning goal, target deadline and answers 2-3 baseline diagnostic questions"}
   - {id: focus, kind: activity, lane: Overseer (tier 0), step: 2, label: "maps library notes/passages (plus readable graphs if present) and selects bounded focus concepts"}
-  - {id: practice, kind: activity, lane: Core, step: 3, label: "runs source-anchored practice rounds; verifies every passage quote/source_ref and writes understanding_record"}
+  - {id: practice, kind: activity, lane: Overseer (tier 0), step: 3, label: "runs source-anchored practice rounds with Owner; Core verifies every passage quote/source_ref and writes understanding_record"}
   - {id: ddone, kind: decision, lane: Core, label: "has each focus concept an understanding_record (or explicit stop) within session budget?"}
   - {id: park, kind: activity, lane: Core, label: "records covered concepts and remaining focus concepts on the session for clean continuation"}
   - {id: consolidate, kind: activity, lane: Owner, step: 4, label: "explains consolidated understanding in own words; recorded as consolidate understanding_record"}

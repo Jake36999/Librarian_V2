@@ -11,16 +11,17 @@ nodes:
   - {id: s, kind: start, label: start}
   - {id: open, kind: activity, lane: Overseer (tier 0), step: 1, label: "opens a suggest session and ensures Project note exists (frame, budget 24)"}
   - {id: daccess, kind: decision, lane: Core, label: "is read_project access enabled for this project's files?"}
-  - {id: readproj, kind: activity, lane: Core, step: 2, label: "reads project files via read_project, runs search(intent='orient'), and opens briefs in map (budget 20)"}
+  - {id: readproj, kind: activity, lane: Overseer (tier 0), step: 2, label: "reads project files via Core read_project, runs search(intent='orient'), and opens briefs in map (budget 20)"}
   - {id: noteonly, kind: activity, lane: Core, label: "skips project files silently on Refusal and maps from Project note only"}
   - {id: search, kind: activity, lane: Overseer (tier 0), step: 3, label: "runs research_round + checkpoint (search, budget 40)"}
   - {id: judge, kind: activity, lane: Overseer (tier 0), step: 4, label: "decides every undecided candidate (judge, budget 40)"}
   - {id: dbudget, kind: decision, lane: Core, label: "is phase budget sufficient and every candidate decided?"}
   - {id: park, kind: activity, lane: Core, label: "refuses exit via PHASE_GATE or parks session for Owner"}
-  - {id: synth, kind: activity, lane: Core, step: 5, label: "records synthesis and drafts Offering with suggestions (synthesise, budget 16)"}
-  - {id: promote, kind: activity, lane: Owner, step: 6, label: "reviews and promotes the staged Offering (PERSON_CONFIRMS)"}
+  - {id: synth, kind: activity, lane: Overseer (tier 0), step: 5, label: "records synthesis and drafts Offering checked verbatim by Core (synthesise, budget 16)"}
+  - {id: promote, kind: activity, lane: Owner, step: 6, label: "reviews staged Offering via promote_offering (PERSON_CONFIRMS)"}
+  - {id: dprom, kind: decision, lane: Core, label: "is the staged Offering promoted or declined by the person?"}
   - {id: close, kind: activity, lane: Overseer (tier 0), step: 7, label: "closes brief(s) and closes session (check_out, budget 14)"}
-  - {id: e1, kind: end, outcome: success, label: "evidenced suggestions promoted and session closed"}
+  - {id: e1, kind: end, outcome: success, label: "evidenced suggestions promoted (or declined cleanly) and session closed"}
   - {id: e_paused, kind: end, outcome: paused, label: "parked on budget limit, PHASE_GATE, or pending promotion"}
 edges:
   - {from: s, to: open}
@@ -35,8 +36,10 @@ edges:
   - {from: dbudget, to: park, guard: "no: budget spent or undecided candidates", ext: 4a}
   - {from: park, to: e_paused}
   - {from: synth, to: promote}
-  - {from: promote, to: close}
+  - {from: promote, to: dprom}
+  - {from: dprom, to: close, guard: "promoted (or declined)"}
+  - {from: dprom, to: park, guard: "still staged / PERSON_CONFIRMS open", ext: 6a}
   - {from: close, to: e1}
 evidence:
   - "src/resource_librarian/standard/phases.yaml:49,88-93 (suggest = frame, map, search, judge, synthesise, check_out; extras open_brief, read_project)."
-  - "src/resource_librarian/session.py:1001-1041 (_gate_frame, _gate_map suggest branch)."
+  - "src/resource_librarian/session.py:1001-1097 (_gate_frame, _gate_map suggest branch, _gate_synthesise staged Offering gate)."

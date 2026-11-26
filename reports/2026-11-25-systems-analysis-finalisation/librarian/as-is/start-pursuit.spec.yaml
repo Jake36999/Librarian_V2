@@ -11,12 +11,12 @@ nodes:
   - {id: s, kind: start, label: start}
   - {id: frame, kind: activity, lane: Overseer (tier 0), step: 1, label: "opens a start_pursuit session and creates Project note (frame, budget 24)"}
   - {id: inv, kind: activity, lane: Overseer (tier 0), step: 2, label: "records kind-specific pursuit inventory (modules, role 90-days, deliverables) via update_plan (inventory, budget 18)"}
-  - {id: plan, kind: activity, lane: Core, step: 3, label: "adds at least one dated milestone via task_add, or records no_dates reason (plan, budget 16)"}
-  - {id: seed, kind: activity, lane: Overseer (tier 0), step: 4, label: "lists initial reading in plan.ingested and ingests or queues them in-session (seed, budget 20)"}
+  - {id: plan, kind: activity, lane: Overseer (tier 0), step: 3, label: "adds at least one dated milestone via Core task_add, or records no_dates reason (plan, budget 16)"}
+  - {id: seed, kind: activity, lane: Overseer (tier 0), step: 4, label: "attempts ingest / queue_source for initial reading and records plan.ingested (seed, budget 20)"}
+  - {id: dbroker, kind: decision, lane: Core, label: "did Broker Ask allow ingest / queue_source within 150s (or was ingested='none')?"}
+  - {id: timeout, kind: activity, lane: Core, label: "fails write with PERMISSION_UNANSWERED at 150s or TIER_REFUSED"}
   - {id: dseed, kind: decision, lane: Core, label: "were listed seed sources actually ingested or queued in this session (or ingested='none')?"}
   - {id: fixseed, kind: activity, lane: Core, label: "blocks seed exit with PHASE_GATE until ingest / queue_source called (self-reported list rejected)"}
-  - {id: dbroker, kind: decision, lane: Core, label: "did Broker Ask allow ingest / queue_source within 150s?"}
-  - {id: timeout, kind: activity, lane: Core, label: "fails write with PERMISSION_UNANSWERED at 150s or TIER_REFUSED"}
   - {id: checkout, kind: activity, lane: Overseer (tier 0), step: 5, label: "closes session directly via close_session (check_out, budget 14; skips brief check)"}
   - {id: e1, kind: end, outcome: success, label: "pursuit Project note, dated milestone and seeded leads saved"}
   - {id: e_paused, kind: end, outcome: paused, label: "blocked at PHASE_GATE or 150s Broker timeout"}
@@ -25,13 +25,13 @@ edges:
   - {from: frame, to: inv}
   - {from: inv, to: plan}
   - {from: plan, to: seed}
-  - {from: seed, to: dseed}
-  - {from: dseed, to: dbroker, guard: "yes: verified ingest/queue_source or 'none'"}
-  - {from: dseed, to: fixseed, guard: "no: PHASE_GATE blocks self-reported list", ext: 4a}
-  - {from: fixseed, to: e_paused}
-  - {from: dbroker, to: checkout, guard: "answered or 'none'"}
-  - {from: dbroker, to: timeout, guard: "unanswered at 150s or TIER_REFUSED", ext: 4b}
+  - {from: seed, to: dbroker}
+  - {from: dbroker, to: dseed, guard: "answered or 'none'"}
+  - {from: dbroker, to: timeout, guard: "unanswered at 150s or TIER_REFUSED", ext: 4a}
   - {from: timeout, to: e_paused}
+  - {from: dseed, to: checkout, guard: "yes: verified ingest/queue_source or 'none'"}
+  - {from: dseed, to: fixseed, guard: "no: PHASE_GATE blocks self-reported list", ext: 4b}
+  - {from: fixseed, to: e_paused}
   - {from: checkout, to: e1}
 evidence:
   - "src/resource_librarian/standard/phases.yaml:51-53,168-195 (start_pursuit = frame, inventory, plan, seed, check_out)."

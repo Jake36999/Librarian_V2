@@ -10,16 +10,17 @@ lanes:
 nodes:
   - {id: s, kind: start, label: start}
   - {id: trigger, kind: activity, lane: Core, step: 1, label: "starts scheduled pipeline (weekly-review or clear-enrichment-backlog) with no interactive person present"}
-  - {id: validate, kind: activity, lane: Core, step: 2, label: "validates pipeline closure, acceptance status and caller tier (workflows.Runner.start; MF-017)"}
-  - {id: dpin, kind: decision, lane: Core, label: "is closure valid, accepted and within tier, and each loop <= 200 items?"}
-  - {id: refused, kind: activity, lane: Core, label: "refuses start with PERSON_CONFIRMS, TIER_REFUSED or DefinitionError (list capped at MAX_EACH = 200)"}
-  - {id: runsteps, kind: activity, lane: Core, step: 3, label: "pins closure texts and executes each step with durable dispatch/done log entries (MF-018)"}
-  - {id: droute, kind: decision, lane: Model host, label: "does a reasoned route step need the routing model, or did a crash leave outcome_unknown?"}
-  - {id: routeok, kind: activity, lane: Model host, step: 4, label: "chooses closed route option via Router.choose (or declared condition) and completes steps"}
-  - {id: pause, kind: activity, lane: Core, label: "pauses run on missing router, cancel or outcome_unknown; awaits person run_resume(choices) or Owner agenda"}
+  - {id: validate, kind: activity, lane: Core, step: 2, label: "validates pipeline closure, acceptance status, inputs and caller tier (workflows.Runner.start; MF-017)"}
+  - {id: dpin, kind: decision, lane: Core, label: "is closure valid, accepted, inputs valid and within caller tier?"}
+  - {id: refused, kind: activity, lane: Core, label: "refuses start with PERSON_CONFIRMS, TIER_REFUSED or DefinitionError"}
+  - {id: runsteps, kind: activity, lane: Core, step: 3, label: "pins closure texts, executes steps with durable dispatch/done checkpoints (MF-018), evaluates scripted declared routes, and slices each-loops at MAX_EACH = 200 (recording considered and truncated)"}
+  - {id: dunknown, kind: decision, lane: Core, label: "did a prior crash leave outcome_unknown or did a person cancel?"}
+  - {id: dreason, kind: decision, lane: Core, label: "does the step require a reasoned route (decide: reason)?"}
+  - {id: routeok, kind: activity, lane: Model host, step: 4, label: "chooses closed route option via Router.choose when reasoned routing is requested"}
+  - {id: pause, kind: activity, lane: Core, label: "pauses run on missing router (LookupError), cancel or MF-018 outcome_unknown; awaits person run_resume(choices) or Owner agenda"}
   - {id: dfail, kind: decision, lane: Core, label: "did all required steps satisfy acceptance_criteria without RunFailed?"}
   - {id: comp, kind: activity, lane: Core, label: "records failed step and lists declared compensations newest-first (shown to person, never auto-run)"}
-  - {id: finish, kind: activity, lane: Core, step: 5, label: "writes finished event + outputs to .librarian/runs/<id>.jsonl (and backlog item if unattended high-risk)"}
+  - {id: finish, kind: activity, lane: Core, step: 5, label: "writes finished event + outputs (including considered and truncated counts) to .librarian/runs/<id>.jsonl (and backlog item if unattended high-risk)"}
   - {id: e1, kind: end, outcome: success, label: "scheduled pipeline finished with pinned outputs"}
   - {id: e_paused, kind: end, outcome: paused, label: "paused awaiting routing model or person run_resume(choices)"}
   - {id: e_failed, kind: end, outcome: escalated, label: "refused start or failed step with declared compensations shown"}
@@ -30,15 +31,18 @@ edges:
   - {from: dpin, to: runsteps, guard: "valid, accepted and within tier"}
   - {from: dpin, to: refused, guard: "unaccepted, TIER_REFUSED, or invalid closure", ext: 2a}
   - {from: refused, to: e_failed}
-  - {from: runsteps, to: droute}
-  - {from: droute, to: routeok, guard: "declared route or routing model available"}
-  - {from: droute, to: pause, guard: "no routing model or MF-018 outcome_unknown", ext: 3a}
+  - {from: runsteps, to: dunknown}
+  - {from: dunknown, to: dreason, guard: "no: ready to run"}
+  - {from: dunknown, to: pause, guard: "yes: MF-018 outcome_unknown or cancelled", ext: 3a}
   - {from: pause, to: e_paused}
+  - {from: dreason, to: routeok, guard: "yes: reasoned route with routing model configured"}
+  - {from: dreason, to: dfail, guard: "no: action, sub-workflow, or scripted declared route", ext: 4a}
+  - {from: dreason, to: pause, guard: "reasoned route requested but no routing model configured (LookupError)", ext: 4b}
   - {from: routeok, to: dfail}
   - {from: dfail, to: finish, guard: "yes: finished"}
-  - {from: dfail, to: comp, guard: "no: RunFailed / not_accepted", ext: 4a}
+  - {from: dfail, to: comp, guard: "no: RunFailed / not_accepted", ext: 4c}
   - {from: comp, to: e_failed}
   - {from: finish, to: e1}
 evidence:
   - "src/resource_librarian/standard/pipelines/{weekly-review,clear-enrichment-backlog}.yaml."
-  - "src/resource_librarian/workflows.py:116,282-300,864-1194 (MAX_EACH=200, MF-017 Pinned, MF-018 outcome_unknown, Router, compensations)."
+  - "src/resource_librarian/workflows.py:116,282-300,864-1194 (MAX_EACH=200 slices at loop in _steps/_route, MF-017 Pinned, MF-018 outcome_unknown in Core, Router.choose in Model host, compensations)."

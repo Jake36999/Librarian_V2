@@ -6,49 +6,56 @@ kind: activity
 title: Run a scheduled pipeline (proposed)
 problem:
   symptom: "As-is: unattended schedules lack a pre-compiled mandate, Oracle verification, and agenda routing for high-risk holds or paused steps."
-  root: "Compile manifest and bounded reserve before start; run within MAX_EACH = 200 with no tier 0; route high-risk choices, missing routers or outcome_unknown cleanly onto the Owner's agenda at exact resume points; repair mapped shortfalls via Doctor; verify via Oracle."
+  root: "Compile manifest and bounded reserve before start; flag or hold oversized loops > 200 (behavior change vs. as-is truncation — ships in report mode first); route high-risk choices, missing routers or outcome_unknown onto the Owner's agenda naming the held operation and resume point, reconcile and resume through Core and Doctor, and reach the final receipt strictly through the Oracle."
 lanes:
   - Owner
   - Core
+  - Model host
   - Oracle
   - Doctor
 nodes:
   - {id: s, kind: start, label: start}
   - {id: trigger, kind: activity, lane: Core, step: 1, label: "schedule fires unattended pipeline; Core validates accepted closure (MF-017), compiles manifest and reserves budget"}
-  - {id: dmandate, kind: decision, lane: Core, label: "are closure valid, accepted and within unattended schedule bounds (MAX_EACH = 200)?"}
-  - {id: run, kind: activity, lane: Core, step: 2, label: "executes pinned steps with durable dispatch/done checkpoints (MF-018) and non-interactive mandate"}
+  - {id: dmandate, kind: decision, lane: Core, label: "are closure valid, accepted and within unattended schedule bounds (MAX_EACH = 200; behavior change vs as-is truncation ships in report mode first)?"}
+  - {id: run, kind: activity, lane: Core, step: 2, label: "executes pinned steps with durable dispatch/done checkpoints (MF-018) and scripted declared routes under non-interactive mandate (Model host called only for reasoned Router.choose)"}
   - {id: dhold, kind: decision, lane: Core, label: "did a high-risk decision, missing router, or outcome_unknown pause the run?"}
-  - {id: holditem, kind: activity, lane: Core, label: "writes structured hold to Owner's agenda with exact resume point and evidence (never bypassed unattended)"}
-  - {id: ref_agenda, kind: ref, lane: Owner, use_case: agenda, label: "Owner resolves held item or resume choice once on the agenda"}
-  - {id: dstep, kind: decision, lane: Core, label: "did all steps meet acceptance_criteria without mapped failure?"}
+  - {id: holditem, kind: activity, lane: Core, label: "writes structured hold to Owner's agenda naming the held operation, its evidence, and exact recorded resume point (never bypassed unattended)"}
+  - {id: ref_agenda, kind: ref, lane: Owner, use_case: agenda, label: "Owner resolves held operation and recorded resume choice once on the agenda"}
+  - {id: reconcile, kind: activity, lane: Core, label: "reads held operation and recorded resume point from agenda result, reconciles any unknown write (applied/retry), and resumes the applicable step"}
+  - {id: devidence, kind: decision, lane: Core, label: "does Core hold verified checkpoint evidence that the held operation already completed?"}
+  - {id: dstep, kind: decision, lane: Core, label: "did all steps and remaining obligations meet acceptance_criteria without mapped failure?"}
   - {id: ref_doctor, kind: ref, lane: Doctor, use_case: doctor, label: "repairs mapped pipeline failure or stale state through a bounded ticket"}
   - {id: ref_oracle, kind: ref, lane: Oracle, step: 3, use_case: oracle, label: "verifies pipeline outputs and spend against specification on a distinct route"}
   - {id: receipt, kind: activity, lane: Core, step: 4, label: "records finished run receipt, spend and overdue counts for Owner handover"}
-  - {id: e1, kind: end, outcome: success, label: "scheduled pipeline finished, verified and receipt recorded"}
-  - {id: e_paused, kind: end, outcome: paused, label: "paused on Owner agenda at exact resume point (nothing redone)"}
+  - {id: e1, kind: end, outcome: success, label: "scheduled pipeline finished, verified by Oracle, and receipt recorded"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused on Owner agenda at exact resume point or awaiting completion evidence / Oracle route (nothing redone)"}
   - {id: e_escalated, kind: end, outcome: escalated, label: "unaccepted definition or unresolved failure escalated with compensation shown"}
 edges:
   - {from: s, to: trigger}
   - {from: trigger, to: dmandate}
-  - {from: dmandate, to: run, guard: "valid, accepted and within bounds"}
-  - {from: dmandate, to: e_escalated, guard: "unaccepted, TIER_REFUSED, or over bounds", ext: 2a}
+  - {from: dmandate, to: run, guard: "valid, accepted and within bounds (or report-mode oversized logged)"}
+  - {from: dmandate, to: e_escalated, guard: "unaccepted, TIER_REFUSED, or over enforced bounds (after report-mode rollout)", ext: 2a}
   - {from: run, to: dhold}
   - {from: dhold, to: dstep, guard: "completed step sequence"}
   - {from: dhold, to: holditem, guard: "high-risk hold, missing router, or outcome_unknown", ext: 2b}
   - {from: holditem, to: ref_agenda}
-  - {from: ref_agenda, to: receipt, guard: "success"}
-  - {from: ref_agenda, to: receipt, guard: "nothing held"}
+  - {from: ref_agenda, to: reconcile, guard: "success"}
+  - {from: reconcile, to: run}
+  - {from: ref_agenda, to: devidence, guard: "nothing held"}
+  - {from: devidence, to: dstep, guard: "yes: verified completion evidence recorded"}
+  - {from: devidence, to: e_paused, guard: "no: no completion evidence; keep run paused"}
   - {from: ref_agenda, to: e_paused, guard: "paused"}
   - {from: ref_agenda, to: e_escalated, guard: "escalated"}
-  - {from: dstep, to: ref_oracle, guard: "all steps accepted"}
+  - {from: dstep, to: ref_oracle, guard: "all steps and remaining obligations accepted"}
   - {from: dstep, to: ref_doctor, guard: "mapped step or acceptance failure", ext: 2c}
   - {from: ref_doctor, to: ref_oracle, guard: "resolved"}
   - {from: ref_doctor, to: holditem, guard: "declined"}
   - {from: ref_doctor, to: e_escalated, guard: "escalated"}
   - {from: ref_oracle, to: receipt, guard: "success"}
   - {from: ref_oracle, to: ref_doctor, guard: "shortfall", ext: 3a}
-  - {from: ref_oracle, to: holditem, guard: "paused", ext: 3b}
+  - {from: ref_oracle, to: e_paused, guard: "paused", ext: 3b}
   - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 3c}
   - {from: receipt, to: e1}
 evidence:
   - "builds-on.md (agenda, tickets, Doctor, Oracle); workflows.py; initiators.table.yaml UC16."
+  - "MAX_EACH = 200 bound change vs. as-is truncation obeys report-mode-first policy (reports/2026-11-26-delegation-briefs.md)."

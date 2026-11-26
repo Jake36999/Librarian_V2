@@ -16,7 +16,7 @@ nodes:
   - {id: dpracticed, kind: decision, lane: Core, label: "has every focus concept an understanding_record (or practice_stopped) within budget?"}
   - {id: stopprac, kind: activity, lane: Core, label: "keeps practice phase open even on budget=0 until covered or practice_stopped explained"}
   - {id: consolidate, kind: activity, lane: Owner, step: 5, label: "explains topic in own words; tier 0 critiques against sources and records consolidate understanding_record (consolidate, budget 16)"}
-  - {id: nextphase, kind: activity, lane: Core, step: 6, label: "schedules review dates as tasks under Understanding heading and sets plan.scheduled (next, budget 14)"}
+  - {id: nextphase, kind: activity, lane: Overseer (tier 0), step: 6, label: "schedules review dates via Core task_add under Understanding heading and sets plan.scheduled (verified by _gate_next; next, budget 14)"}
   - {id: close, kind: activity, lane: Overseer (tier 0), step: 7, label: "closes the tutoring session via close_session"}
   - {id: e1, kind: end, outcome: success, label: "understanding records written and review tasks scheduled"}
   - {id: e_paused, kind: end, outcome: paused, label: "session parked waiting for learner reply, practice completion, or budget extension"}

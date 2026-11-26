@@ -7,18 +7,17 @@ lanes:
   - Owner
   - Overseer (tier 0)
   - Core
-  - Model worker
 nodes:
   - {id: s, kind: start, label: start}
   - {id: open, kind: activity, lane: Overseer (tier 0), step: 1, label: "opens an add_project session and creates the Project note (frame, budget 24)"}
-  - {id: ingest, kind: activity, lane: Core, step: 2, label: "records what the person already has and queues or ingests it (ingest, budget 20; wait 150s if Broker asks)"}
+  - {id: ingest, kind: activity, lane: Overseer (tier 0), step: 2, label: "records what the person already has in plan.ingested and calls ingest / queue_source (verified by Core _gate_ingest; budget 20, wait 150s if Broker asks)"}
   - {id: map, kind: activity, lane: Overseer (tier 0), step: 3, label: "orients in the library via search(intent='orient') and updates plan.map (map, budget 20)"}
   - {id: need, kind: activity, lane: Overseer (tier 0), step: 4, label: "opens one brief per asked topic with disqualifiers (need, budget 18)"}
   - {id: search, kind: activity, lane: Overseer (tier 0), step: 5, label: "runs research_round + checkpoint until stopping rule fires (search, budget 40)"}
   - {id: judge, kind: activity, lane: Overseer (tier 0), step: 6, label: "decides every undecided candidate (judge, budget 40; pool spans whole library)"}
   - {id: dbudget, kind: decision, lane: Core, label: "do phase budgets suffice before hitting 0 (request_budget halves on return)?"}
   - {id: park, kind: activity, lane: Core, label: "blocks transition with PHASE_GATE or parks via park_session until Owner extends"}
-  - {id: synth, kind: activity, lane: Core, step: 7, label: "records cross-source synthesis and drafts an Offering with quote verification (synthesise, budget 16)"}
+  - {id: synth, kind: activity, lane: Overseer (tier 0), step: 7, label: "records cross-source synthesis and drafts an Offering checked verbatim by Core (synthesise, budget 16)"}
   - {id: promote, kind: activity, lane: Owner, step: 8, label: "confirms promote_offering at curate/PERSON_CONFIRMS (unless declined)"}
   - {id: dprom, kind: decision, lane: Core, label: "is the staged Offering promoted by the person?"}
   - {id: hold, kind: activity, lane: Core, label: "keeps Offering staged or waits on PERSON_CONFIRMS"}

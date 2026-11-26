@@ -310,13 +310,13 @@ use_cases:
     actors: [owner, oracle, doctor]
     includes: [UC-O, UC-D, UC9]
     fields:
-      brief: "Unattended scheduled pipelines run with pre-compiled manifests, reserved budgets, MF-017/MF-018 pinning and checkpoints within MAX_EACH = 200; high-risk holds, missing routers or outcome_unknown pause onto the Owner's agenda at exact resume points; mapped failures route to Doctor; Oracle verifies outputs."
+      brief: "Unattended scheduled pipelines run with pre-compiled manifests, reserved budgets, MF-017/MF-018 pinning and checkpoints within MAX_EACH = 200 (holding/refusing >200 vs. as-is truncation is a behavior change shipping in report mode first); high-risk holds, missing routers or outcome_unknown pause onto the Owner's agenda naming the held operation and resume point, reconcile and resume through Core and Doctor, and reach the final receipt strictly through the Oracle."
       primary_actor: Core
-      supporting_actors: "Owner, Oracle, Doctor"
+      supporting_actors: "Owner, Model host, Oracle, Doctor"
       preconditions: "Accepted pipeline closure pinned and budget reserved for unattended schedule"
       trigger: "Schedule triggers weekly-review or clear-enrichment-backlog"
-      success_guarantee: "Pipeline completes, passes Oracle verification and records spend/receipt for Owner handover"
-      minimal_guarantee: "No high-risk decision proceeds without the Owner; held runs resume from their recorded point with nothing redone"
+      success_guarantee: "Pipeline completes (with any held step reconciled and resumed), passes Oracle verification, and records spend/receipt for Owner handover"
+      minimal_guarantee: "No high-risk decision proceeds without the Owner; an empty agenda without verified completion evidence keeps the run paused; held runs resume from their recorded point with nothing redone"
       open_questions: "—"
     boundaries:
-      - {at: dmandate, values: ["<= 200 items within mandate", "201 items or unaccepted closure"], expect: "loops cap at MAX_EACH = 200; invalid/unaccepted definitions refuse before mutation"}
+      - {at: dmandate, values: ["<= 200 items within mandate", "201 items (report mode vs. enforced hold/refusal)", "unaccepted closure"], expect: "holding/refusing >200 is a behavior change vs as-is truncation and ships in report mode first; invalid/unaccepted definitions refuse before mutation"}
