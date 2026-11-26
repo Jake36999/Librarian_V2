@@ -2,6 +2,8 @@
 
 **Status:** proposal (rank 5 in `docs/policy/README.md`). Owner direction, 20 November 2026. It becomes plan work, entered in `docs/unified-implementation-plan.md`, only once the owner accepts a workstream.
 
+**Superseded order, 26 November 2026:** [the implementation plan](implementation-plan-2026-11.md) orders the open workstreams below into milestones M0–M7 and a Geo-Grapher track G1–G6, from the systems-analysis packs. The workstreams' content stands; their order is the implementation plan's.
+
 **Inputs:**
 - [the workflow map and use cases](../../reports/2026-11-20-workflow-map/USE-CASES.md): open points OP1–OP16, each measured against that day's runs;
 - [operators and views](operators-and-views.md);

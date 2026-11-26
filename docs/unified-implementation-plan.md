@@ -7659,3 +7659,32 @@ What was done:
 - All four packs pass with no warnings. The regression matrix still reads 210 preserved, 12 deferred, 2 rejected, none unresolved. The flows stay proposed and unaccepted.
 
 Tests: reports only; no code changed.
+
+### An implementation plan from the systems-analysis packs (2026-11-26)
+
+The Owner asked for a review of the four packs and an implementation plan. [The implementation plan](proposals/implementation-plan-2026-11.md) is a proposal.
+
+Review:
+- `render_pack.py --check --all` passes (0 errors, 0 warnings). Seven as-is claims were spot-checked against the code and hold: the dropped workflow result, the 150 s and 600 s waits, the batch's flat grant, the Web UI skipping the Broker, the unread receipts, CI with no paths filter, and the halving phase budget.
+- Corrections needed before building:
+  - the as-is pack is pinned at `d9435e1`, and OP1, F2 and OP8 have since been implemented (`8489387`);
+  - folder review has no registered actions, so no pipeline can compose it;
+  - the oracle and doctor have no role slot;
+  - the code still numbers the Clerk tier 3 and the Scribe tier 2;
+  - the agenda can be built on `checkpoints.py`;
+  - the CI pathway session failed, and nothing of it is in the tree.
+
+The plan:
+- M0 guardrails: CI pathways 1, 2 and 8, the re-pin, and the tier numbering in code.
+- M1 primitives: folder review as registered actions, action declarations, stage contracts, manifests and mandates, the run record, named refusals.
+- M2 the commission and the permission envelope.
+- M3 the agenda and tickets.
+- M4 the oracle.
+- M5 `ingest-folder` as a parent pipeline.
+- M6 the doctor, remedies and the repertoire.
+- M7 research fitted to a brief.
+- A parallel Geo-Grapher track G1–G6, meeting the Librarian at the receipt contract.
+
+Each milestone has a done-when and an acceptance run. Section 5 gathers the Owner's decisions, with a default for each until decided. The plan forward points to it for the order.
+
+Tests: docs only; no code changed.
