@@ -1,0 +1,83 @@
+title: What each to-be mechanism hardens (one specification per mechanism)
+about: 'The to-be is the current Librarian made reliable, not a second system beside it. Owner, 26 November: the
+  packs map the system as it is and what makes it unreliable; the build is an optimisation and hardening pass that
+  builds on the existing code. So each to-be mechanism has one specification, and it is the existing module it
+  extends. Where the to-be names something that already exists under another name (the agenda, the grant, the
+  exit gates, the verifiers), this table is where the two are flattened into one. Code read at d9435e1; src/ is
+  unchanged since. Proposed and unaccepted.'
+sections:
+- heading: Mechanisms and the code they build on
+  columns:
+  - To-be mechanism
+  - Builds on, today
+  - What the hardening changes
+  - Where in the to-be
+  rows:
+  - - The Owner's agenda (UC9)
+    - agenda.py and the `agenda` tool (dated tasks; since 8489387 also read work awaiting acceptance); checkpoints.py (typed, scope-digested decisions, resolved once)
+    - one agenda, not two. The `agenda` tool also lists pending checkpoints and open tickets. The closed list of 13 checkpoint types gains high-risk holds, folder sensitivity and ticket escalation. The checkpoint file gets a lock, since parallel runs will write to it
+    - '`agenda:decide`'
+  - - Tickets for failures and misalignments
+    - the batch's partial, paused and escalated outcomes; queue_retry; checkpoints for decisions
+    - a ticket record per failure (class, owner, evidence, repair history, re-check, review date) in the Core's store beside the checkpoints. It is not a bit mask (policy, fault register)
+    - '`doctor:runremedy`'
+  - - The commission and the permission envelope
+    - workflow_grant (app.start_action, granted_actions()); the Broker's allow_session; read_access's deep_read exemption
+    - the same grant, computed from a manifest, for agent-run sessions and pipelines. ALWAYS_ASK tools and reserved decisions stay outside it
+    - '`activation-overseer:commission`, `compose:oracle_scope`'
+  - - Stage contracts
+    - standard/phases.yaml and phases.py (session phases, tool bundles, exit-gate checks); batch.py's STAGE_TOOLS, MODEL_STAGES and FOLDER_STAGES
+    - the batch's and folder review's stages declared as the phases are. Refusals are reported only, in the test vault, before the Broker enforces them
+    - '`source-reading:read`'
+  - - The Oracle's deterministic checks (Tier A)
+    - closure.VERIFIERS and closure_audit.py (the audited session); the phases' exit-gate checks
+    - typed obligations per stage. A verifier is reused only where its subject matches. A missing or stale check fails closed
+    - '`oracle:tiera`'
+  - - Oracle and repair routes
+    - role_routes.ROLES (lead, scribe, clerk, research_helper and the media roles), profiles and qualification records; GLM-5.3 qualified as Resource-Library's Clerk
+    - an oracle slot and a repair slot of their own, with their own qualification. A run is refused when its worker and oracle resolve to the same model
+    - '`oracle:droute`'
+  - - Folder review for agents
+    - folder_review.FolderReview behind the /api/folders/* routes; folder_sources.queue
+    - registered actions over the same FolderReview, usable on every folder a person has connected or routed an agent to
+    - '`folder-review:folderscreen`'
+  - - A run's result reaches the person
+    - the action_done event, run_status and batch_status
+    - the result is kept and shown; the Web UI stops dropping it (app.js:8472)
+    - '`activation-web-ui:uinotify`'
+  - - Remedies and the repertoire
+    - standard/workflows (YAML), save_workflow, validate_workflow
+    - remedies are workflows; promotion into the repertoire pins the digest
+    - '`catalogue:x3`'
+  - - Claim review
+    - the review route inside the Core (8489387); the Clerk's closed verdicts
+    - each verdict recorded as a rebuttable claim and re-checked
+    - '`verify-claims:review`'
+  - - Delegation
+    - delegate and dispatch_plan, capped by the effort settings
+    - a long plan runs in waves within the cap instead of being refused
+    - '`delegate:cite`'
+  - - The research budget
+    - session.budget_left, which halves a phase's budget on each return
+    - the budget comes from the brief's manifest
+    - '`research:rounds`'
+  - - The ingestion parent
+    - intake_run, queue_source, process_approved and the folder routes, ordered by tier 0 by hand
+    - one pipeline over those same actions, owned by a parent that starts each child
+    - '`ingestion:holdunmet`'
+  - - Publication's receipt
+    - geo_service's paper import, which reads no receipt field
+    - the receipt's fields are read and stored, the link to the Source note included
+    - '`paper-publication:publish`'
+- heading: Duplicates outside the packs
+  columns:
+  - Duplicate
+  - Canonical
+  - What to do
+  rows:
+  - - The 24 November activation map (reports/2026-11-24…/diagrams/librarian-current-activation)
+    - 'librarian/as-is/activation.spec.yaml: it already holds the folder path, the /api/folders/sources bridge and the paperclip workflow'
+    - edit the pack's spec only. The 24 November map is a superseded record (CANONICAL.md) and is no longer carried forward
+  - - The other 21 superseded originals (CANONICAL.md)
+    - their pack copies
+    - none; they are kept as records (D2) and carry superseded_by

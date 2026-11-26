@@ -8,7 +8,7 @@ title: Verify a report's claims, as it runs today
 problem:
   symptom: "With review off, a garbled claim was staged; with review on, three reviews of full-PDF quotes did not complete."
   root: "Claim review is opt-in per library, and an incomplete review records the claim as unchecked rather than holding it."
-lanes: [Lead (tier 1), Core, Clerk (tier 2)]
+lanes: [Lead (tier 1), Core, Clerk (tier 3)]
 nodes:
   - {id: s, kind: start, label: start}
   - {id: submit, kind: activity, lane: Lead (tier 1), step: 1, label: "submits the draft (draft_offering), each claim citing a source and a quote"}
@@ -21,7 +21,7 @@ nodes:
   - {id: dreview, kind: decision, lane: Core, label: "is claim review on for this library (review_offerings, or the effort level)?"}
   - {id: skip, kind: activity, lane: Core, label: "skips the review: the claim is staged checked for its quote only"}
   - {id: send, kind: activity, lane: Core, step: 3, label: "sends each claim with the passage around its quote to the Clerk, on the library's review route"}
-  - {id: judge, kind: activity, lane: Clerk (tier 2), step: 4, label: "judges whether the passage supports the claim as written"}
+  - {id: judge, kind: activity, lane: Clerk (tier 3), step: 4, label: "judges whether the passage supports the claim as written"}
   - {id: dverdict, kind: decision, lane: Core, label: "the Clerk's verdict?"}
   - {id: challenge, kind: activity, lane: Core, label: "returns the challenge to the Lead, with the words that show it"}
   - {id: unchecked, kind: activity, lane: Core, label: "records the claim as unchecked, with the Clerk's own problem as the reason"}

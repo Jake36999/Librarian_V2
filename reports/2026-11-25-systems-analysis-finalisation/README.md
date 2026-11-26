@@ -71,10 +71,18 @@ Weaknesses link to their evidence, and as-is and to-be use cases pair by id.
 - **Owner decision, from the authority table:** whether to delegate any reserved decision (such as sensitivity review in the test vault) to tier 0. That would change the policy.
 - **Not drawn yet, from the initiators table:** UC10 to UC16 (search and read, the five session purposes with no to-be flow, and scheduled pipelines).
 - **Proposed, not built:** the stage contracts and the eight CI and CD pathways in the [stages table](librarian/to-be/stages.md). Each is a code or CI change that needs its own task.
-- **Open question, from the catalogue:** the accepted layer table allows same-layer components only for workflows; the 20 November UC-C allowed them at every layer.
+- **Closed 26 November, from the catalogue:** same-layer components. Composition rule 1 (policy) allows a process "of its own kind without a cycle" at every layer, and policy outranks the accepted layer table.
 - **Decisions the performance tables leave open:** retention numbers, the concurrency cap (the rule that reading is capped within a stage is settled; the number is not), the target rate for folder descriptions.
 - **Decided 26 November:** an unlicensed repository is treated the same as any external source. Its licence status is a label, never a gate: licence status alone no longer holds a folder (`folder-review:dfolderauth`), while scope, linked content, sensitivity and reserved decisions still can. Work that uses an external source cites it; that is a provenance rule applied when the work is written, not a block on ingestion. The [ingest sequence by source kind](librarian/to-be/source-kinds.md) shows how a repository and a document differ: their units, their relations, the graph each feeds. A repository's functions and classes are symbols on its module records (at most 25 each, in `dik.py`); records of their own are marked as a proposed expansion.
 - **Decided 26 November: high risk stays with the person when no tier 0 oversees the run.** The [authority table](librarian/to-be/authority.md) now gives each gate a risk level and says who holds it when no tier 0 oversees: a high-risk decision (gates 1 and 2, starting a batch, a code change, an uncovered bridge) is held on the Owner's agenda, never passed down to a Lead, unless a standing policy the Owner set covers it. To cut tier 0's tokens and turns, routine and bounded items are counted in the handover rather than asked, a reserved decision goes straight to the Owner's agenda (the catalogue's wider radius no longer costs tier 0 two relay turns), and the Core alerts the Owner and tier 0 at once on a critical fault.
+
+**Decided 26 November, after the implementation plan's review:**
+- **The packs map the current system,** and what makes its processes unreliable; the build hardens the existing code. The to-be [builds-on table](librarian/to-be/builds-on.md) names, for each to-be mechanism, the module it extends. It flattens duplicates, such as the to-be's agenda and the existing `agenda` tool.
+- **The tier order is Lead 1, Scribe 2, Clerk 3,** as the code has it; the names imply the hierarchy. The packs had it reversed since 25 November.
+  - Every lane is renamed by its tier: the tier-2 lanes are the Scribe's, the tier-3 lanes the Clerk's.
+  - Four tier-2 lanes do what the code's Clerk does today, so they move to the Clerk (tier 3): claim verdicts, folder screening, and two title drafts.
+- **A connected folder is the person's decision:** it is open to that library's agents, and no classification revokes it (policy, agent-roles-and-authority).
+- **The 24 November activation map is a superseded record.** Its canonical copy, `librarian/as-is/activation`, already holds the folder path, the folder-to-Source bridge and the paperclip workflow. Edits belong there.
 
 ## Out of scope of these packs (deferred, on the record)
 

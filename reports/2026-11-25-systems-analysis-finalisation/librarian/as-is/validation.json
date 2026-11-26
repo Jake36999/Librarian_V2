@@ -157,7 +157,7 @@
     },
     {
       "spec": "research.spec.yaml",
-      "sha256": "b43c5226c084a7fe5ad0e7375c6dc556c9e3266a6eb140e4c838e36604884361",
+      "sha256": "868fccd705fdef7489b4230edefb7074cd7014894672f534fcefdfd00e0304ed",
       "status": "IMPLEMENTED_OBSERVED",
       "nodes": 33,
       "steps": 15,
@@ -227,7 +227,7 @@
     },
     {
       "spec": "verify-claims.spec.yaml",
-      "sha256": "3068f6c43c8a759bf8ccda8e2bbdde7fbfda90adb2b8682e1e689a32001e41f1",
+      "sha256": "961e20c03e58bf4e1930e1d39b25191487707436b0b81d4b82f7118eb3477460",
       "status": "IMPLEMENTED_OBSERVED",
       "nodes": 20,
       "steps": 6,

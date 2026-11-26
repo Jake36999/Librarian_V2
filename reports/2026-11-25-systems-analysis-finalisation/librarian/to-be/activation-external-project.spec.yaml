@@ -11,7 +11,7 @@ problem:
   root: 'An external project gets a scoped grant: a reading budget, checked third-party access, intake that only queues or
     stages, no acceptance, and Applications/ notes written by the agent and stored by the Core.'
 lanes:
-- Clerk (tier 2)
+- Scribe (tier 2)
 - Doctor
 - Core
 - Overseer (tier 0)
@@ -62,9 +62,9 @@ nodes:
   label: reuses verified precedent directly in external project
 - id: parallelhelpers
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   step: 4
-  label: 'runs the delegated reading within the helper budget: the Lead sets a narrower sub-task, Clerks and Scribes do it'
+  label: 'runs the delegated reading within the helper budget: the Lead sets a narrower sub-task, Scribes and Clerks do it'
 - id: checkcatalog
   kind: activity
   lane: Core

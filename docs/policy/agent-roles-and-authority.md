@@ -22,13 +22,13 @@ Two more words sound like tiers and are not (21 November 2026):
 |---|---|---|---|
 | **0** | The **Overseer**: an outside agent working for the owner in Codex, Claude, Antigravity or another harness, including using Librarian to support another project | MCP, the CLI, the Core API; may delegate work through Librarian | The current MCP cap is `contribute`; delegated authority must be granted explicitly and does not include the person's reserved decisions |
 | **1** | The **Lead**: manages the main direction and delegated work; currently hosted on DeepInfra | The app's chat loop and its phase-sized tool bundles | Up to the caller's and assigned profile's authority |
-| **2** | The **Clerk**: proofreads, checks claims, synthesises and directs Scribes | Bounded work delegated through the Core | Within the caller's and assigned profile's authority |
-| **3** | The **Scribe**: lightweight reading and writing across many small tasks | Bounded tasks directed by a Clerk or Lead | Within the caller's and assigned profile's authority |
+| **2** | The **Scribe**, and the research helpers: writes notes and prose from checked parts, synthesises, reviews and directs Clerks; today the notes model | Work delegated by the Lead through the Core | Within the caller's and assigned profile's authority |
+| **3** | The **Clerk**: bounded tasks across many small units (drafts, checks such as a claim's verdict, reading parts); today the small-task model | Bounded tasks directed by a Scribe or the Lead | Within the caller's and assigned profile's authority |
 
-These are semantic roles, not instructions to swap legacy numeric configuration fields. Existing
-role slots, profiles, qualification records and tool gates keep their current behaviour until an
-explicit implementation change reconciles them. Drafting text does not grant a worker direct
-authority to write a vault note.
+The names imply the hierarchy: each tier directs the tier below. The code already follows this order:
+the `scribe` slot and `tier2_agents` are tier 2, the `clerk` slot and `tier3_agents` tier 3 (`effort.py`,
+`tools/staging.py`, `tools/plan_dispatch.py`); the order, written reversed on 25 November 2026, was
+restored by the owner on 26 November. Drafting text does not grant a worker authority to write a note.
 
 ## Core services and agent ownership
 
@@ -127,3 +127,29 @@ assignment before its output is treated as independently reviewed.
   say **assign**.
 - Changing an assignment needs the same evidence as making one: the route's qualification for
   that role. A person decides where the role's profile requires it.
+
+## High risk when no tier 0 oversees
+
+**High risk stays with the person when no tier 0 oversees the run** (Owner, 26 November 2026).
+A run is overseen when tier 0 commissioned it and receives its handover. In any other run (one
+the person started in the Web UI, a scheduled run, an external project's run), a high-risk
+decision (approving staged sources, starting a batch, accepting sources, a code change, a bridge
+no standing policy covers) is held on the Owner's agenda without blocking the rest of the run. It
+is never passed down to a Lead, unless a standing policy the Owner set covers that kind.
+
+## A connected folder is the person's decision
+
+**A folder the person connected, or routed an agent to, is open to that library's agents**
+(Owner, 26 November 2026). A system decision does not supersede the person's decision to connect
+it.
+
+- **The same actions on every surface.** Folder review (survey, draft, decide, apply, queue as
+  Sources) is offered to agents as registered actions over the same service the Web UI uses, within
+  the caller's registry tier. No surface is the only way in.
+- **Classification describes; it does not revoke.** A survey result, purpose, authorship, licence
+  label or default file scope decides how a folder's contents are handled (indexed whole, queued as
+  Sources, kept read-only). It never decides whether the connection stands. Only the person
+  disconnects a folder.
+- **What still holds content, not the folder.** A sensitivity flag stays a reserved decision and
+  holds that content's promotion. Originals and attached repositories stay read-only. Drafting
+  still needs approved spend. Folder decisions follow who holds each gate.

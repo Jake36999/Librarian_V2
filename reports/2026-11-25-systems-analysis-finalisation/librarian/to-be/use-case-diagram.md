@@ -7,8 +7,8 @@ flowchart LR
   owner(["Owner"])
   overseer(["Overseer (tier 0)"])
   lead(["Lead (tier 1)"])
-  clerk(["Clerk (tier 2)"])
-  scribe(["Scribe (tier 3)"])
+  scribe(["Scribe (tier 2)"])
+  clerk(["Clerk (tier 3)"])
   oracle(["Oracle"])
   doctor(["Doctor"])
   geo(["Geo-Grapher"])
@@ -137,7 +137,7 @@ flowchart LR
 | UC1c.3 Publish a paper to the paper graph | Geo-Grapher | [paper-publication](views/paper-publication.views.md) | PROPOSED_UNACCEPTED |
 | UC1.3 Accept the screened sources | Owner | [acceptance](views/acceptance.views.md) | PROPOSED_UNACCEPTED |
 | UC2 Research a brief across a corpus | Owner, Lead (tier 1) | [research](views/research.views.md) | PROPOSED_UNACCEPTED |
-| UC3 Verify a report's claims | Lead (tier 1), Clerk (tier 2) | [verify-claims](views/verify-claims.views.md) | PROPOSED_UNACCEPTED |
+| UC3 Verify a report's claims | Lead (tier 1), Clerk (tier 3) | [verify-claims](views/verify-claims.views.md) | PROPOSED_UNACCEPTED |
 | UC4 Read and cite a paper from the graph | Lead (tier 1), Geo-Grapher | [cite-graph](views/cite-graph.views.md) | PROPOSED_UNACCEPTED |
 | UC-O Judge a process's output | Oracle | [oracle](views/oracle.views.md) | PROPOSED_UNACCEPTED |
 | UC-D Repair a failure through a ticket | Doctor, Owner | [doctor](views/doctor.views.md) | PROPOSED_UNACCEPTED |

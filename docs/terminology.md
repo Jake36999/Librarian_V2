@@ -13,7 +13,7 @@ delivery-status authority.
 | Role slot | A semantic assignment: `lead`, `scribe`, `clerk`, `research_helper`, `ocr`, `tts`, `stt`, or `embeddings`. | A legacy positional tier. |
 | Legacy position | The existing three-picker compatibility projection: Lead, Scribe, Clerk. | The canonical vault-scoped role-to-route assignment. |
 | Assign (a model to a role) | Choose the route a role uses. Always revisable; qualification is evidence for that route at that time. **Say "assign", never "bind"** in prose, UI and agent instructions (owner, 2026-11-20): "bind" was read as permanent. The stored record is still `RoleRouteBinding` in code. | A permanent commitment, or a rule for later sessions. |
-| Agent tier | 0 = Overseer, an outside agent (Codex, Claude, Antigravity…) working on the owner's behalf, including using Librarian for another project; 1 = Lead; 2 = Clerk; 3 = Scribe. Clerks proofread, check claims, synthesise and direct Scribes; Scribes perform many small reading and writing tasks. See [policy/agent-roles-and-authority.md](policy/agent-roles-and-authority.md). | A registry tier (`consult`/`contribute`/`curate`), trust tier (`gold`/`silver`/`bronze`), or legacy numeric configuration field. |
+| Agent tier | 0 = Overseer, an outside agent (Codex, Claude, Antigravity…) working on the owner's behalf, including using Librarian for another project; 1 = Lead; 2 = Scribe (with the research helpers); 3 = Clerk. The names imply the hierarchy: Scribes write notes and prose, synthesise, review and direct Clerks; Clerks perform many small bounded tasks (drafts, checks, reading parts). See [policy/agent-roles-and-authority.md](policy/agent-roles-and-authority.md). | A registry tier (`consult`/`contribute`/`curate`), trust tier (`gold`/`silver`/`bronze`), or legacy numeric configuration field. |
 | Route | One host plus exact provider model, protocol adapter, expectation record, and qualification evidence. | A provider family or catalogue tile. |
 
 ## Model evidence and controls
@@ -90,7 +90,7 @@ Adopted 21 November 2026 ([diagram-workflows](proposals/diagram-workflows.md), s
 | Term | Meaning | Must not be confused with |
 | --- | --- | --- |
 | Owner | The person who runs the library; the only actor whose decisions are reserved. | Tier 0. |
-| Worker | The role doing a task: a Lead, Clerk, Scribe or assigned helper. | The oracle, which judges the task. |
+| Worker | The role doing a task: a Lead, Scribe, Clerk or assigned helper. | The oracle, which judges the task. |
 | Oracle | The role that judges a run's output against its specification. It never executes or repairs. It runs Tier A checks before any Tier B review. | The worker, the doctor, or a Tier B audit on its own. |
 | Doctor | The role that repairs a failure at a mapped extension point, by a catalogued remedy within its blast radius, then hands back to the oracle. | The oracle, or tier 0. |
 | Verdict | The oracle's judgement: a claim with its evidence. It can be rebutted, and is itself re-checked. | A fact, or an instruction to the worker. |

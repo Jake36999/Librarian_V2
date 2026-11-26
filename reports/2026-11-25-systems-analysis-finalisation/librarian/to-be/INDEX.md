@@ -2,7 +2,7 @@
 
 The preferred Librarian: every use case runs under a parent process that owns it end to end, is granted its authority once, is judged by an Oracle separate from its workers, and repairs its failures through tickets and a Doctor. handles.yaml answers each as-is weakness, and the as-is index counts what is left. Nothing here is accepted or built (PROPOSED_UNACCEPTED).
 
-[Use case diagram](use-case-diagram.md) · [Composition](composition.md) · [States](states.md) · [Authority (permissions, reserved decisions and risk)](authority.md) · [Data contract (Medallion and DIK)](data-contract.md) · [Who starts each use case (the person, tier 0, a schedule)](initiators.md) · [Performance (baselines, metrics and targets)](performance.md) · [Ingest sequence by source kind (a repository and a document)](source-kinds.md) · [Stage contracts and CI/CD pathways](stages.md) · [Ticket routing (who owns each ticket class)](ticket-routing.md) · [Geo-Grapher woven into the Librarian](weave.md) · [Canvas](index.canvas)
+[Use case diagram](use-case-diagram.md) · [Composition](composition.md) · [States](states.md) · [Authority (permissions, reserved decisions and risk)](authority.md) · [What each to-be mechanism hardens (one specification per mechanism)](builds-on.md) · [Data contract (Medallion and DIK)](data-contract.md) · [Who starts each use case (the person, tier 0, a schedule)](initiators.md) · [Performance (baselines, metrics and targets)](performance.md) · [Ingest sequence by source kind (a repository and a document)](source-kinds.md) · [Stage contracts and CI/CD pathways](stages.md) · [Ticket routing (who owns each ticket class)](ticket-routing.md) · [Geo-Grapher woven into the Librarian](weave.md) · [Canvas](index.canvas)
 
 ## Use cases
 

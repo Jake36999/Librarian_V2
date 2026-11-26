@@ -15,7 +15,7 @@ problem:
 lanes:
 - Owner
 - Overseer (tier 0)
-- Clerk (tier 2)
+- Scribe (tier 2)
 - Oracle
 - Lead (tier 1)
 - Core
@@ -80,7 +80,7 @@ nodes:
   label: records the allowance and its evidence for the end-of-run report
 - id: worker_roles
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: carries out the assigned interpretation, review and bounded reading and writing over the Core's scripted actions,
     seeing only the repertoire mounted for its role
   step: 6

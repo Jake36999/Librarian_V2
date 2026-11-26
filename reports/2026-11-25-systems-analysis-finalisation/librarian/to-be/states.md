@@ -62,7 +62,7 @@ stateDiagram-v2
 
 | From | To | On | By | Guard |
 |---|---|---|---|---|
-| staged | screened | — | Clerk (tier 2) | — |
+| staged | screened | — | Clerk (tier 3) | — |
 | screened | decided | — | Lead (tier 1) | — |
 | screened | decided | — | Owner | — |
 | decided | decided | — | Geo-Grapher | — |

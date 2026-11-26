@@ -10,7 +10,7 @@ actors:
   - {id: owner, name: Owner}
   - {id: overseer, name: Overseer (tier 0)}
   - {id: lead, name: Lead (tier 1)}
-  - {id: clerk, name: Clerk (tier 2)}
+  - {id: clerk, name: Clerk (tier 3)}
   - {id: model, name: Model worker and model host}
   - {id: geo, name: Geo-Grapher}
   - {id: external, name: External project}

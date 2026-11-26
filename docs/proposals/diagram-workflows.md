@@ -3,7 +3,7 @@
 **Status:** proposal (rank 5 in `docs/policy/README.md`). Owner direction, 20 November 2026. It extends workstream W2 (canvas service) of [the plan forward](plan-forward-2026-11.md), and runs beside it rather than through the main workflow. It becomes plan work only once the owner accepts a phase.
 
 **Owner clarifications, 21 November 2026:** tier 0 is the Overseer and may delegate through
-Librarian on the owner's behalf; tier 1 is Lead, tier 2 Clerk, tier 3 Scribe. Specifications are
+Librarian on the owner's behalf; tier 1 is Lead, tier 2 Scribe, tier 3 Clerk. Specifications are
 Core-owned. The fault register is a ticket service with tiered flags and responsible actors.
 GLM-5.3 is the current, revisable assignment for both oracle and doctor. These choices update the
 design; they do not claim that the missing runtime integration has been delivered.
@@ -91,8 +91,8 @@ The course rule is that an actor is a role, not a person or a product, and need 
 | Owner | human | primary |
 | Overseer (tier 0, outside harness through MCP, CLI or Core API) | model | primary; may delegate Librarian work on the owner's behalf |
 | Lead (tier 1) | model | primary or secondary |
-| Clerk (tier 2) | model | secondary; proofreading, claim checks, synthesis and Scribe direction |
-| Scribe (tier 3) | model | secondary; bounded reading and writing |
+| Scribe (tier 2) | model | secondary; notes and prose, synthesis, review and Clerk direction |
+| Clerk (tier 3) | model | secondary; bounded drafts, checks and reading |
 | Core | the system | the system boundary itself |
 | Geo-Grapher | system | secondary |
 | Model host (DeepInfra, in our case) | external system | secondary. Its timeouts, refusals and unavailability are extensions in their own right, as in the 19–20 November runs. |
@@ -623,7 +623,7 @@ At this scale a word must mean one thing. This section is binding for this propo
 | Term | Means | Is not |
 |---|---|---|
 | **Owner** | The person who runs the library; the only actor whose decisions are reserved | Tier 0 |
-| **Agent tier** (from docs/terminology.md) | 0 = Overseer in an outside harness (Codex, Claude…); 1 = Lead; 2 = Clerk; 3 = Scribe | Registry tier (consult, contribute, curate), trust tier (gold, silver, bronze), layer (L0–L3), or Tier A/B audit |
+| **Agent tier** (from docs/terminology.md) | 0 = Overseer in an outside harness (Codex, Claude…); 1 = Lead; 2 = Scribe; 3 = Clerk | Registry tier (consult, contribute, curate), trust tier (gold, silver, bronze), layer (L0–L3), or Tier A/B audit |
 | **Oracle** | The actor that judges a run's output against its specification and never executes or repairs. Its verdict is a claim, with evidence. | The worker, the doctor, or a Tier B audit on its own (an oracle runs Tier A before Tier B) |
 | **Doctor** | The actor that repairs a failure at a mapped extension point, by a catalogued remedy within its blast radius, then hands back to the oracle | The oracle, or tier 0 |
 | **Tier A / Tier B audit** (from docs/terminology.md) | Tier A: deterministic, target-scoped checks. Tier B: a read-only model assessment. An oracle runs Tier A first and Tier B only after it passes. Gemini's "hard oracle" and "soft oracle" are these. | Agent tiers |

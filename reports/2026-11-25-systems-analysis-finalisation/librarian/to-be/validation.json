@@ -3,7 +3,7 @@
   "receipts": [
     {
       "spec": "acceptance.spec.yaml",
-      "sha256": "d1b973ba85f945e6ceecab530349f41a6bc32988738e85ee40ec40281bb795f0",
+      "sha256": "9f6566543e0d44209100dcf039b860b1e3ccf4ba0abee24be1e99dedaecd450e",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 9,
       "steps": 2,
@@ -17,7 +17,7 @@
     },
     {
       "spec": "activation-external-project.spec.yaml",
-      "sha256": "29aa2b74e8b118fc10379be3f350cda76d92acb0814f7b1ca48af10d70c37160",
+      "sha256": "f79c7e329ffa1efe3e1ed66f1db441b0551fff1869babd38e0ab113ea3422334",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 34,
       "steps": 8,
@@ -31,7 +31,7 @@
     },
     {
       "spec": "activation-overseer.spec.yaml",
-      "sha256": "59f14079652395f67a4b709ab82788f866be6b7d023a5290e9675a3d84f5112a",
+      "sha256": "c2d22fcd1bf3f24bf10bca2368383fddafdee08e660bf95fa25112ebe0c739db",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 39,
       "steps": 9,
@@ -45,7 +45,7 @@
     },
     {
       "spec": "activation-web-ui.spec.yaml",
-      "sha256": "cb117262186ca6e790740d58d72cc084583bf2111d506900417a049a5d1c619b",
+      "sha256": "c200064484a7d77c24f35d08627c3ae21b6ce8c467126593957207f1d8ecc8dc",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 39,
       "steps": 12,
@@ -59,7 +59,7 @@
     },
     {
       "spec": "agenda.spec.yaml",
-      "sha256": "93feb384d889d256a66ed9482279a350ecc9d6a574d7dae86cda536303a8d656",
+      "sha256": "9c87425aa692125c1fb0408d6f73025d977ad5b3a711600cc17e3aaacf61a2ce",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 20,
       "steps": 6,
@@ -73,7 +73,7 @@
     },
     {
       "spec": "batch-enrichment.spec.yaml",
-      "sha256": "2cbe2c9a7616e73299a156cd6f724c46d34446a37e9c45bd59133eee6b71d80c",
+      "sha256": "756c0391c1a953964b2b004d8b497806202398e5cb82dd02efdaa3100830af53",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 37,
       "steps": 10,
@@ -87,7 +87,7 @@
     },
     {
       "spec": "catalogue.spec.yaml",
-      "sha256": "8b5a37a79d81a714e27bb21abfb65d5bfc39fc0ffea8cc14e6399b47e151c9b6",
+      "sha256": "c096917f2837e6ef292bc303b8f796e3302c647140b411f9d1c8d160bc3ed1aa",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 34,
       "steps": 12,
@@ -101,7 +101,7 @@
     },
     {
       "spec": "cite-graph.spec.yaml",
-      "sha256": "b88653501b49255ce3f812801dd5e6f40e01d6fc8e3d5a00632cc8d26bdcdf1e",
+      "sha256": "1ffee008649ba95f7861c544388b9e42f2239c520ced1866286fdb24f0fca659",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 12,
       "steps": 5,
@@ -115,7 +115,7 @@
     },
     {
       "spec": "compose.spec.yaml",
-      "sha256": "bec7eaf0f2b1104fe9ac31888565a5b3bcfe3a74feff1d796b8a132aeb4d99d2",
+      "sha256": "e74421a9c48ab529979fbdbd52873582460fdd8f35254c8ede2a4e5e41ad1f03",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 35,
       "steps": 10,
@@ -129,7 +129,7 @@
     },
     {
       "spec": "delegate.spec.yaml",
-      "sha256": "70343fe0859571d68b6dc0b26a6e89c90641fd8dd09f89f0f951ffcf4b796eea",
+      "sha256": "e678466f05475fba871b302e02decf456c403ce7142971f4f96a6c41aa37d253",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 19,
       "steps": 7,
@@ -143,7 +143,7 @@
     },
     {
       "spec": "doctor.spec.yaml",
-      "sha256": "925f1c09bcc35e8d9c02c6fe254ff283b292336cbb454cf9eefbf431dcff9b98",
+      "sha256": "23d098644a7a1661438b9cc105319d74fa04bbfa69979d109e1c931b96158c20",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 26,
       "steps": 6,
@@ -157,7 +157,7 @@
     },
     {
       "spec": "folder-review.spec.yaml",
-      "sha256": "085707be69936d30d1476221ec3dfc19ba689afd26aa90033b41551d1fb079d1",
+      "sha256": "577664f8b88421d65bd26079433fc827cb625a68a6d5509da7654717e71918aa",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 23,
       "steps": 6,
@@ -171,7 +171,7 @@
     },
     {
       "spec": "ingestion.spec.yaml",
-      "sha256": "0fced071b089fd659eb952a426a11fcbac3f07af899c07be0997d4feae556d57",
+      "sha256": "54419af99f8541e7fc2108d965fdc1bf43ef0abb1aca5c229b1aa7a981c843db",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 40,
       "steps": 13,
@@ -185,7 +185,7 @@
     },
     {
       "spec": "learn.spec.yaml",
-      "sha256": "7c5cf9554de9df264ca8a9f14115015af960e6975f1aee3b8b399d4fbaae1401",
+      "sha256": "23aeff05b82dd1e329b5b6ca31d319ce92c4e8d7a5d4f0408a09bcfb17748df8",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 10,
       "steps": 5,
@@ -199,7 +199,7 @@
     },
     {
       "spec": "oracle.spec.yaml",
-      "sha256": "757118fb2f8d7773ac6ddd2ea1ccbcbb30537c3beb27df189a5ddf56e7ee5446",
+      "sha256": "d6f09909f1e5488681f87b90f6867ca52562391ca47a5fff3bbcdf2ee48b0bee",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 16,
       "steps": 5,
@@ -213,7 +213,7 @@
     },
     {
       "spec": "paper-publication.spec.yaml",
-      "sha256": "ce9358f20e6b25a1c544c9f15512726396b9d208fe70d0477c8303d8781c8ad7",
+      "sha256": "1f13e8b5868b58fd195680d43f981e42c8991b3ddca2494fd0bd77bbd6c9f432",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 8,
       "steps": 2,
@@ -227,7 +227,7 @@
     },
     {
       "spec": "research.spec.yaml",
-      "sha256": "880324add6ed2e22835517648a980e8ceda8050bf9404f0bb9cabb29babcae6e",
+      "sha256": "124362026515e3fb958e60a8f7409783cee9f8f35c46c0feca8d31787c54ec9b",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 34,
       "steps": 15,
@@ -241,7 +241,7 @@
     },
     {
       "spec": "source-enrichment.spec.yaml",
-      "sha256": "3cbc81f712f75aa785563dde1cdd48deaeb423f61e2fe00f47a39bfecf4ad1c3",
+      "sha256": "aaa6abe344c24389f5b3dc77546457fbef13c6609bfefe5f14ab1d0cffe896a2",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 26,
       "steps": 7,
@@ -255,7 +255,7 @@
     },
     {
       "spec": "source-intake.spec.yaml",
-      "sha256": "c5f3866d623bf56182333f146ae1c0bdbfb5ce419b9b2d02e593729372ef141b",
+      "sha256": "6cff9aa629aab40210f53e0beef4cee4c33e7c5185856613b27256d6efbbd0ee",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 9,
       "steps": 4,
@@ -269,7 +269,7 @@
     },
     {
       "spec": "source-parse.spec.yaml",
-      "sha256": "28c92e3a2d2cd193d54fe12db20e364b41243d0a1fac084bc71a19c1c06b23c2",
+      "sha256": "fa522efb107b3fcf9b436df93135cf25226e1a981f45e68c410fde58ae382672",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 17,
       "steps": 3,
@@ -283,7 +283,7 @@
     },
     {
       "spec": "source-reading.spec.yaml",
-      "sha256": "ec7759ea8e2fd5d88500e47e020d579c0ad28a74a1569deb9f74d3f7b1db862b",
+      "sha256": "91eb4303f3bb58431fed4658e752dd1ad39fc0e3b9971be6c1c4e586d87eb7f7",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 20,
       "steps": 12,
@@ -297,7 +297,7 @@
     },
     {
       "spec": "verify-claims.spec.yaml",
-      "sha256": "cd01afaecc0abfd574f7a7fc170be3c8bb236b053a44b0da23a22dd92bbb4d55",
+      "sha256": "9b95337bf47241a0ce087eb838789c7468418a3173ed0aa0ed6a06aaa8d24f37",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 20,
       "steps": 6,

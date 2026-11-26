@@ -15,8 +15,8 @@ lanes:
 - Oracle
 - Lead (tier 1)
 - Doctor
-- Clerk (tier 2)
-- Scribe (tier 3)
+- Scribe (tier 2)
+- Clerk (tier 3)
 - Core
 nodes:
 - id: s
@@ -92,11 +92,11 @@ nodes:
   label: is folder drafting needed, and permitted?
 - id: fscribe
   kind: activity
-  lane: Scribe (tier 3)
+  lane: Clerk (tier 3)
   label: drafts inventory-grounded folder summary without reading documents
 - id: freview
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: reviews the folder summary's organisation and sensitivity
 - id: fdata
   kind: activity
@@ -117,7 +117,7 @@ nodes:
   label: more frozen items?
 - id: assess
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   step: 8
   label: explains semantic partial gaps across items (Core account step owns literal counts)
 - id: oracle

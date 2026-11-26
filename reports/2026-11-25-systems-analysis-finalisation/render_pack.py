@@ -38,7 +38,7 @@ PACKS = ("librarian/as-is", "librarian/to-be", "geo-grapher/as-is", "geo-grapher
 STATUSES = {"as-is": {"IMPLEMENTED_VERIFIED", "IMPLEMENTED_OBSERVED"},
             "to-be": {"PROPOSED_UNACCEPTED", "PROPOSED_ACCEPTED"}}
 # Lane names: exactly the actors of docs/terminology.md and USE-CASES.md. Qualifiers go in the labels.
-ACTORS = ("Owner", "Overseer (tier 0)", "Lead (tier 1)", "Clerk (tier 2)", "Scribe (tier 3)", "Oracle", "Doctor",
+ACTORS = ("Owner", "Overseer (tier 0)", "Lead (tier 1)", "Scribe (tier 2)", "Clerk (tier 3)", "Oracle", "Doctor",
           "Core", "Web UI", "Model worker", "Model host", "Geo-Grapher", "Geo-Grapher CLI", "Geo-Grapher service",
           "Geo-Grapher store", "External project")
 NODE_KEYS = {"id", "kind", "lane", "label", "step", "outcome", "use_case"}
@@ -69,7 +69,9 @@ R = load_render()
 
 
 def sha(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    # Line endings are normalised so a view checks the same in a Windows working tree (CRLF)
+    # and a fresh checkout (LF, per .gitattributes).
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def rel(path: Path) -> str:

@@ -67,7 +67,7 @@ entities:
   - from: staged
     to: screened
     true: a Clerk screens purpose, authorship and sensitivity (licence status is a label)
-    by: Clerk (tier 2)
+    by: Clerk (tier 3)
   - from: screened
     to: decided
     true: within the commission or standing policy
@@ -161,7 +161,7 @@ entities:
     by: Core
   - from: open
     to: escalated
-    true: 'no remedy matches: tier 0 gets it with the Clerk''s diagnosis'
+    true: 'no remedy matches: tier 0 gets it with the Scribe''s diagnosis'
     by: Core
   - from: assigned
     to: repairing

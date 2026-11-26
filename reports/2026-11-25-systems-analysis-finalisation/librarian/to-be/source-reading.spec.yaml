@@ -5,8 +5,8 @@ status: PROPOSED_UNACCEPTED
 kind: activity
 title: Read one source (proposed)
 lanes:
-- Clerk (tier 2)
-- Scribe (tier 3)
+- Scribe (tier 2)
+- Clerk (tier 3)
 - Core
 - Model host
 nodes:
@@ -15,12 +15,12 @@ nodes:
   label: start
 - id: readplan
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: assigns spread chunks, blind lens tasks, and required whole-source passes
   step: 1
 - id: read
   kind: activity
-  lane: Scribe (tier 3)
+  lane: Clerk (tier 3)
   label: carries out bounded reading and synthesis tasks, at most a set number at a time within the stage, within the reserved
     budget
   step: 2
@@ -37,7 +37,7 @@ nodes:
   step: 4
 - id: readproof
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: reconciles the whole-source pass and the chapter relations
   step: 5
 - id: dread
@@ -72,12 +72,12 @@ nodes:
   label: keeps the Core's static code relations, or records chapter relations as not applicable
 - id: relate
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: proposes semantic chapter relations across read chapters (Core persists)
   step: 8
 - id: metapropose
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: proposes semantic content-model metadata fields from evidence; retains Unknown where insufficient
   step: 9
 - id: metadata
@@ -87,7 +87,7 @@ nodes:
   step: 10
 - id: review
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: drafts a neutral Bottom Line and the sensitivity check, flagging low confidence
   step: 11
 - id: reviewchk

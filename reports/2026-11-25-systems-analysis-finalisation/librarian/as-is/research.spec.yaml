@@ -10,7 +10,7 @@ problem:
   symptom: "The 20 November run needed four budget extensions, decided 82 candidates that were the library's own notes, and shared one synthesis across every report."
   why: ["Budgets are per phase visit; the candidate pool is the whole library; a session holds one synthesis."]
   root: "The explore purpose was built for one question about the library itself, not a multi-question brief over an outside corpus."
-lanes: [Owner, Lead (tier 1), Core, Clerk (tier 2), Geo-Grapher]
+lanes: [Owner, Lead (tier 1), Core, Clerk (tier 3), Geo-Grapher]
 nodes:
   - {id: s, kind: start, label: start}
   - {id: ask, kind: activity, lane: Owner, step: 1, label: "asks the Lead to carry out the brief"}

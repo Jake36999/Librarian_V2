@@ -31,7 +31,7 @@ handles:
   - {weakness: W-DOC-02, spec: doctor, at: intake, how: "Every failure opens a ticket with its extension, flags, evidence, accountable actor and repair history."}
   - {weakness: W-DOC-03, spec: doctor, at: blast, how: "The blast radius is computed against the parent's mandate before any remedy runs."}
   - {weakness: W-WFR-02, spec: activation-web-ui, at: uiagenda, how: "A paused run appears on the agenda with its ticket and the exact resume path."}
-  - {weakness: W-BAT-01, spec: batch-enrichment, at: fscribe, how: "A Scribe drafts the folder summary from the inventory and a Clerk reviews it; a failed folder stage is recorded per item."}
+  - {weakness: W-BAT-01, spec: batch-enrichment, at: fscribe, how: "A Clerk drafts the folder summary from the inventory and a Scribe reviews it; a failed folder stage is recorded per item."}
   - {weakness: W-INT-02, spec: source-intake, at: qticket, how: "Each quarantined sibling gets a ticket, routed to the Doctor's re-capture remedy; the rest carry on."}
   # T5 Decisions wait with no owner
   - {weakness: W-BAT-02, spec: ingestion, at: ledger, how: "The ledger separates each kind of decision the batch leaves, and the acceptance child assigns them."}
@@ -63,7 +63,7 @@ handles:
   - {weakness: W-FOL-05, spec: "state:folder-card", at: "*", how: "One meaning per state: a card is selected for the batch, or decided."}
   - {weakness: W-STI-01, spec: "state:staged-item", at: "staged -> accepted", how: "Accepting a captured source needs the person's explicit choice, and its coverage stays visible."}
   - {weakness: W-DOC-05, spec: doctor, at: "*", how: "Proposed: the repair role takes a distinct code name, and `doctor` stays the install check."}
-  - {weakness: W-REA-02, spec: source-reading, at: metapropose, how: "A Clerk proposes semantic metadata from the evidence, Unknown where it is not supported."}
+  - {weakness: W-REA-02, spec: source-reading, at: metapropose, how: "A Scribe proposes semantic metadata from the evidence, Unknown where it is not supported."}
 open:
   - {weakness: W-PUB-01, reason: "Handled on Geo-Grapher's side (G-BLD-06, G-GEN-01): geo-grapher/to-be paper-import inserts into one active database, and snapshots are pruned by retention."}
   - {weakness: W-ACT-05, reason: "Owner decision: may a person's own surface skip the Broker, as it does today?"}

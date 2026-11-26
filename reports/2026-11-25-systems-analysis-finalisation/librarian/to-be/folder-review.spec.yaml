@@ -7,7 +7,7 @@ title: Review a folder and apply its group (proposed)
 lanes:
 - Owner
 - Lead (tier 1)
-- Clerk (tier 2)
+- Clerk (tier 3)
 - Doctor
 - Oracle
 - Core
@@ -36,7 +36,7 @@ nodes:
   label: checks the single repair's progress
 - id: folderscreen
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Clerk (tier 3)
   label: screens only the new or ambiguous folders for purpose, authorship and sensitivity, without reading documents; an
     unlicensed repository is an external source, labelled and never withheld
   step: 2

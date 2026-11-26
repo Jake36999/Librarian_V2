@@ -15,7 +15,7 @@ problem:
 lanes:
 - Overseer (tier 0)
 - Core
-- Clerk (tier 2)
+- Scribe (tier 2)
 - Oracle
 - Geo-Grapher
 nodes:
@@ -58,7 +58,7 @@ nodes:
   label: marks the tasks that needed the unreadable graph as not run, with the reason, and runs the rest
 - id: run
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: 'the helpers work their tasks at once, read-only and each in its own context: tiers 1 and 2 on their assigned models,
     tier 3 on its packet alone'
   step: 3

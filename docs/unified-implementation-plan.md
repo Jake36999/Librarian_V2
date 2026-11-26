@@ -7688,3 +7688,38 @@ The plan:
 Each milestone has a done-when and an acceptance run. Section 5 gathers the Owner's decisions, with a default for each until decided. The plan forward points to it for the order.
 
 Tests: docs only; no code changed.
+
+### The implementation plan revised: a hardening pass; the tier order restored (2026-11-26)
+
+The Owner's direction on the first version, and three independent reviews of it:
+- **The packs map the current system,** and what makes its processes unreliable. The build hardens the existing code rather than adding beside it.
+- **Tier order:** Lead 1, Scribe 2, Clerk 3, as the code has it (`effort.py`, `tools/staging.py`, `tools/plan_dispatch.py`). The names imply the hierarchy. The 25 November policy had it reversed.
+- **Folders:** a folder the person connected, or routed an agent to, is open to that library's agents.
+- **Oracle and repair roles** get slots of their own.
+- **CI pathways** are optional integration points.
+
+Changed:
+- **Policy.** [Agent roles and authority](policy/agent-roles-and-authority.md):
+  - the tier table is restored;
+  - two new sections, appended so cited line numbers hold: high risk when no tier 0 oversees, and a connected folder is the person's decision.
+  - Terminology and the diagram-workflows proposal follow.
+- **Packs.**
+  - Lanes are renamed by tier. Four tier-2 lanes move to the Clerk (tier 3), because the code's Clerk does that work today: claim verdicts, folder screening, two title drafts.
+  - The new [builds-on table](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/builds-on.md) gives each to-be mechanism one specification, the module it extends.
+  - The README records the decisions and closes the same-layer question (composition rule 1).
+  - All four packs pass with no warnings, now in a fresh checkout too. `render_pack.py` hashed specs with their line endings. Windows working trees hold CRLF and git stores LF, so every view failed `--check` in a clean clone; the hash now ignores line endings.
+- **[The implementation plan](proposals/implementation-plan-2026-11.md), rewritten.** Corrections to the first version:
+  - the as-is pack was already current, since `8489387` is an ancestor of `d9435e1`;
+  - the agenda exists;
+  - the tier code change would have swapped caps, so it is dropped;
+  - the "four bits" default contradicted policy;
+  - the dependency graph had errors.
+- **What the plan adds:**
+  - M1 is split into M1a (folders open to agents, results that reach the person) and M1b (declarations, stages, manifests);
+  - stage refusals are reported before they are enforced;
+  - each milestone has a named setting, an off-path test and a migration test;
+  - tier-0 tokens are counted as well as turns;
+  - G1's contract comes first;
+  - an appendix maps all 54 as-is weaknesses to milestones.
+
+Tests: docs and reports only; no code changed.

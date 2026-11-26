@@ -16,7 +16,7 @@ lanes:
 - Oracle
 - Lead (tier 1)
 - Doctor
-- Clerk (tier 2)
+- Scribe (tier 2)
 - Core
 nodes:
 - id: s
@@ -46,7 +46,7 @@ nodes:
   label: accepted YAML remedy matches?
 - id: scout
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: scouts the unmapped defect read-only and attaches its findings to the ticket
 - id: draftprop
   kind: activity

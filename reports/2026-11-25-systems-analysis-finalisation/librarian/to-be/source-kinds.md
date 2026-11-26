@@ -9,10 +9,10 @@ One ingestion pathway, two sequences. A repository and a document pass the same 
 |---|---|---|---|
 | Authorship and licence | own code, or an external source (third-party authorship); an unlicensed repository is an external source like any other, its licence status a label | own documents, research documents or third-party, from the folder's purpose | `folder-review:folderscreen` |
 | Capture | the README and the tree at a commit, the licence id where there is one; a nested repository is its own source | the immutable file, with its literal header and DOI metadata | `source-intake:capture` |
-| Parse | a syntax tree per file, by script (tree-sitter, Python AST); no model call | the text with its page map; conversion or OCR where needed, by a Scribe and reviewed by a Clerk | `source-parse:parse`, `source-parse:convplan` |
+| Parse | a syntax tree per file, by script (tree-sitter, Python AST); no model call | the text with its page map; conversion or OCR where needed, by a Clerk and reviewed by a Scribe | `source-parse:parse`, `source-parse:convplan` |
 | Data: the finest units | files, modules (each listing up to 25 of its symbols), entry points, endpoints, settings, languages, dependencies | chapters or sections, then chunks for reading | `source-reading:data` |
-| Reading | bounded reading of the components that need describing; most structure is scripted | bounded chunk reading by Scribes, then a whole-document pass | `source-reading:read` |
-| Relations: Information | static structure only (imports, routes), by script; never runtime behaviour | document order, and chapter relations a Clerk proposes from two or more read chapters, marked inferred | `source-reading:relateskip`, `source-reading:relate` |
+| Reading | bounded reading of the components that need describing; most structure is scripted | bounded chunk reading by Clerks, then a whole-document pass | `source-reading:read` |
+| Relations: Information | static structure only (imports, routes), by script; never runtime behaviour | document order, and chapter relations a Scribe proposes from two or more read chapters, marked inferred | `source-reading:relateskip`, `source-reading:relate` |
 | The note: Knowledge | Components, How It Fits Together | Chapters, the Bottom Line | `source-reading:review` |
 | Graph | a code graph, through the folder group's application in Geo-Grapher | the paper graph, once a PDF is fully converted | `folder-review:folderapply`, `paper-publication:dpub` |
 

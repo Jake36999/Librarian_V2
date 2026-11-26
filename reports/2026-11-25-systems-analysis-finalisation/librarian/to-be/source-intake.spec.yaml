@@ -5,7 +5,7 @@ status: PROPOSED_UNACCEPTED
 kind: activity
 title: Capture, title and stage each source (proposed)
 lanes:
-- Clerk (tier 2)
+- Clerk (tier 3)
 - Core
 nodes:
 - id: s
@@ -28,7 +28,7 @@ nodes:
   label: do the capture and the queue reconcile?
 - id: describe
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Clerk (tier 3)
   label: proposes a readable title when the header is a slug or file name, a neutral description, its fields (Unknown where
     unsupported) and topics
   step: 3

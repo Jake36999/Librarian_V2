@@ -5,8 +5,8 @@ status: PROPOSED_UNACCEPTED
 kind: activity
 title: Validate and parse one source (proposed)
 lanes:
-- Clerk (tier 2)
-- Scribe (tier 3)
+- Scribe (tier 2)
+- Clerk (tier 3)
 - Core
 nodes:
 - id: s
@@ -32,15 +32,15 @@ nodes:
   label: 'what does the parse need: nothing more, a conversion, or does it stop early?'
 - id: convplan
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: assigns a bounded OCR or cleanup task to a qualified role, within the reserved budget
 - id: convert
   kind: activity
-  lane: Scribe (tier 3)
+  lane: Clerk (tier 3)
   label: converts the pages with page anchors, marking what is unread or failed
 - id: convrev
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: verifies conversion fidelity without attesting unread pages
 - id: convchk
   kind: activity

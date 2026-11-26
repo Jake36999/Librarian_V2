@@ -11,7 +11,7 @@ problem:
   root: The Web UI starts the same parent processes with no tier 0; each decision (source, summary, folder, lens, topic, index)
     is separate and explicit, and every result is shown from the Core's record.
 lanes:
-- Clerk (tier 2)
+- Clerk (tier 3)
 - Doctor
 - Oracle
 - Core
@@ -52,7 +52,7 @@ nodes:
   step: 3
 - id: clerkdraft
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Clerk (tier 3)
   label: proposes a readable title, a neutral Bottom Line, what the source solves, its fields (Unknown where unsupported),
     topics and sensitivity
   step: 4

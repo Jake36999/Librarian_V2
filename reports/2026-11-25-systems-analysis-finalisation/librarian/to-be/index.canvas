@@ -268,7 +268,7 @@
       "x": 2320,
       "y": 0,
       "width": 520,
-      "height": 3420
+      "height": 3840
     },
     {
       "id": "librarian-card-4-0",
@@ -282,7 +282,7 @@
     {
       "id": "librarian-card-4-1",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/data-contract.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/builds-on.md",
       "x": 2340,
       "y": 460,
       "width": 480,
@@ -291,7 +291,7 @@
     {
       "id": "librarian-card-4-2",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/initiators.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/data-contract.md",
       "x": 2340,
       "y": 880,
       "width": 480,
@@ -300,7 +300,7 @@
     {
       "id": "librarian-card-4-3",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/performance.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/initiators.md",
       "x": 2340,
       "y": 1300,
       "width": 480,
@@ -309,7 +309,7 @@
     {
       "id": "librarian-card-4-4",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/source-kinds.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/performance.md",
       "x": 2340,
       "y": 1720,
       "width": 480,
@@ -318,7 +318,7 @@
     {
       "id": "librarian-card-4-5",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/stages.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/source-kinds.md",
       "x": 2340,
       "y": 2140,
       "width": 480,
@@ -327,7 +327,7 @@
     {
       "id": "librarian-card-4-6",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/ticket-routing.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/stages.md",
       "x": 2340,
       "y": 2560,
       "width": 480,
@@ -336,9 +336,18 @@
     {
       "id": "librarian-card-4-7",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/weave.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/ticket-routing.md",
       "x": 2340,
       "y": 2980,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-4-8",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/weave.md",
+      "x": 2340,
+      "y": 3400,
       "width": 480,
       "height": 400
     },

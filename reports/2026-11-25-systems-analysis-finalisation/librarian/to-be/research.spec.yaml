@@ -13,8 +13,8 @@ problem:
 lanes:
 - Owner
 - Lead (tier 1)
-- Clerk (tier 2)
-- Scribe (tier 3)
+- Scribe (tier 2)
+- Clerk (tier 3)
 - Oracle
 - Core
 - Geo-Grapher
@@ -47,7 +47,7 @@ nodes:
   step: 3
 - id: rounds
   kind: activity
-  lane: Scribe (tier 3)
+  lane: Clerk (tier 3)
   label: runs bounded research rounds for each brief
   step: 4
 - id: candidates
@@ -57,7 +57,7 @@ nodes:
   step: 5
 - id: propose
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Scribe (tier 2)
   label: proposes a decision for each run of candidates, with its reason
   step: 6
 - id: decide

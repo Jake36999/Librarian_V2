@@ -60,7 +60,7 @@ nodes:
   kind: activity
   lane: Lead (tier 1)
   step: 4
-  label: owns the delegated pipeline run, never wider than its parent, and routes work to Clerks and Scribes
+  label: owns the delegated pipeline run, never wider than its parent, and routes work to Scribes and Clerks
 - id: callingest
   kind: ref
   lane: Core

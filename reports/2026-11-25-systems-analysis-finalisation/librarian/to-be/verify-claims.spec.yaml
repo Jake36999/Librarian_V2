@@ -11,7 +11,7 @@ problem:
 lanes:
 - Lead (tier 1)
 - Core
-- Clerk (tier 2)
+- Clerk (tier 3)
 nodes:
 - id: s
   kind: start
@@ -49,7 +49,7 @@ nodes:
   label: refuses the draft and names the closest passage
 - id: review
   kind: activity
-  lane: Clerk (tier 2)
+  lane: Clerk (tier 3)
   step: 4
   label: 'reviews each claim against the passage around its quote, choosing one of the Core''s closed verdicts: supported,
     goes beyond the passage, or not a readable sentence; review is always on'

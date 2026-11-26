@@ -7,7 +7,7 @@ flowchart LR
   owner(["Owner"])
   overseer(["Overseer (tier 0)"])
   lead(["Lead (tier 1)"])
-  clerk(["Clerk (tier 2)"])
+  clerk(["Clerk (tier 3)"])
   model(["Model worker and model host"])
   geo(["Geo-Grapher"])
   external(["External project"])
@@ -101,7 +101,7 @@ flowchart LR
 | UC1c.3 Publish a paper to the paper graph | Geo-Grapher | [paper-publication](views/paper-publication.views.md) | IMPLEMENTED_VERIFIED |
 | UC1.3 Accept a source into the library | Owner | [acceptance](views/acceptance.views.md) | IMPLEMENTED_VERIFIED |
 | UC2 Research a brief across a corpus | Owner, Lead (tier 1) | [research](views/research.views.md) | IMPLEMENTED_OBSERVED |
-| UC3 Verify a report's claims | Lead (tier 1), Clerk (tier 2) | [verify-claims](views/verify-claims.views.md) | IMPLEMENTED_OBSERVED |
+| UC3 Verify a report's claims | Lead (tier 1), Clerk (tier 3) | [verify-claims](views/verify-claims.views.md) | IMPLEMENTED_OBSERVED |
 | UC4 Read and cite a paper from the graph | Lead (tier 1), Geo-Grapher | [cite-graph](views/cite-graph.views.md) | IMPLEMENTED_OBSERVED |
 | UC8 Compose work from actions | Owner, Overseer (tier 0) | [compose](views/compose.views.md) | IMPLEMENTED_VERIFIED |
 | UC8.1 Run a saved workflow from the Web UI | Owner | [workflow-run](views/workflow-run.views.md) | IMPLEMENTED_VERIFIED |

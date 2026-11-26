@@ -27,7 +27,7 @@ sections:
     - '`doctor:askowner`'
   - - An unmapped failure or a misalignment
     - no catalogue entry matches
-    - Lead (tier 1); the Clerk scouts it and the Doctor drafts a remedy, never installing it
+    - Lead (tier 1); the Scribe scouts it and the Doctor drafts a remedy, never installing it
     - the Lead's queue
     - the Lead puts the Doctor's draft to the Owner (`learn:a2`), or hands a code change on (the next row)
     - '`doctor:draftprop`'
