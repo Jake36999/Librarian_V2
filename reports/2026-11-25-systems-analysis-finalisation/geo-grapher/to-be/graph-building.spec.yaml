@@ -1,4 +1,4 @@
-# Correction round by tools/s5_labels.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: graph-building
 use_case: UC-G1
 status: PROPOSED_UNACCEPTED
@@ -22,14 +22,14 @@ nodes:
 - id: submit
   kind: activity
   lane: Core
-  step: 1
   label: submits the one decided group, with its fingerprint and withheld paths
+  step: 1
 - id: check
   kind: activity
   lane: Geo-Grapher service
-  step: 2
   label: checks this group's stratum and store ownership, that no other application holds the group, and the disk reserve
     for this delta
+  step: 2
 - id: dvalid
   kind: decision
   lane: Geo-Grapher service
@@ -41,9 +41,9 @@ nodes:
 - id: delta
   kind: activity
   lane: Geo-Grapher store
-  step: 3
   label: 'computes what changed since the group''s last snapshot: added, changed and deleted files, and every file again when
     the parser version changed'
+  step: 3
 - id: dparse
   kind: decision
   lane: Geo-Grapher store
@@ -55,24 +55,25 @@ nodes:
 - id: write
   kind: activity
   lane: Geo-Grapher store
-  step: 4
   label: writes the delta in one transaction, deletions as tombstones, and checkpoints the WAL; an interrupted transaction
     rolls back to the last snapshot
+  step: 4
 - id: prune
   kind: activity
   lane: Geo-Grapher store
-  step: 5
   label: prunes snapshots beyond the retention policy, never a pinned one or the one a rollback still needs
+  step: 5
 - id: receipt
   kind: activity
   lane: Geo-Grapher service
+  label: 'returns the group''s receipt: snapshot id, parser version, parse coverage with each unparsed file''s cause, counts,
+    and the changed entity ids (added, changed, deleted)'
   step: 6
-  label: 'returns the group''s receipt: snapshot id, parse coverage, counts'
 - id: judge
   kind: activity
   lane: Oracle
-  step: 7
   label: 'checks the receipt against the group''s decision: coverage, status, counts'
+  step: 7
 - id: dverdict
   kind: decision
   lane: Oracle

@@ -40,7 +40,7 @@ Not drawn yet: UC5 Trust a relation (deferred: to-be only; there is no as-is (US
 | **T5 Decisions wait with no owner** | Work that needs a decision is left in a state, with no one assigned and nothing drafted to decide from. | W-BAT-02, W-STI-02, W-INT-01, W-FOL-03 | 4 of 4 |
 | **T6 Results do not reach the person** | What a run did is dropped, unrecorded or wiped before the person sees it. | W-WFR-01, W-WFR-03, W-ACC-01, W-ACC-02 | 4 of 4 |
 | **T7 One decision reaches too far** | A folder decision re-applies, and can be blocked by, every group in the library. | W-FOL-01, W-FOL-02 | 2 of 2 |
-| **T8 Links between records are derived or missing** | Paper, note, folder and application records are joined by titles, timing or nothing at all. | W-CIT-01, W-CIT-02, W-RES-05, W-PUB-02, W-EXT-02, W-PAR-01 | 5 of 6 |
+| **T8 Links between records are derived or missing** | Paper, note, folder and application records are joined by titles, timing or nothing at all. | W-CIT-01, W-CIT-02, W-RES-05, W-PUB-02, W-EXT-02, W-PAR-01 | 6 of 6 |
 | **T9 The research session does not fit a brief** | One session, one synthesis, the whole library as its pool and halving budgets: built for one question about the library. | W-RES-01, W-RES-02, W-RES-03, W-RES-04 | 4 of 4 |
 | **T10 Integrity and naming** | Errors where refusals belong, a bypassed gate, states and names that mean two things, and leftovers. | W-EXT-01, W-ACT-05, W-FOL-05, W-ACC-04, W-STI-01, W-DOC-05, W-REA-02, W-PUB-01 | 5 of 8 |
 
@@ -87,7 +87,7 @@ Every weakness found in the as-is, and the to-be element that handles it.
 | W-ORA-01 | gap | `oracle` | Admitted contracts and Tier A checks exist only in audited sessions; ingestion, research and workflows are judged by whoever ran them. | `oracle` |
 | W-PAR-01 | risk | `source-parse` | A provisional paper projection is written before reading; if reading then fails, a catalogue-only projection remains. | `source-parse` |
 | W-PUB-01 | cost | `paper-publication` | Old and failed candidate paper databases are never cleaned up. | open: Handled on Geo-Grapher's side (G-BLD-06, G-GEN-01): geo-grapher/to-be paper-import inserts into one active database, and snapshots are pruned by retention. |
-| W-PUB-02 | gap | `paper-publication` | Publication needs an accepted current folder, so a source added without folder review is never published. | open: Handled on Geo-Grapher's side (G-BLD-10): geo-grapher/to-be paper-import publishes a source without folder review into the library's own papers group. |
+| W-PUB-02 | gap | `paper-publication` | Publication needs an accepted current folder, so a source added without folder review is never published. | `paper-publication` |
 | W-REA-01 | fault | `source-reading` | Read completion follows the remaining-part counts, not the validity of each part's answer. | `source-reading` |
 | W-REA-02 | gap | `source-reading` | The metadata stage copies a few literal Data facts and lists the unknown fields; there is no semantic metadata step. | `source-reading` |
 | W-RES-01 | cost | `research` | The candidate pool is the whole library: 82 of its own notes and folder cards had to be decided in the 20 November run (OP4). | `research` |
@@ -105,7 +105,7 @@ Every weakness found in the as-is, and the to-be element that handles it.
 | W-WFR-02 | gap | `workflow-run` | A paused run shows a static chip, with no route picker, resume or dismiss. | `activation-web-ui` |
 | W-WFR-03 | fault | `workflow-run` | deep-read-staged reads each staged source but leaves its status unchanged, so nothing records that it was read. | `source-enrichment` |
 
-54 weaknesses: 50 handled by the to-be, 4 open with a reason, 0 not yet answered.
+54 weaknesses: 51 handled by the to-be, 3 open with a reason, 0 not yet answered.
 
 ## Checks
 

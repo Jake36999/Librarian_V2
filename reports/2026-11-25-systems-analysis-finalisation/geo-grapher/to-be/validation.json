@@ -3,11 +3,11 @@
   "receipts": [
     {
       "spec": "federated-search.spec.yaml",
-      "sha256": "8eb8d7f74bc0916b3fcaa5072e24769a54e604572b94b9396c5ea6c81d3a7d5f",
+      "sha256": "89beda6bdc7abc809c099d3f85576fc99c9b935aef8db8d999297e9c426faf9a",
       "status": "PROPOSED_UNACCEPTED",
-      "nodes": 13,
+      "nodes": 14,
       "steps": 4,
-      "scenarios": 3,
+      "scenarios": 4,
       "tier0_turns_mss": null,
       "tier0_turns_worst": null,
       "weaknesses": 0,
@@ -17,7 +17,7 @@
     },
     {
       "spec": "graph-building.spec.yaml",
-      "sha256": "95f2344a99b9537a5f5d5060478dbda4512020667995a6eeb7fe186652cd9408",
+      "sha256": "a7c90a7b86ef11a278968c0eb875ac3e4d0873eb8a53ce365403d657acd4748e",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 17,
       "steps": 7,
@@ -31,11 +31,11 @@
     },
     {
       "spec": "paper-import.spec.yaml",
-      "sha256": "addd83a100ead29f509dacf574597388423f363bf96721ee95a1012f26e2a202",
+      "sha256": "990debb10a6d1cb28115c6627e6d87012be6eac5b1a31535a3f0fef21dec25a6",
       "status": "PROPOSED_UNACCEPTED",
-      "nodes": 21,
+      "nodes": 22,
       "steps": 7,
-      "scenarios": 6,
+      "scenarios": 7,
       "tier0_turns_mss": null,
       "tier0_turns_worst": null,
       "weaknesses": 0,

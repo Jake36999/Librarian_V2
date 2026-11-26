@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: research
 use_case: UC2
 status: PROPOSED_UNACCEPTED
@@ -117,6 +117,14 @@ nodes:
   use_case: verify-claims
   label: verifies and reviews every claim, code placements included
   step: 12
+- id: dredraft
+  kind: decision
+  lane: Lead (tier 1)
+  label: within two redrafts of this claim?
+- id: dropclaim
+  kind: activity
+  lane: Lead (tier 1)
+  label: drops the claim from the report as a stated gap, with its ticket, and goes on with the rest
 - id: ref_oracle
   kind: ref
   lane: Oracle
@@ -144,7 +152,7 @@ nodes:
 - id: e_paused
   kind: end
   outcome: paused
-  label: stopped by the Owner, or waiting on a held claim
+  label: stopped by the Owner, or paused by the Oracle
 - id: e_escalated
   kind: end
   outcome: escalated
@@ -217,15 +225,15 @@ edges:
   to: ref_oracle
   guard: success
 - from: ref_verify
-  to: draft
+  to: dredraft
   guard: challenged
   ext: 12a
 - from: ref_verify
-  to: draft
+  to: dredraft
   guard: refused
   ext: 12b
 - from: ref_verify
-  to: e_paused
+  to: dropclaim
   guard: held
   ext: 12c
 - from: ref_oracle
@@ -253,6 +261,14 @@ edges:
 - from: dshort
   to: e_escalated
   guard: 'again: escalate'
+- from: dredraft
+  to: draft
+  guard: 'yes'
+- from: dredraft
+  to: dropclaim
+  guard: 'no'
+- from: dropclaim
+  to: ref_oracle
 evidence:
 - AS-IS-FINDINGS.md rules T3 (Oracle), T8 (stored links), T9 (brief scoped, budget from the envelope).
 - docs/proposals/plan-forward-2026-11.md W1b item 5 (permission envelope) and W9 (the Oracle's scope judgments, Rule 17).

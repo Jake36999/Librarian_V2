@@ -115,7 +115,7 @@ _None declared._
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
 | W-PUB-01 | cost | publishstorage | Old and failed candidate paper databases are never cleaned up. | publishstorage note | open: Handled on Geo-Grapher's side (G-BLD-06, G-GEN-01): geo-grapher/to-be paper-import inserts into one active database, and snapshots are pruned by retention. |
-| W-PUB-02 | gap | pubcheck | Publication needs an accepted current folder, so a source added without folder review is never published. | pubgap label: awaiting accepted folder | open: Handled on Geo-Grapher's side (G-BLD-10): geo-grapher/to-be paper-import publishes a source without folder review into the library's own papers group. |
+| W-PUB-02 | gap | pubcheck | Publication needs an accepted current folder, so a source added without folder review is never published. | pubgap label: awaiting accepted folder | `paper-publication` |
 
 ## Checks
 

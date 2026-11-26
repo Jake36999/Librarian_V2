@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: compose
 use_case: UC8
 status: PROPOSED_UNACCEPTED
@@ -87,7 +87,7 @@ nodes:
 - id: dctx
   kind: decision
   lane: Core
-  label: which context runs the sprint?
+  label: routes by the specification's recorded owner (set at the first decision; a run never switches context)
 - id: ctx1
   kind: ref
   lane: Lead (tier 1)
@@ -225,14 +225,14 @@ edges:
   to: dctx
 - from: dctx
   to: ctx1
-  guard: tier 0's commission
+  guard: the owner is tier 0, working for the Owner
 - from: dctx
   to: ctx2
-  guard: an external project
+  guard: the owner is an external project
   ext: 7a
 - from: dctx
   to: ctx3
-  guard: the Web UI
+  guard: the owner is the person, in the Web UI
   ext: 7b
 - from: ctx1
   to: oracle_rollup

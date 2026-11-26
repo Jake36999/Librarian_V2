@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: folder-review
 use_case: UC1.1
 status: PROPOSED_UNACCEPTED
@@ -93,6 +93,11 @@ nodes:
   kind: merge
   lane: Core
   label: the ways to the folder's group is applied, its inputs known meet
+- id: markstale
+  kind: activity
+  lane: Core
+  label: records the receipt, and marks the notes and claims that cite a changed entity as stale, for the Oracle's recheck
+  step: 6
 - id: e_success
   kind: end
   outcome: success
@@ -175,7 +180,7 @@ edges:
 - from: dgeo
   to: doctorgeo
   guard: the folder is stale, or a mapped Geo-Grapher fault
-  ext: 5a
+  ext: 6a
 - from: doctorgeo
   to: reentrygeo
   guard: resolved
@@ -190,11 +195,11 @@ edges:
 - from: dgeo
   to: oraclecov
   guard: parse coverage is degraded (some files skipped)
-  ext: 5b
+  ext: 6b
 - from: dgeo
   to: e_escalated
   guard: critical Geo DB or security violation
-  ext: 5c
+  ext: 6c
 - from: oraclecov
   to: m_success
   guard: acceptable for scope (gap recorded)
@@ -202,4 +207,6 @@ edges:
   to: e_paused
   guard: below required quality
 - from: m_success
+  to: markstale
+- from: markstale
   to: e_success

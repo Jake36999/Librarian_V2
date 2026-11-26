@@ -5,7 +5,7 @@
 | Pack | Use cases | Weaknesses | Status |
 |---|---|---|---|
 | [Librarian, as-is](librarian/as-is/INDEX.md) | 18 | 54, in ten root causes ([findings](librarian/AS-IS-FINDINGS.md)) | `IMPLEMENTED_VERIFIED` / `_OBSERVED`, code at `d9435e1` |
-| [Librarian, to-be](librarian/to-be/INDEX.md) | 20 | 50 handled; 4 open with reasons ([handles](librarian/to-be/handles.yaml)) | `PROPOSED_UNACCEPTED` |
+| [Librarian, to-be](librarian/to-be/INDEX.md) | 20 | 51 handled; 3 open with reasons ([handles](librarian/to-be/handles.yaml)) | `PROPOSED_UNACCEPTED` |
 | [Geo-Grapher, as-is](geo-grapher/as-is/INDEX.md) | 3 (3 deferred) | 17, in six root causes ([register](geo-grapher/as-is/weaknesses.yaml)) | `IMPLEMENTED_VERIFIED`, code at `e71967a` |
 | [Geo-Grapher, to-be](geo-grapher/to-be/INDEX.md) | 4 | all 17 handled ([handles](geo-grapher/to-be/handles.yaml)) | `PROPOSED_UNACCEPTED` |
 
@@ -20,6 +20,7 @@
 - **Two open gaps closed:** a ticket for each quarantined sibling, and the person's draft kept through a stale revision.
 - **Other changes:** the Oracle now checks unchanged children by their receipts' hashes, and pack specs no longer point to themselves.
 - **All four packs pass with no warnings.** [VALIDATION.md](VALIDATION.md) says what that does and does not prove.
+- **Handoff review** (same day): fifteen fixes for bounded retries, reachable paths, complete handoffs, rechecks, a single owner for drafting remedies, and Geo-Grapher's receipt contract. They are listed at the end of the [adversarial review](ADVERSARIAL-REVIEW.md).
 - **Second pass** (DeepInfra readers and reviewers, 19 calls, $0.83 of the $5 allowed):
   - The [regression matrix](REGRESSION-MATRIX.md) traces 224 checked requirements from the 20–24 November research, designs and graphs: 207 preserved, 13 deferred on the record, 2 rejected with evidence, 2 unresolved.
   - The [adversarial review](ADVERSARIAL-REVIEW.md): 56 findings with verbatim quotes, 39 accepted (23 changes), 17 rejected with reasons.

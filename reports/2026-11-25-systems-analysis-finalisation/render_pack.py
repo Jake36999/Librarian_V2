@@ -435,7 +435,7 @@ def states_md(pack: Pack, handled: dict, weakness_index: dict) -> str:
     return "\n".join(out)
 
 
-REF = re.compile(r"`((?:as-is|to-be)/)?([a-z][a-z0-9-]*):([A-Za-z0-9_]+)`")
+REF = re.compile(r"`((?:(?:librarian|geo-grapher)/)?(?:as-is|to-be)/)?([a-z][a-z0-9-]*):([A-Za-z0-9_]+)`")
 
 
 def check_table(pack: Pack, name: str, table: dict) -> list[str]:
@@ -448,7 +448,9 @@ def check_table(pack: Pack, name: str, table: dict) -> list[str]:
             for cell in row:
                 for prefix, sid, nid in REF.findall(str(cell)):
                     target = pack
-                    if prefix and prefix.rstrip("/") != pack.state:
+                    if prefix.count("/") == 2:                      # another system's pack: system/state/
+                        target = Pack(HERE / prefix.rstrip("/")) if (HERE / prefix.rstrip("/")).exists() else None
+                    elif prefix and prefix.rstrip("/") != pack.state:
                         other = other or pack.counterpart()
                         target = other
                     spec = target.specs.get(sid) if target else None

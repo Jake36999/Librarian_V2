@@ -93,6 +93,13 @@ sections:
     - the person
     - policy line 61
     - 'not drawn: outside the flows'
+  - - Accepting a bridge between graphs
+    - reserved, unless a standing policy covers its kind
+    - the Owner decides, or the policy
+    - same
+    - the person
+    - 'docs/terminology.md: a declared bridge is an operator''s assertion'
+    - '`geo-grapher/to-be/federated-search:decide`'
 - heading: How the earlier open decision (OD-05) resolves
   notes:
   - 'The two exceptions the 24 November proposal kept for the Owner, sensitivity reviews and challenged claims, are both reserved

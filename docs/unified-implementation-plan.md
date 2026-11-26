@@ -7582,3 +7582,16 @@ ChatGPT reviewed the packs; the Owner asked for a correction round and a seconda
 Open: the Owner's decisions (delegating a reserved decision, W-ACT-05, W-ACC-04, unlicensed nested repositories, the layer rule's same-layer question); the retention, concurrency and review-date numbers; two unresolved requirements (closed choices for models; bounded concurrency within a stage).
 
 Tests: reports only; no code changed.
+
+### Handoff review of the systems-analysis packs (2026-11-26)
+
+Before handing back to the main workflow, the Owner passed on a focused subset of ChatGPT's and Gemini's findings. Each was confirmed in the specs and fixed (`tools/s6_handoff_fixes.py`; table in ADVERSARIAL-REVIEW.md, "Handoff review"):
+- retries and loops bounded, with terminal outcomes: paper import's compare-and-set retry, re-reading failed parts at most twice, at most two redrafts per claim before it is dropped as a stated gap;
+- unreachable or contradictory paths removed: the Librarian publishes without a reviewed folder into the library's own papers group (W-PUB-02 now handled in the Librarian to-be); compose routes by the specification's recorded owner; the catalogue's layer-rule repair counts against its revision limit;
+- complete handoffs: a code-only ledger before the final check; nothing sent to acceptance when every item is held; a held folder no longer pauses the other folders;
+- rechecks: the Web UI's repair and its partial promotion both go through the Oracle's findability check; a missing citation link gets a Doctor repair;
+- contracts: one owner for drafting remedies (the Lead; the Doctor drafts, never installs; tier 0 only for code changes); Geo-Grapher's receipt carries `changed_entity_ids` and the parser version, consumed by the new `folder-review:markstale`; a receipt-contract table; federation decisions with explicit outcomes.
+
+All four packs pass with no warnings; the regression matrix still resolves every reference (224 checked items). The table check now resolves references across systems. Every flow stays `PROPOSED_UNACCEPTED`.
+
+Tests: reports only; no code changed.

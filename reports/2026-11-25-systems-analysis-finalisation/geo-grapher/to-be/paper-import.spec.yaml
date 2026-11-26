@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: paper-import
 use_case: UC-G2
 status: PROPOSED_UNACCEPTED
@@ -22,13 +22,13 @@ nodes:
 - id: send
   kind: activity
   lane: Core
-  step: 1
   label: sends the artifact, its hash, the source's identity and the graph to the running service (no cold start)
+  step: 1
 - id: scope
   kind: activity
   lane: Geo-Grapher service
-  step: 2
   label: checks the hash, the full conversion and the source's provenance
+  step: 2
 - id: dgroup
   kind: decision
   lane: Geo-Grapher service
@@ -48,8 +48,8 @@ nodes:
 - id: insert
   kind: activity
   lane: Geo-Grapher store
-  step: 3
   label: inserts the paper into the active database in one transaction, under compare-and-set on the graph row
+  step: 3
 - id: dcas
   kind: decision
   lane: Geo-Grapher store
@@ -58,11 +58,15 @@ nodes:
   kind: activity
   lane: Geo-Grapher store
   label: retries once against the current row
+- id: dretry
+  kind: decision
+  lane: Geo-Grapher store
+  label: did the retry match the current row?
 - id: content
   kind: activity
   lane: Geo-Grapher store
-  step: 4
   label: counts the paper's claims and concepts
+  step: 4
 - id: dcontent
   kind: decision
   lane: Geo-Grapher store
@@ -74,18 +78,18 @@ nodes:
 - id: receipt
   kind: activity
   lane: Geo-Grapher service
-  step: 5
   label: checkpoints, and returns the document id, its link to the source's identity, and the counts
+  step: 5
 - id: link
   kind: activity
   lane: Core
-  step: 6
   label: stores the link on the staged item, and moves it to the note when the source is accepted
+  step: 6
 - id: judge
   kind: activity
   lane: Oracle
-  step: 7
   label: checks that both sides hold the link and the counts are what the reading found
+  step: 7
 - id: dverdict
   kind: decision
   lane: Oracle
@@ -141,7 +145,7 @@ edges:
   guard: 'no'
   ext: 4a
 - from: retry
-  to: content
+  to: dretry
 - from: content
   to: dcontent
 - from: dcontent
@@ -168,5 +172,11 @@ edges:
   ext: 7a
 - from: ticket
   to: e_partial
+- from: dretry
+  to: content
+  guard: 'yes'
+- from: dretry
+  to: refuse
+  guard: 'no: refused, nothing written'
 evidence:
 - As-is weaknesses G-BLD-06 to G-BLD-12; geographer/library_papers.py publish.

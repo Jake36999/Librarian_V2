@@ -27,10 +27,10 @@ sections:
     - '`doctor:askowner`'
   - - An unmapped failure or a misalignment
     - no catalogue entry matches
-    - Lead (tier 1), with the Clerk's read-only scout
+    - Lead (tier 1); the Clerk scouts it and the Doctor drafts a remedy, never installing it
     - the Lead's queue
-    - the Lead drafts a remedy for the Owner (UC-L) or hands it to tier 0
-    - '`doctor:scout`'
+    - the Lead puts the Doctor's draft to the Owner (`learn:a2`), or hands a code change to tier 0
+    - '`doctor:draftprop`'
   - - A failure that needs a code change (the R7 class)
     - outside every remedy's scope
     - Overseer (tier 0)
@@ -78,7 +78,7 @@ sections:
     - Doctor (re-link from the publication receipt)
     - the ticket service
     - the citation is retried
-    - '`cite-graph:ticket`'
+    - '`cite-graph:ref_doctor`'
   - - A permitted partial, or unmet tasks
     - '`source-enrichment:retpartial`'
     - Lead (tier 1), for the parent

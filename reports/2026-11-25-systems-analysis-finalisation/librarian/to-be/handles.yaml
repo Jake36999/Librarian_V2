@@ -51,6 +51,7 @@ handles:
   - {weakness: W-CIT-02, spec: cite-graph, at: staged, how: "A read but unaccepted paper is quoted from its staged evidence, labelled as unaccepted."}
   - {weakness: W-RES-05, spec: research, at: candidates, how: "Read but unaccepted sources of the corpus are candidates, labelled."}
   - {weakness: W-EXT-02, spec: activation-external-project, at: recordapp, how: "The Applications/ note validates its citations and records locators in an append-only sidecar."}
+  - {weakness: W-PUB-02, spec: paper-publication, at: dpub, how: "A source without folder review is published into the library's own papers group; only a disabled Geo-Grapher stops publication."}
   - {weakness: W-PAR-01, spec: source-parse, at: preproj, how: "The provisional projection is marked provisional and never counted as published."}
   # T9 The research session does not fit a brief
   - {weakness: W-RES-01, spec: research, at: candidates, how: "Candidates come from the named corpus only."}
@@ -64,7 +65,6 @@ handles:
   - {weakness: W-DOC-05, spec: doctor, at: "*", how: "Proposed: the repair role takes a distinct code name, and `doctor` stays the install check."}
   - {weakness: W-REA-02, spec: source-reading, at: metapropose, how: "A Clerk proposes semantic metadata from the evidence, Unknown where it is not supported."}
 open:
-  - {weakness: W-PUB-02, reason: "Handled on Geo-Grapher's side (G-BLD-10): geo-grapher/to-be paper-import publishes a source without folder review into the library's own papers group."}
   - {weakness: W-PUB-01, reason: "Handled on Geo-Grapher's side (G-BLD-06, G-GEN-01): geo-grapher/to-be paper-import inserts into one active database, and snapshots are pruned by retention."}
   - {weakness: W-ACT-05, reason: "Owner decision: may a person's own surface skip the Broker, as it does today?"}
   - {weakness: W-ACC-04, reason: "Owner decision: whether to correct the attester on the 96 notes accepted on 20 November."}

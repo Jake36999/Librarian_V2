@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: source-reading
 use_case: UC1c.2
 status: PROPOSED_UNACCEPTED
@@ -46,7 +46,7 @@ nodes:
 - id: dpoison
   kind: decision
   lane: Core
-  label: are the bounded retries spent on poison or ungrounded text?
+  label: what is left after the bounded retries (at most two per part; the number is a decision)?
 - id: partialread
   kind: activity
   lane: Core
@@ -124,7 +124,7 @@ edges:
   ext: 6a
 - from: dpoison
   to: e_failed
-  guard: the retries are spent on ungrounded or poison text
+  guard: the retries are spent, and the text is still ungrounded or poison
 - from: dpoison
   to: partialread
   guard: noncritical partial retained
@@ -153,3 +153,6 @@ edges:
   to: reviewchk
 - from: reviewchk
   to: e_success
+- from: dpoison
+  to: read
+  guard: 'retries left: re-read only the failed parts'

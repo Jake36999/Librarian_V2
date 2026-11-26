@@ -1,4 +1,4 @@
-# Correction round by tools/s5_open_gaps.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: activation-web-ui
 use_case: UC0
 status: PROPOSED_UNACCEPTED
@@ -80,19 +80,15 @@ nodes:
   use_case: batch-enrichment
   label: runs the mixed batch under the person's start
   step: 7
-- id: duicrit
-  kind: decision
-  lane: Core
-  label: a critical security, data-loss or boundary breach, rather than a mapped shortfall?
 - id: uidoctor
   kind: ref
   lane: Doctor
   use_case: doctor
-  label: attempts a bounded repair of the UI or batch ticket (for example, re-indexing)
+  label: repairs the findability ticket (for example, re-indexing)
 - id: uireentry
   kind: activity
   lane: Core
-  label: confirms the repaired ticket and refreshes Staging and Search
+  label: confirms the repaired ticket and refreshes Search, for the Oracle's recheck
 - id: reviewgate2
   kind: activity
   lane: Owner
@@ -122,12 +118,16 @@ nodes:
 - id: oracleverify
   kind: activity
   lane: Oracle
-  label: verifies the summary's integrity and the note's findability, on a route distinct from the workers'
+  label: verifies the summary's integrity and the note's findability, full or partial, on a route distinct from the workers'
   step: 10
 - id: dindex
   kind: decision
   lane: Oracle
   label: is the Source note findable, and do its checks pass?
+- id: dkind
+  kind: decision
+  lane: Web UI
+  label: was the note accepted with full or partial coverage?
 - id: uinotify
   kind: activity
   lane: Web UI
@@ -165,7 +165,7 @@ nodes:
 - id: uiesc
   kind: activity
   lane: Web UI
-  label: shows the critical error at once, with the ticket, flags, evidence and the compensation shown
+  label: shows the critical or unresolved error at once, with the ticket, flags, evidence and the compensation shown
 - id: useresc
   kind: activity
   lane: Owner
@@ -262,20 +262,14 @@ edges:
   guard: paused
   ext: 7c
 - from: batchchild
-  to: duicrit
+  to: uiesc
   guard: escalated
   ext: 7d
-- from: duicrit
-  to: uiesc
-  guard: critical security, data-loss, or boundary violation
-- from: duicrit
-  to: uidoctor
-  guard: mapped noncritical shortfall
 - from: uidoctor
   to: uireentry
   guard: resolved
 - from: uireentry
-  to: reviewgate2
+  to: oracleverify
 - from: uidoctor
   to: uiagenda
   guard: declined
@@ -296,13 +290,13 @@ edges:
   guard: Defer or Reject
   ext: 9b
 - from: promotepartial
-  to: uipartial
+  to: oracleverify
 - from: promoteindex
   to: oracleverify
 - from: oracleverify
   to: dindex
 - from: dindex
-  to: uinotify
+  to: dkind
   guard: findable, and the checks pass on a distinct Oracle route
 - from: dindex
   to: uidoctor
@@ -345,3 +339,10 @@ edges:
   ext: 9c
 - from: keepdraft
   to: reviewgate2
+- from: dkind
+  to: uinotify
+  guard: full
+- from: dkind
+  to: uipartial
+  guard: partial
+  ext: 11d

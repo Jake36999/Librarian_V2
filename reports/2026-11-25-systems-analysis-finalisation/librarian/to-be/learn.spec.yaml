@@ -1,4 +1,4 @@
-# Copied from reports/2026-11-20-workflow-map/examples/ingestion/learn.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: learn
 use_case: UC-L
 status: PROPOSED_UNACCEPTED
@@ -18,7 +18,7 @@ problem:
   - The catalogue had no remedy for its shape.
   root: The catalogue only grows when a resolved case is written back into it.
 lanes:
-- Overseer (tier 0)
+- Lead (tier 1)
 - Owner
 - Core
 nodes:
@@ -26,19 +26,19 @@ nodes:
   kind: start
 - id: a1
   kind: activity
-  lane: Overseer (tier 0)
+  lane: Lead (tier 1)
+  label: owns an unmapped case resolved without a catalogued remedy (tier 0 only when it needed a code change)
   step: 1
-  label: resolves the escalated case
 - id: a2
   kind: activity
-  lane: Overseer (tier 0)
+  lane: Lead (tier 1)
+  label: 'puts the Doctor''s drafted remedy to the Owner: symptom shape, remedy workflow, scope, rejoin'
   step: 2
-  label: 'proposes a remedy entry: symptom shape, remedy workflow, scope, rejoin'
 - id: a3
   kind: activity
   lane: Core
-  step: 3
   label: 'validates the entry: workflow exists, scope declared, blast radius bounded'
+  step: 3
 - id: d1
   kind: decision
   lane: Core
@@ -46,8 +46,8 @@ nodes:
 - id: a4
   kind: activity
   lane: Owner
-  step: 4
   label: accepts the entry into the catalogue
+  step: 4
 - id: d2
   kind: decision
   lane: Owner
@@ -55,8 +55,8 @@ nodes:
 - id: a5
   kind: activity
   lane: Core
-  step: 5
   label: adds the entry, pinned to its digest
+  step: 5
 - id: e1
   kind: end
   outcome: learned
@@ -80,7 +80,7 @@ edges:
 - from: d1
   to: e2
   guard: invalid
-  ext: 3a
+  ext: 4a
 - from: a4
   to: d2
 - from: d2
@@ -89,7 +89,7 @@ edges:
 - from: d2
   to: e2
   guard: declined
-  ext: 4a
+  ext: 5a
 - from: a5
   to: e1
 provenance:

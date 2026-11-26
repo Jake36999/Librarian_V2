@@ -78,6 +78,13 @@ def main(run_dir: Path) -> None:
         sources = {m["path"]: norm((REPO / m["path"]).read_text(encoding="utf-8"))
                    for m in r["manifest"] if not m["path"].endswith("pack-digest.md")}
         items = parse_reply(response) if response.exists() else []
+        # A supporting quote is checked against the packet this reader was sent (the request keeps it),
+        # not against today's digest: later rewording must not turn a faithful quote into a failure.
+        request = Path(r.get("request_path", ""))
+        seen = digest
+        if request.exists():
+            body = json.loads(request.read_text(encoding="utf-8")).get("body", {})
+            seen = norm(" ".join(str(m.get("content", "")) for m in body.get("messages", []) if m.get("role") == "user"))
         for item in items:
             quote = norm(item.get("quote", ""))
             in_source = bool(quote) and any(quote in text for text in sources.values())
@@ -85,7 +92,7 @@ def main(run_dir: Path) -> None:
             call = r["task"].replace("trace-", "").split("-")[0]      # t1 ... t8: readers reuse ids across calls
             rows.append({**item, "id": f"{call}/{item.get('id', '?')}", "call": r["task"], "run_id": r["run_id"], "model": r["model"],
                          "check_quote": in_source,
-                         "check_pack_quote": (pq in digest) if pq else None,
+                         "check_pack_quote": (pq in seen) if pq else None,
                          "check_ref": node_exists(str(item.get("pack_ref") or ""))})
     adjudication_file = HERE / "regression-adjudication.yaml"
     adjudication = yaml.safe_load(adjudication_file.read_text(encoding="utf-8")) if adjudication_file.exists() else {}

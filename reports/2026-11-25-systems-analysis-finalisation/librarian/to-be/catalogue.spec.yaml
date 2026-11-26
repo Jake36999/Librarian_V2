@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: catalogue
 use_case: UC8.2
 status: PROPOSED_UNACCEPTED
@@ -33,13 +33,13 @@ nodes:
 - id: a1
   kind: activity
   lane: Lead (tier 1)
-  step: 1
   label: needs a capability its task calls for
+  step: 1
 - id: a2
   kind: activity
   lane: Core
-  step: 2
   label: searches the repertoire, the Core's store of accepted processes, for one that covers it, lowest layer first
+  step: 2
 - id: d1
   kind: decision
   lane: Core
@@ -47,14 +47,14 @@ nodes:
 - id: a3
   kind: activity
   lane: Lead (tier 1)
-  step: 3
   label: drafts a process at the layer the task needs, from accepted processes as its components
+  step: 3
 - id: a4
   kind: activity
   lane: Core
-  step: 4
   label: 'validates the draft: schema, references, arguments and outputs, and that no step declares less than its action''s
     registered effects'
+  step: 4
 - id: d2
   kind: decision
   lane: Core
@@ -70,9 +70,9 @@ nodes:
 - id: a5
   kind: activity
   lane: Core
-  step: 5
   label: 'validates the layer rule: an action has no components; a workflow holds actions and, without a cycle, workflows;
     a pipeline holds workflows and actions; a sprint holds pipelines, workflows and actions'
+  step: 5
 - id: d4
   kind: decision
   lane: Core
@@ -84,9 +84,9 @@ nodes:
 - id: a6
   kind: activity
   lane: Core
-  step: 6
   label: 'compiles the manifest: the component tree, the actions in order, their declared effects, tier and outside access,
     and the blast radius'
+  step: 6
 - id: d5
   kind: decision
   lane: Core
@@ -110,8 +110,8 @@ nodes:
 - id: a7
   kind: activity
   lane: Oracle
-  step: 7
   label: 'dry-runs the draft against its specification: Tier A checks, then a Tier B review'
+  step: 7
 - id: d7
   kind: decision
   lane: Oracle
@@ -123,18 +123,18 @@ nodes:
 - id: a8
   kind: activity
   lane: Core
-  step: 8
   label: runs the process for the task, pinned to its digest
+  step: 8
 - id: a9
   kind: activity
   lane: Lead (tier 1)
-  step: 9
   label: proposes promoting the process into the repertoire
+  step: 9
 - id: a10
   kind: activity
   lane: Core
-  step: 10
   label: checks the proposal against the repertoire for duplicates, and puts it on the Owner's agenda
+  step: 10
 - id: d8
   kind: decision
   lane: Core
@@ -142,8 +142,8 @@ nodes:
 - id: a11
   kind: activity
   lane: Owner
-  step: 11
   label: accepts the process into the repertoire
+  step: 11
 - id: d9
   kind: decision
   lane: Owner
@@ -151,8 +151,8 @@ nodes:
 - id: a12
   kind: activity
   lane: Core
-  step: 12
   label: stores the specification in the Core, pins its digest, and records its manifest and provenance
+  step: 12
 - id: xe
   kind: activity
   lane: Overseer (tier 0)
@@ -194,7 +194,7 @@ edges:
 - from: d1
   to: e2
   guard: covered
-  ext: 2a
+  ext: 3a
 - from: a3
   to: a4
 - from: a4
@@ -205,7 +205,7 @@ edges:
 - from: d2
   to: x1
   guard: invalid
-  ext: 4a
+  ext: 5a
 - from: x1
   to: d3
 - from: d3
@@ -222,9 +222,9 @@ edges:
 - from: d4
   to: x2
   guard: 'it breaks the rule: a later layer, a same-layer component outside workflows, or a cycle'
-  ext: 5a
+  ext: 6a
 - from: x2
-  to: a4
+  to: d3
 - from: a6
   to: d5
 - from: d5
@@ -233,7 +233,7 @@ edges:
 - from: d5
   to: x3
   guard: wider
-  ext: 6a
+  ext: 7a
 - from: x3
   to: x4
 - from: x4
@@ -254,7 +254,7 @@ edges:
 - from: d7
   to: x6
   guard: not met
-  ext: 7a
+  ext: 8a
 - from: x6
   to: d3
 - from: a8
@@ -269,7 +269,7 @@ edges:
 - from: d8
   to: e2
   guard: duplicate
-  ext: 10a
+  ext: 11a
 - from: a11
   to: d9
 - from: d9
@@ -278,7 +278,7 @@ edges:
 - from: d9
   to: e3
   guard: declined
-  ext: 11a
+  ext: 12a
 - from: a12
   to: e1
 - from: xe

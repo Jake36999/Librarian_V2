@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: ingestion
 use_case: UC1
 status: PROPOSED_UNACCEPTED
@@ -42,10 +42,18 @@ nodes:
   kind: activity
   lane: Core
   label: puts the reserved decision, or the external project's hold, on the agenda as a ticket without blocking the caller
+- id: heldfolders
+  kind: activity
+  lane: Core
+  label: puts the held folders on the agenda, each with its owner, and goes on with the other folders
 - id: dinput
   kind: decision
   lane: Core
   label: Source-eligible files or queued refs in scope?
+- id: codeledger
+  kind: activity
+  lane: Core
+  label: 'records the ledger for code-only folders: the applied groups and their receipts, no Source notes expected'
 - id: ref_source_intake
   kind: ref
   lane: Core
@@ -95,6 +103,10 @@ nodes:
   kind: activity
   lane: Core
   label: holds only the unmet items on the agenda, each with its ticket and owner; the clean items go on to acceptance
+- id: dclean
+  kind: decision
+  lane: Core
+  label: are any items clean?
 - id: doctorbatch
   kind: ref
   lane: Doctor
@@ -113,7 +125,8 @@ nodes:
 - id: oraclefinal
   kind: activity
   lane: Oracle
-  label: verifies findability, neutrality and the ledger on a route distinct from the workers'
+  label: 'verifies against the ledger, on a route distinct from the workers'': the committed notes'' findability and neutrality,
+    or for code-only folders the applied groups'' receipts'
   step: 10
 - id: doracle
   kind: decision
@@ -199,7 +212,7 @@ edges:
   to: ref_source_intake
   guard: Source-eligible inputs present
 - from: dinput
-  to: oraclefinal
+  to: codeledger
   guard: code or graph folders only (no Source notes)
   ext: 4a
 - from: dinput
@@ -341,7 +354,7 @@ edges:
   to: dinput
   guard: success
 - from: ref_folder_review
-  to: queueagenda
+  to: heldfolders
   guard: held for the Owner
   ext: 3a
 - from: ref_folder_review
@@ -375,4 +388,14 @@ edges:
   guard: paused
   ext: 9f
 - from: holdunmet
+  to: dclean
+- from: codeledger
+  to: oraclefinal
+- from: dclean
   to: ref_acceptance
+  guard: 'yes'
+- from: dclean
+  to: recordpartial
+  guard: 'no: nothing to accept; the held items'' tickets are returned'
+- from: heldfolders
+  to: dinput

@@ -1,4 +1,4 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: paper-publication
 use_case: UC1c.3
 status: PROPOSED_UNACCEPTED
@@ -40,20 +40,20 @@ nodes:
 - id: e_gap
   kind: end
   outcome: gap
-  label: missing folder, refusal, or an empty paper graph
+  label: Geo-Grapher disabled, a refusal, or an empty paper graph
 edges:
 - from: s
   to: dpub
 - from: dpub
   to: publish
-  guard: full conversion and trusted folder group
+  guard: 'fully converted: into its folder''s group, or the library''s own papers group when it has none'
 - from: dpub
   to: e_not_applicable
   guard: non-PDF or no conversion
   ext: 1a
 - from: dpub
   to: e_gap
-  guard: missing folder or Geo disabled
+  guard: Geo-Grapher disabled for this library
   ext: 1b
 - from: publish
   to: pubreceipt

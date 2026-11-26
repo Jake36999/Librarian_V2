@@ -24,13 +24,13 @@ flowchart LR
 
 ## The transitions
 
-| Transition | As-is | To-be | What holds it | To-be check (proposed) |
+| Transition | As-is | To-be | What holds it | To-be check (proposed): Core or Oracle |
 |---|---|---|---|---|
-| capture: into Bronze | `as-is/source-intake:capture_source` | `source-intake:capture` | immutable evidence with its hash | `source-parse:validate` verifies the hash |
-| Bronze to staged Silver: the preview | `as-is/source-intake:clerk_draft` | `source-intake:describe` | a neutral description, Unknown where unsupported | staged only: nothing enters the library yet |
-| Bronze to staged Silver: full reading | `as-is/source-enrichment:ref_source_reading` | `source-reading:readchk` | each part grounded in the evidence | `source-enrichment:oracle` audits the fidelity of what was read |
-| staged to catalogued Silver | `as-is/acceptance:promote_curr` | `acceptance:promote` | the guarded writer, the index, findability | `ingestion:oraclefinal` verifies findability and neutrality |
-| Silver to Gold | `as-is/research:synth` | `research:synth` | framed by the brief; every quote verified | `verify-claims:quote` and `research:ref_oracle` |
+| capture: into Bronze | `as-is/source-intake:capture_source` | `source-intake:capture` | immutable evidence with its hash | Core: `source-parse:validate` verifies the hash (deterministic) |
+| Bronze to staged Silver: the preview | `as-is/source-intake:clerk_draft` | `source-intake:describe` | a neutral description, Unknown where unsupported | none: staged only, nothing enters the library yet |
+| Bronze to staged Silver: full reading | `as-is/source-enrichment:ref_source_reading` | `source-reading:readchk` | each part grounded in the evidence | Oracle: `source-enrichment:oracle` audits the fidelity of what was read |
+| staged to catalogued Silver | `as-is/acceptance:promote_curr` | `acceptance:promote` | the guarded writer, the index, findability | Oracle: `ingestion:oraclefinal` verifies findability and neutrality |
+| Silver to Gold | `as-is/research:synth` | `research:synth` | framed by the brief; every quote verified | Core: `verify-claims:quote` finds each quote; Oracle: `research:ref_oracle` judges the report |
 | Gold back to Bronze: feedback | `as-is/activation-external-project:c2_record_app` | `activation-external-project:recordapp` | an Application's unresolved sources are queued for capture | none proposed |
 
 ## Invariants

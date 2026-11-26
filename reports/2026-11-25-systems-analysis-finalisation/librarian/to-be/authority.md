@@ -18,6 +18,7 @@ The Owner said tier 0 should have the authority to act on the Owner's behalf, so
 | Widening the parent's mandate (a blast radius beyond it) | reserved | the Owner decides | same | the person | composition rule 16; to-be doctor | `doctor:askowner` |
 | Changing the promotion mode | reserved | the Owner | same | the person | policy line 61 | not drawn: outside the flows |
 | A lead-override checkpoint | reserved | the Owner | same | the person | policy line 61 | not drawn: outside the flows |
+| Accepting a bridge between graphs | reserved, unless a standing policy covers its kind | the Owner decides, or the policy | same | the person | docs/terminology.md: a declared bridge is an operator's assertion | `geo-grapher/to-be/federated-search:decide` |
 
 ## How the earlier open decision (OD-05) resolves
 

@@ -59,3 +59,27 @@ Each was given the pack digest, the README and the as-is findings, and asked for
 ## Discarded (quote not verbatim)
 
 Qwen A23, A24, A26 and A30.
+
+## Handoff review (26 November)
+
+A focused subset from ChatGPT and Gemini, checked against the specs and the policy before the hand-back to the main workflow. Every item was confirmed in the specs and fixed by [`tools/s6_handoff_fixes.py`](tools/s6_handoff_fixes.py); the packs still pass with no warnings.
+
+| Finding | Fix |
+|---|---|
+| `paper-import` retried a compare-and-set conflict without checking the second result | `dretry`: a second mismatch is refused, with nothing written |
+| `source-reading` had no retry edge for the parts that failed | `dpoison` re-reads only the failed parts, at most twice (the number is a decision); after that the part is partial or the item fails. Boundary values added. |
+| `research` could loop on challenged or refused claims | `dredraft`: at most two redrafts per claim, then `dropclaim` drops it as a stated gap with its ticket, and the report goes on. A held claim now does the same instead of pausing the brief. |
+| The Librarian's publication refused a missing folder before Geo-Grapher's own-papers-group fallback could run | `paper-publication:dpub` publishes into the folder's group or the library's own papers group; only a disabled Geo-Grapher stops it. W-PUB-02 is now handled in the Librarian's own to-be. |
+| `compose` chose the specification's owner, then the context, separately | `dctx` routes by the specification's recorded owner and never switches context; its guards are conditions on that record, not a second choice |
+| `catalogue`'s layer-rule repair bypassed its revision limit | `x2` now goes through `d3`, the two-revision limit |
+| `ingestion` sent a code-only folder to a final check that expects a ledger | `codeledger` records the code-only ledger first; `oraclefinal` checks either notes or applied groups against it |
+| `ingestion` could send an empty set to acceptance when every item was held | `dclean`: with nothing clean, it goes to the partial record with the held items' tickets |
+| A held folder decision paused the whole ingestion | `heldfolders` puts the held folders on the agenda and goes on with the others. A held acceptance, or a stage-only scope, still ends the run held, because nothing else is left to do. |
+| The Web UI's repair rejoined at the review gate, and the partial promotion skipped the Oracle | The Web UI's Doctor now serves only findability and rejoins at `oracleverify`; the partial promotion goes through `oracleverify` too, and `dkind` branches after it. A batch escalation is shown at once, because the batch's own Doctor has already tried. |
+| The citation's missing-link ticket had no repair | `cite-graph:ref_doctor` re-links from the publication receipt and rejoins at `resolve` |
+| The drafting of a remedy for an unmapped failure was assigned three ways | One owner, as the policy says: the Lead owns the ticket, the Clerk scouts, the Doctor drafts (`doctor:draftprop`) and never installs, and the Lead puts the draft to the Owner (`learn:a2`). Tier 0 gets only code changes. The routing table and UC-L agree. |
+| Geo-Grapher's receipt needed `changed_entity_ids` for the Librarian to propagate staleness | `graph-building:receipt` carries them, with the parser version. `folder-review:markstale` consumes them. The new [receipt contract](geo-grapher/to-be/receipt-contract.md) names each field's consumer. |
+| Federation decisions had no outcome | `federated-search:ddecide`: accepted or rejected, the rejection recorded; the authority table adds accepting a bridge as reserved, unless a standing policy covers its kind |
+| The data contract's "Oracle checks" included a Core check | Each check is now labelled Core (deterministic) or Oracle |
+
+The table check now also resolves references across systems (`librarian/to-be/...` from a Geo-Grapher table), and fails on one that does not exist.

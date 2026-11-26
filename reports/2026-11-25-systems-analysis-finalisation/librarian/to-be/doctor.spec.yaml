@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
 diagram: doctor
 use_case: UC-D
 status: PROPOSED_UNACCEPTED
@@ -25,9 +25,9 @@ nodes:
 - id: intake
   kind: activity
   lane: Core
-  step: 1
   label: 'records the ticket: the extension, tiered flags, evidence hash, accountable actor, repair history, the Oracle it
     needs, and the mandate'
+  step: 1
 - id: dtrigger
   kind: decision
   lane: Core
@@ -51,12 +51,12 @@ nodes:
 - id: draftprop
   kind: activity
   lane: Doctor
-  label: drafts a new remedy on the ticket; it never installs or runs it
+  label: drafts a remedy for the unmapped case on the Lead's ticket; it never installs or runs it
 - id: blast
   kind: activity
   lane: Core
-  step: 2
   label: 'computes the blast radius against the parent''s mandate: at most 3 recovery steps and 2 paid calls'
+  step: 2
 - id: dgrant
   kind: decision
   lane: Core
@@ -76,14 +76,14 @@ nodes:
 - id: runremedy
   kind: activity
   lane: Doctor
-  step: 3
   label: runs the accepted remedy in an isolated context
+  step: 3
 - id: checkrepair
   kind: activity
   lane: Core
-  step: 4
   label: reruns the deterministic checks, records the changed hashes on the ticket, and checks the repair ran apart from the
     workers
+  step: 4
 - id: drepaired
   kind: decision
   lane: Core
@@ -99,8 +99,8 @@ nodes:
 - id: oracle
   kind: activity
   lane: Oracle
-  step: 5
   label: confirms the cleared ticket on a route distinct from the workers', switching reviewer on a collision
+  step: 5
 - id: doracle
   kind: decision
   lane: Oracle
@@ -108,8 +108,8 @@ nodes:
 - id: closeresolved
   kind: activity
   lane: Core
-  step: 6
   label: marks the ticket resolved, with its repair history, the Oracle's pass and the notice to the caller
+  step: 6
 - id: haltdecline
   kind: activity
   lane: Lead (tier 1)
@@ -142,11 +142,11 @@ edges:
 - from: dtrigger
   to: userdoc
   guard: user directed
-  ext: 1a
+  ext: 2a
 - from: dtrigger
   to: t0doc
   guard: tier 0 directed
-  ext: 1b
+  ext: 2b
 - from: userdoc
   to: dremedy
 - from: t0doc
@@ -157,7 +157,7 @@ edges:
 - from: dremedy
   to: scout
   guard: unmapped or proposed-only
-  ext: 1c
+  ext: 2c
 - from: scout
   to: draftprop
 - from: draftprop
@@ -170,7 +170,7 @@ edges:
 - from: dgrant
   to: downeravail
   guard: wider than narrowed mandate (never widens autonomously)
-  ext: 2a
+  ext: 3a
 - from: downeravail
   to: askowner
   guard: user directed
@@ -191,7 +191,7 @@ edges:
 - from: dgrant
   to: haltescalate
   guard: a critical security, data-loss or boundary violation (at once)
-  ext: 2b
+  ext: 3b
 - from: runremedy
   to: checkrepair
 - from: checkrepair
@@ -202,7 +202,7 @@ edges:
 - from: drepaired
   to: showcomp
   guard: the checks failed, or the step or call limit was reached
-  ext: 4a
+  ext: 5a
 - from: showcomp
   to: dcomp
 - from: dcomp
@@ -219,7 +219,7 @@ edges:
 - from: doracle
   to: showcomp
   guard: the recheck failed, or no distinct Oracle route (never marked resolved)
-  ext: 5a
+  ext: 6a
 - from: closeresolved
   to: e1
 - from: haltdecline

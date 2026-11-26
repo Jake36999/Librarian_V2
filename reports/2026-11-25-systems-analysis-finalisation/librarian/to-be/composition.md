@@ -33,6 +33,7 @@ flowchart TD
   activation_web_ui --> ingestion
   batch_enrichment --> doctor
   batch_enrichment --> source_enrichment
+  cite_graph --> doctor
   compose --> activation_external_project
   compose --> activation_overseer
   compose --> activation_web_ui
