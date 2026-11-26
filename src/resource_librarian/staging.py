@@ -960,6 +960,23 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
     if mode != "agent" and decided_by != "person":
         raise Refusal("PERSON_CONFIRMS", f"this vault's promotion.mode is {mode!r}: a "
                                          f"person accepts staged items")
+    if decision == "accept" and item["kind"] == "source" and decided_by != "person" \
+            and not item.get("revision_of") \
+            and not item.get("promotion_progress"):  # a revision, or an interrupted acceptance, has its own rule
+        # The accept stage's entry receipt (standard/stages.yaml, M1b; as-is W-STI-01): an agent's
+        # acceptance of a source the batch has not read is recorded on the decision, and refused
+        # only once `acceptance.enforce: refuse` is set. Report first: nothing an agent could do
+        # before is taken away, and the note's coverage still says `captured`.
+        from . import stages
+        contract = stages.load()
+        if item.get("status") not in contract.agent_entry:
+            if contract.acceptance_enforce == "refuse":
+                raise Refusal("SOURCE_NOT_ENRICHED",
+                              f"{item_id} is {item.get('status')!r}; an agent accepts a source once it is "
+                              f"{' or '.join(sorted(contract.agent_entry))}: approve it for the batch, or "
+                              f"leave accepting it as captured to a person")
+            entry["entry_receipt"] = (f"accepted by an agent while {item.get('status')!r}, before the "
+                                      f"batch read it (standard/stages.yaml acceptance)")
     if decision == "approve":
         if item.get("promotion_progress"):
             raise TypeError("review and finish interrupted acceptance, or defer/reject it; do not re-ingest partial writes")

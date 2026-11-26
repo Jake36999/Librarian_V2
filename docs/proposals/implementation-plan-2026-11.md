@@ -131,6 +131,11 @@ Each names the code it extends, the root causes it addresses (T1–T10 for the L
 
 ### M1b. Declarations, stages and manifests (T1, T2, T7; W1b items 1–4)
 
+**Status, 26 November: delivered** (see §19).
+- Item 3 already existed: MF-020's reuse key covers the source, each stage's recipe and the model route. M1b moved the recipes into the declaration.
+- Stage tool use and the acceptance entry check are both in report mode. Switching either to refuse waits for a clean run in the test vault and the Owner's word. Nothing an agent could do before is refused.
+- Not done: CI pathway 4's check that every MCP tool belongs to a phase bundle or a stage, and catching a stage's code changed without its recipe bump.
+
 1. **Action declarations:** the state classes each action can change (notes, staging, sessions, indexes, graphs, outside services), beside its existing tier and effect.
 2. **Stage contracts:** `standard/stages.yaml` declares the batch's and folder review's stages as `standard/phases.yaml` declares session phases: tools, entry receipt, exit gate, receipt, recipe version, risk and role.
    - The Broker first only reports a tool used outside its stage, in the test vault. It refuses only after a clean run.

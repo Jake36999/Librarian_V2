@@ -243,6 +243,14 @@ _RULES = [
     Rule("ADOPTION_PLAN_STALE", "boundaries",
          "An adoption or attachment applies only to the folder its plan surveyed. The "
          "survey fingerprint changed, so nothing was written: survey it again."),
+    # --- stage contracts (M1b, standard/stages.yaml) -------------------------------------------------
+    Rule("STAGE_TOOL_REFUSED", "boundaries",
+         "A batch stage calls only the tools its contract declares (standard/stages.yaml). The "
+         "call was refused; declare the tool on the stage that needs it, after review."),
+    Rule("SOURCE_NOT_ENRICHED", "boundaries",
+         "An agent accepts a source only once the batch has read it (enriched or partial). "
+         "Approve it for the batch; accepting it as captured is a person's explicit choice, "
+         "with its coverage on the note."),
     # --- an external project's application record (M1a, as-is W-EXT-01) ---------------------------
     Rule("APPLICATION_SOURCES_REQUIRED", "sessions",
          "An application record cites at least one catalogued source it used. If the library held "

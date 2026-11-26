@@ -68,8 +68,10 @@ def test_standard_set_is_valid(vault):
      "    args: {query: q, intent: poetry}\n", "is not one of"),
     ("workflow: x1\npurpose: p\nsteps:\n  - id: a\n    action: search\n    args: {query: q}\n"
      "    python: print(1)\n", "unknown key 'python'"),
-    ("pipeline: x1\npurpose: p\nsteps:\n  - id: a\n    action: search\n    args: {query: q}\n",
-     "a pipeline's steps are workflows or routes"),
+    # Composition rule 1: a workflow is never built from a pipeline, a later kind.
+    ("workflow: x1\npurpose: p\nsteps:\n  - id: a\n    workflow: clear-enrichment-backlog\n",
+     "never built from a later kind"),
+    ("workflow: x1\npurpose: p\nsteps:\n  - id: a\n    workflow: x1\n", "would run itself"),
     ("pipeline: x1\npurpose: p\nsteps:\n  - id: r\n    route:\n      decide: reason\n"
      "      question: q\n      options:\n        a: {workflow: run-queue}\n        b: {end: true}\n",
      "when_to_choose"),
@@ -103,6 +105,31 @@ def test_agent_saved_definitions_wait_for_a_person(vault):
     edited.write_text(edited.read_text().replace("limit: 3", "limit: 4"))
     assert REGISTRY.call("run_workflow", {"name": "find-and-review", "inputs": {"query": "x"}},
                          a)["refused"] == "PERSON_CONFIRMS"            # an edit revokes it
+
+
+def test_the_composition_rules_direct_uses_validate_and_run(vault):
+    # Policy composition.md rules 1-2 (M1b): an action directly in a pipeline, a workflow inside a
+    # workflow and a pipeline inside a pipeline, each without a cycle. Before, all three were refused.
+    p = person(vault)
+    assert "error" not in REGISTRY.call("save_workflow", {"yaml_text": GOOD}, p)
+    inner = ("workflow: wraps-review\npurpose: p\ninputs:\n  query: {type: string}\nsteps:\n"
+             "  - id: inner\n    workflow: find-and-review\n    args: {query: {from: inputs.query}}\n")
+    assert "error" not in REGISTRY.call("save_workflow", {"yaml_text": inner}, p), inner
+    child = ("pipeline: child-line\npurpose: p\nsteps:\n  - id: look\n    action: rules\n")
+    assert "error" not in REGISTRY.call("save_workflow", {"yaml_text": child}, p)
+    parent =("pipeline: parent-line\npurpose: p\nsteps:\n  - id: first\n    action: rules\n"
+              "  - id: then\n    workflow: child-line\n  - id: last\n    workflow: wraps-review\n"
+              "    args: {query: x}\n")
+    saved = REGISTRY.call("save_workflow", {"yaml_text": parent}, p)
+    assert "error" not in saved, saved
+    for name in ("find-and-review", "wraps-review", "child-line", "parent-line"):
+        REGISTRY.call("accept_workflow", {"name": name}, p)
+    ran = REGISTRY.call("run_pipeline", {"name": "parent-line"}, p)
+    assert ran["status"] == "finished", ran
+    # A cycle can only be made by re-saving a definition so that it reaches its own parent.
+    closing = ("pipeline: child-line\npurpose: p\nsteps:\n  - id: back\n    workflow: parent-line\n")
+    out = REGISTRY.call("save_workflow", {"yaml_text": closing}, p)
+    assert "error" in out and "run itself" in out["detail"], out
 
 
 def test_inputs_are_checked(vault):

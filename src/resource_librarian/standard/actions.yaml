@@ -1,0 +1,43 @@
+# The kinds of state an action can change, where the registry's effect and scope do not say it
+# (implementation plan M1b; plan-forward W1b item 1). Manifests carry these, and change impact (M6)
+# reads them to find a decision's blast radius.
+#
+# Classes: notes (vault Markdown), staging (staged items and folder cards), sessions (session logs
+# and their artefacts), indexes (search, catalogue, DIK and other derived stores), graphs
+# (Geo-Grapher's), outside (anything beyond the library: a model provider, the web, a remote, a
+# project's own files).
+#
+# Every other action's classes are derived in manifests.changes_of and marked `derived` there:
+# vault_write -> notes; write -> sessions (session or phase scope), staging (library scope) or
+# graphs (a Geo-Grapher tool); open_world adds outside.
+version: 1
+changes:
+  # Capture and intake: staged items, fetched from outside.
+  ingest: [staging, outside]
+  intake_run: [staging, outside]
+  queue_source: [staging]
+  pdf_to_markdown: [staging, outside]
+  ocr_pdf: [staging, outside]
+  deep_read: [staging, outside]
+  staging_review: [staging, outside]
+  # Acceptance writes the note and catalogues it.
+  staging_decide: [staging, notes, indexes]
+  # The batch: staged items, their derived data, and publication into the library's paper graph.
+  process_approved: [staging, indexes, graphs, outside]
+  batch_cancel: [staging]
+  # Folder review: folder cards, the read barrier, and the group applied to Geo-Grapher.
+  folder_survey: [staging]
+  folder_draft: [staging, outside]
+  folder_accept: [staging, graphs]
+  folder_accept_policy: [staging, graphs]
+  folder_approve_batch: [staging]
+  folder_queue_sources: [staging]
+  # Derived stores.
+  index: [indexes]
+  dik_rebuild: [indexes]
+  community_rebuild: [indexes]
+  # An external project's record: its Applications/ note, and its unresolved sources queued.
+  record_application: [notes, staging]
+  # Beyond the library.
+  vault_push: [outside]
+  project_edit: [outside]

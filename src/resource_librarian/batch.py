@@ -40,6 +40,7 @@ from pathlib import Path
 from typing import Any, Callable, TypeVar
 
 from . import deep_read as reading
+from . import stages as stage_contracts
 from .coordination import (PreconditionChangedError, atomic_write_bytes, fingerprint,
                            fingerprint_bytes)
 from .registry import REGISTRY, Context
@@ -49,11 +50,12 @@ from .workflows import RunStore
 
 NAME = "process-approved"
 MAX_READ_CALLS = 40                  # deep_read is chunked; enough calls for a long book
-# MF-020: bump a stage's recipe when what it does changes; the read stage's
-# comes from deep_read itself (its first-step clerk tasks).
-STAGE_RECIPES = {"validate": "1", "parse": "1", "lenses": "1", "data": "1", "relate": "1",
-                 "metadata": "1", "review": "1", "publish": "1"}
-MODEL_STAGES = frozenset({"parse", "read", "relate", "review", "folder_describe"})
+# The stages' tools, dependencies, recipes and model use are declared in standard/stages.yaml
+# (M1b), as session phases are in phases.yaml. MF-020: bump a stage's recipe there when what it
+# does changes; the read stage's comes from deep_read itself (its first-step clerk tasks).
+CONTRACT = stage_contracts.load()
+STAGE_RECIPES = CONTRACT.recipes()
+MODEL_STAGES = CONTRACT.model_stages()
 # What processing itself writes to the item it reads: excluded from the
 # mid-stage change check for the stage that writes it.
 OWN_FILES = {"parse": ("file", "clean_file")}
@@ -63,8 +65,9 @@ _GUARD = threading.RLock()
 T = TypeVar("T")
 
 
-# What the batch's stages call through the registry. The grant is exactly this list.
-STAGE_TOOLS = frozenset({"pdf_to_markdown", "ocr_pdf", "deep_read", "staging_review"})
+# What the batch's stages call through the registry: the union of the stages' declared tools.
+# The grant is exactly this list; each call is also checked against its own stage (stages.guard).
+STAGE_TOOLS = CONTRACT.tools()
 
 
 def _commit(ctx: Context, fn: Callable[[], T], *, targets: tuple[Path, ...] = (),
@@ -808,11 +811,9 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                 before = _source_identity(ctx.vault, current, own)
                 key = _stage_key(_source_identity(ctx.vault, current), stage, route)
                 logged = done.get((item_id, stage))
-                # Independent stages keep their receipts across partial retries.
-                dependencies = {"read": {"parse"}, "lenses": {"read"},
-                                "data": {"parse", "read"}, "relate": {"data"},
-                                "review": {"read", "data", "relate"},
-                                "publish": {"parse", "read", "review"}}
+                # Independent stages keep their receipts across partial retries; a stage runs
+                # again when one it depends on did (standard/stages.yaml `after`).
+                dependencies = CONTRACT.dependencies()
                 changed_input = bool(reran.intersection(dependencies.get(stage, ())))
                 if (not changed_input and logged and logged.get("key") == key
                         and logged.get("status") == "complete"):
@@ -836,10 +837,22 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                 # banner never sits on one stage for minutes with nothing to show.
                 ctx.extras["progress"] = (lambda detail, i=item_id, s=stage: runs.append(
                     run_id, {"type": "progress", "item": i, "stage": s, "detail": detail}))
+                # A stage may call only its declared tools (standard/stages.yaml). Another call
+                # is recorded in the run log, and refused once `enforce: refuse` is set.
+                ctx.extras["stage_guard"] = stage_contracts.guard(
+                    CONTRACT, stage, lambda st, tool, i=item_id: runs.append(
+                        run_id, {"type": "stage_tool_outside", "item": i, "stage": st, "tool": tool}))
                 try:
                     result = fn(ctx, store.load(item_id))
                 except Exception as exc:                      # noqa: BLE001 - one item
                     result = {"status": "failed", "reason": f"{type(exc).__name__}: {exc}"}
+                finally:
+                    ctx.extras.pop("stage_guard", None)
+                gate = CONTRACT.stage(stage)
+                unmet = [problem for check in (gate.gate if gate else ())
+                         if (problem := stage_contracts.GATES[check](result))]
+                if unmet:
+                    result = {**result, "gate": unmet}
                 # The source changed while this stage waited (a model, a fetch): what
                 # it produced describes the old input and must not count as done.
                 if result.get("status") == "complete":
@@ -948,3 +961,15 @@ def _folder_data(ctx, item):
 
 FOLDER_STAGES = (('folder_validate', _folder_validate), ('folder_describe', _folder_describe),
                  ('folder_data', _folder_data))
+
+
+def _check_declared_stages() -> None:
+    """The stages that run are exactly the stages declared (the Core does not start otherwise)."""
+    for kind, coded in (("source", STAGES), ("folder", FOLDER_STAGES)):
+        declared = [stage.name for stage in CONTRACT.pipelines.get(kind, ())]
+        if declared != [name for name, _fn in coded]:
+            raise stage_contracts.StageDefinitionError(
+                f"stages.yaml {kind} stages {declared} differ from the batch's {[n for n, _ in coded]}")
+
+
+_check_declared_stages()

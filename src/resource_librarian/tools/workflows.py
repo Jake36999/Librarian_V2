@@ -48,6 +48,26 @@ def list_workflows(ctx: Context) -> dict:
     return {"definitions": sorted(out, key=lambda r: (r["kind"], r["name"]))}
 
 
+@tool("process_manifest", tier="consult", effect="read",
+      returns=("manifest", "valid", "problems", "suitable", "unsuitable"),
+      card=Card("A workflow or pipeline's manifest: its components, every action it can take with "
+                "each action's tier, effect and the state it can change, and a roll-up; with a "
+                "parent's mandate, whether the process is suitable for it",
+                "before composing a process into a parent, or approving what a run may do",
+                "Compiled from the definition and the registry, never written by hand. Its digest "
+                "covers every action's implementation, so a changed action makes it stale. A mandate "
+                "is {max_tier, effects, changes, open_world, deny, parent_layer}"))
+def process_manifest(ctx: Context, name: str, mandate: dict | None = None) -> dict:
+    from .. import manifests
+    manifest = manifests.compile_process(name, _library(ctx))
+    problems = manifests.problems_in(manifest)
+    out = {"manifest": manifest, "valid": not problems, "problems": problems}
+    if mandate is not None:
+        unsuitable = manifests.check(manifest, mandate)
+        out.update(suitable=not unsuitable, unsuitable=unsuitable)
+    return out
+
+
 @tool("show_workflow", tier="consult", effect="read",
       card=Card("One workflow or pipeline: its YAML and its validation", "before running it"))
 def show_workflow(ctx: Context, name: str) -> dict:

@@ -1,0 +1,64 @@
+# The batch's stages, declared as data, as standard/phases.yaml declares session phases
+# (implementation plan M1b; the to-be pack's stage contracts, librarian/to-be/stages.md).
+#
+# `stages.py` loads and validates this file when the Core starts, and `batch.py` reads it, so a
+# stage's tools, what it needs before it runs, its recipe, its risk and its role are written once.
+# Before this, the stages were code and shared one flat tool grant (batch.STAGE_TOOLS), so a tool
+# granted to the batch could run at any of its stages.
+#
+# For each stage:
+#   tools   the registered tools the stage may call. Another call is reported (enforce: report)
+#           or refused with STAGE_TOOL_REFUSED (enforce: refuse).
+#   after   the stages whose receipts this one depends on: when one of them ran again, this
+#           stage runs again instead of reusing its receipt.
+#   recipe  the version of what the stage does. A changed recipe invalidates reuse (MF-020); the
+#           read stage's recipe comes from deep_read itself, so it is `deep_read`.
+#   model   whether the stage calls a model, so its reuse key includes the model assignment.
+#   risk    its level in the authority table: routine, bounded or high.
+#   role    the lane that does it: core, clerk or scribe.
+#   gate    named checks on the stage's result before the item moves on (stages.py GATES).
+version: 1
+
+# How a call outside its stage's tools is handled. `report` records it in the run log and lets it
+# run; `refuse` refuses it. Report first, in the test vault; refuse only after a clean run.
+enforce: report
+
+# Tools any stage may call: none today. A tool listed here is reviewed (CI pathway 4).
+any_stage: []
+
+pipelines:
+  source:
+    - {stage: validate, tools: [], after: [], recipe: "1", model: false, risk: routine, role: core,
+       gate: [result_status]}
+    - {stage: parse, tools: [pdf_to_markdown, ocr_pdf], after: [], recipe: "1", model: true,
+       risk: bounded, role: clerk, gate: [result_status]}
+    - {stage: read, tools: [deep_read], after: [parse], recipe: deep_read, model: true,
+       risk: bounded, role: clerk, gate: [result_status]}
+    - {stage: lenses, tools: [], after: [read], recipe: "1", model: false, risk: routine, role: core,
+       gate: [result_status]}
+    - {stage: data, tools: [], after: [parse, read], recipe: "1", model: false, risk: routine,
+       role: core, gate: [result_status]}
+    - {stage: relate, tools: [], after: [data], recipe: "1", model: true, risk: bounded, role: clerk,
+       gate: [result_status]}
+    - {stage: metadata, tools: [], after: [], recipe: "1", model: false, risk: routine, role: core,
+       gate: [result_status]}
+    - {stage: review, tools: [staging_review], after: [read, data, relate], recipe: "1", model: true,
+       risk: bounded, role: clerk, gate: [result_status]}
+    - {stage: publish, tools: [], after: [parse, read, review], recipe: "1", model: false,
+       risk: routine, role: core, gate: [result_status]}
+  folder:
+    - {stage: folder_validate, tools: [], after: [], recipe: "1", model: false, risk: routine,
+       role: core, gate: [result_status]}
+    - {stage: folder_describe, tools: [], after: [], recipe: "1", model: true, risk: bounded,
+       role: clerk, gate: [result_status]}
+    - {stage: folder_data, tools: [], after: [], recipe: "1", model: false, risk: routine, role: core,
+       gate: [result_status]}
+
+# Acceptance is a stage of its own, after the batch: what a source should carry before an agent
+# accepts it (as-is W-STI-01). A person may always accept a captured source ("Accept as captured"),
+# with its coverage on the note. With `enforce: report` an agent may too, and the decision records
+# that the batch had not read it; `refuse` would make it the person's alone.
+acceptance:
+  agent_entry: [enriched, partial]
+  enforce: report
+  risk: high

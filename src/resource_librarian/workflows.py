@@ -5,6 +5,9 @@
   order, one step's output bound into a later step's arguments. No model.
 - A **pipeline** chains workflows, with **routing** between them: settled by a
   declared condition, or handed to a model as a closed choice.
+- Composition (docs/policy/composition.md rules 1-2): a process is built from
+  earlier kinds, or its own kind without a cycle, and may use any earlier kind
+  directly. So a pipeline may hold actions and pipelines, a workflow workflows.
 
 There is no code between steps. A value in `args` is a literal or a reference
 (`{from: "inputs.x"}`, `{from: "steps.<id>.<field>"}`, `{from: "item.<field>"}`),
@@ -490,9 +493,8 @@ def validate(d: Definition, library: Library, _seen: tuple[str, ...] = ()) -> di
         if len(what) != 1:
             errors.append(f"{where}: exactly one of `action`, `workflow` or `route`")
         elif what[0] == "action":
-            if d.kind == "pipeline":
-                errors.append(f"{where}: a pipeline's steps are workflows or routes; wrap "
-                              f"actions in a workflow")
+            # Composition rule 2: a process may use any earlier kind directly, so an action may
+            # sit in a pipeline as well as in a workflow (M1b; before, it had to be wrapped).
             tool = str(step["action"])
             if tool not in REGISTRY:
                 errors.append(f"{where}: {tool!r} is not a registered action "
@@ -552,11 +554,10 @@ def validate(d: Definition, library: Library, _seen: tuple[str, ...] = ()) -> di
                                                 not isinstance(c["at_least"], (int, float))):
                             errors.append(f"{at}: at_least is a number")
         elif what[0] == "workflow":
-            if d.kind == "workflow":
-                errors.append(f"{where}: a workflow's steps are actions; chain workflows "
-                              f"in a pipeline")
+            # Composition rule 1: built from earlier kinds, or its own kind without a cycle. A
+            # workflow may hold a workflow, a pipeline a pipeline; never a later kind.
             _check_workflow_ref(str(step["workflow"]), step.get("args") or {}, where, library,
-                                errors, tiers, _seen + (d.name,))
+                                errors, tiers, _seen + (d.name,), parent_kind=d.kind)
             check_ref(step.get("args") or {}, f"{where}.args", has_item)
             returns[sid] = ("results", "outputs", "status")
         else:
@@ -617,7 +618,7 @@ def _compensation_problems(undo: Any, where: str, in_each: bool, check_ref: Call
 
 
 def _check_workflow_ref(name: str, args: Any, where: str, library: Library, errors: list[str],
-                        tiers: list[str], seen: tuple[str, ...]) -> None:
+                        tiers: list[str], seen: tuple[str, ...], parent_kind: str = "pipeline") -> None:
     if name in seen:
         errors.append(f"{where}: {name!r} would run itself")
         return
@@ -626,8 +627,9 @@ def _check_workflow_ref(name: str, args: Any, where: str, library: Library, erro
     except DefinitionError:
         errors.append(f"{where}: no workflow named {name!r}")
         return
-    if target.kind != "workflow":
-        errors.append(f"{where}: {name!r} is a pipeline; pipelines are not nested")
+    if target.kind == "pipeline" and parent_kind == "workflow":
+        errors.append(f"{where}: {name!r} is a pipeline; a workflow is never built from a later "
+                      f"kind (composition rule 1)")
         return
     inner = validate(target, library, seen)
     if inner["errors"]:

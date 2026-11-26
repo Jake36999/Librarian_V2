@@ -7775,3 +7775,35 @@ Verified:
 Not verified: the run-record dialog and the kept draft in a browser.
 
 Tests: `test_folder_tools.py` (+9), `test_folder_review.py` (+1), `test_handoff.py` (+1, one changed); access declarations for the seven tools. The smoke scripts' labels are updated, and `folders-smoke.mjs`'s out-of-date fixture name is corrected.
+
+### M1b: declarations, stages and manifests (2026-11-26)
+
+The batch's stages are declared as data, as session phases are:
+- `standard/stages.yaml` declares the 9 source and 3 folder stages: each stage's tools, the stages it depends on, its recipe, model use, risk, role and gate. `stages.py` loads and validates it.
+- `batch.py` now reads from it: the stage recipes (MF-020's reuse key), the model stages, the dependencies that were inline in the run loop, and the batch's grant. The grant is now the union of the stages' tools, so it is unchanged.
+- At import, the Core checks that the declared stages are exactly the stages that run.
+- Each stage's own calls pass `stages.guard` through `Registry.call`. A tool outside the stage's list is recorded in the run log (`stage_tool_outside`), and refused with `STAGE_TOOL_REFUSED` once `enforce: refuse` is set. The tools those calls make in turn are not checked.
+
+The accept stage has an entry receipt (as-is W-STI-01): an enriched or partial source. It is in report mode (`acceptance.enforce: report`), because tidying must not take a capability away (Owner, 26 November).
+- An agent that accepts a captured source can still do so. The decision's history records `entry_receipt`: the batch had not read it.
+- With `enforce: refuse`, only a person accepts a captured source (`SOURCE_NOT_ENRICHED`). Switching to refuse is the Owner's call.
+- A staged revision and an interrupted acceptance keep their own rules.
+
+Composition rules 1–2 are in the validator:
+- An action may sit directly in a pipeline, a workflow inside a workflow, and a pipeline inside a pipeline. Re-saving a definition so that it reaches its parent is refused.
+- A workflow is never built from a pipeline.
+- The runner needed no change.
+
+Manifests and mandates are in the Core (`manifests.py`, built from the 20 November prototype):
+- A manifest lists each process's components, every action with its tier, effect and state classes, and a roll-up.
+- Its digest covers the definition texts and every action's implementation and declaration, so a changed action makes it stale (`is_fresh`).
+- `problems_in` checks a manifest's structure. `standard/manifest.schema.json` states the schema; the tests validate against it with jsonschema, a dev dependency.
+- `check` tests a manifest against a parent's mandate, now including the state classes it may change, and allows the same layer (composition rule 1).
+- `process_manifest` is a new consult-tier read tool.
+- State classes come from `standard/actions.yaml` for 25 actions whose effect and scope do not say them. Every other action's classes are derived and marked `derived`.
+
+Tests:
+- `test_stages.py` (+12), `test_manifests.py` (+27, one per shipped process);
+- `test_workflows.py` (+2, one case replaced);
+- the existing agent-acceptance tests are unchanged and pass;
+- the access declaration for `process_manifest`.

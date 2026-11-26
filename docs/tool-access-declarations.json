@@ -46,7 +46,7 @@
       "fixes": [],
       "evidence": {
         "path": "src/resource_librarian/tools/workflows.py",
-        "line": 66,
+        "line": 96,
         "symbol": "accept_workflow"
       },
       "fingerprint": {
@@ -2405,7 +2405,7 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/workflows.py",
-        "line": 26,
+        "line": 36,
         "symbol": "list_workflows"
       },
       "fingerprint": {
@@ -4117,7 +4117,7 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/workflows.py",
-        "line": 95,
+        "line": 125,
         "symbol": "run_pipeline"
       },
       "fingerprint": {
@@ -4151,7 +4151,7 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/workflows.py",
-        "line": 112,
+        "line": 142,
         "symbol": "run_resume"
       },
       "fingerprint": {
@@ -4185,7 +4185,7 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/workflows.py",
-        "line": 105,
+        "line": 135,
         "symbol": "run_status"
       },
       "fingerprint": {
@@ -4219,7 +4219,7 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/workflows.py",
-        "line": 86,
+        "line": 116,
         "symbol": "run_workflow"
       },
       "fingerprint": {
@@ -4353,7 +4353,7 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/workflows.py",
-        "line": 57,
+        "line": 87,
         "symbol": "save_workflow"
       },
       "fingerprint": {
@@ -4678,7 +4678,7 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/workflows.py",
-        "line": 41,
+        "line": 71,
         "symbol": "show_workflow"
       },
       "fingerprint": {
@@ -5363,7 +5363,7 @@
       "fixes": [],
       "evidence": {
         "path": "src/resource_librarian/tools/workflows.py",
-        "line": 50,
+        "line": 80,
         "symbol": "validate_workflow"
       },
       "fingerprint": {
@@ -6037,6 +6037,33 @@
         "source_sha256": "e635a7aca3558758c3a4b61982f0c835e5227934e477db743eb0fff5629d279b",
         "schema_sha256": "39b714704935190561ed407980480b9a4a0b346b97346e0bff71fb9ace820194",
         "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "process_manifest",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 51,
+        "symbol": "process_manifest"
+      },
+      "fingerprint": {
+        "source_sha256": "ecf133357e6a76b36f4e678a59caa9be29ab22ed772d21253522fcfc58e1de9e",
+        "schema_sha256": "dcc6fe33abe647cce6e2cba074186460c00c2c8d40800244c9f955f29d77a081",
+        "effect": "read",
         "open_world": false,
         "external": false,
         "sessionless": false

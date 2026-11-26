@@ -323,6 +323,18 @@ class Registry:
     def call(self, name: str, arguments: dict[str, Any] | None,
              ctx: Context) -> dict[str, Any]:
         """Every surface calls tools through here, and nowhere else."""
+        # A batch stage may call only its declared tools (standard/stages.yaml, M1b). The check
+        # applies to the stage's own calls, not to calls those tools make in turn.
+        guard = ctx.extras.get("stage_guard") if isinstance(ctx.extras, dict) else None
+        if guard is not None:
+            refusal = guard(name)
+            if refusal is not None:
+                return {"error": "refused", **refusal.to_dict()}
+            ctx.extras["stage_guard"] = None
+            try:
+                return self.call(name, arguments, ctx)
+            finally:
+                ctx.extras["stage_guard"] = guard
         hooks = self.session_hooks if ctx.session and ctx.vault is not None else None
         if hooks and name in self._tools and self._tools[name].sessionless:
             hooks = None

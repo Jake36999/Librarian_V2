@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "resource-librarian/process-manifest-1",
+  "title": "Process manifest",
+  "description": "A workflow or pipeline compiled from its definition and the registry (manifests.py). Never written by hand.",
+  "type": "object",
+  "required": ["manifest", "process", "kind", "layer", "origin", "definition_digest", "digest", "components", "actions", "rollup"],
+  "properties": {
+    "manifest": {"const": 1},
+    "process": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["workflow", "pipeline", "sprint"]},
+    "layer": {"type": "integer", "minimum": 0, "maximum": 3},
+    "origin": {"type": "string"},
+    "definition_digest": {"type": "string", "minLength": 8},
+    "digest": {"type": "string", "minLength": 8},
+    "purpose": {"type": "string"},
+    "inputs": {"type": "object"},
+    "outputs": {"type": "array", "items": {"type": "string"}},
+    "components": {"type": "array", "items": {"$ref": "#/$defs/component"}},
+    "actions": {"type": "array", "items": {"$ref": "#/$defs/action"}},
+    "rollup": {
+      "type": "object",
+      "required": ["actions", "distinct_actions", "effects", "changes", "open_world", "undeclared"],
+      "properties": {
+        "actions": {"type": "integer", "minimum": 0},
+        "distinct_actions": {"type": "array", "items": {"type": "string"}},
+        "highest_tier": {"enum": ["consult", "contribute", "curate", null]},
+        "effects": {"type": "array", "items": {"enum": ["read", "write", "vault_write"]}},
+        "changes": {"type": "array", "items": {"$ref": "#/$defs/state_class"}},
+        "open_world": {"type": "boolean"},
+        "not_idempotent": {"type": "array", "items": {"type": "string"}},
+        "undeclared": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  },
+  "$defs": {
+    "state_class": {"enum": ["notes", "staging", "sessions", "indexes", "graphs", "outside"]},
+    "component": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {"enum": ["action", "workflow", "pipeline", "route", "end"]},
+        "components": {"type": "array", "items": {"$ref": "#/$defs/component"}},
+        "options": {"type": "array", "items": {"$ref": "#/$defs/component"}}
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["action", "declared"],
+      "properties": {
+        "order": {"type": "integer", "minimum": 1},
+        "at": {"type": "string"},
+        "action": {"type": "string"},
+        "declared": {"type": "boolean"},
+        "tier": {"enum": ["consult", "contribute", "curate"]},
+        "effect": {"enum": ["read", "write", "vault_write"]},
+        "open_world": {"type": "boolean"},
+        "idempotent": {"type": "boolean"},
+        "changes": {"type": "array", "items": {"$ref": "#/$defs/state_class"}},
+        "changes_from": {"enum": ["declared", "derived"]},
+        "fingerprint": {"type": "string"}
+      }
+    }
+  }
+}
