@@ -5,7 +5,7 @@
 | Pack | Use cases | Weaknesses | Status |
 |---|---|---|---|
 | [Librarian, as-is](librarian/as-is/INDEX.md) | 18 | 54, in ten root causes ([findings](librarian/AS-IS-FINDINGS.md)) | `IMPLEMENTED_VERIFIED` / `_OBSERVED`, code at `d9435e1` |
-| [Librarian, to-be](librarian/to-be/INDEX.md) | 20 | 51 handled; 3 open with reasons ([handles](librarian/to-be/handles.yaml)) | `PROPOSED_UNACCEPTED` |
+| [Librarian, to-be](librarian/to-be/INDEX.md) | 22 (7 more mapped, not drawn) | 51 handled; 3 open with reasons ([handles](librarian/to-be/handles.yaml)) | `PROPOSED_UNACCEPTED` |
 | [Geo-Grapher, as-is](geo-grapher/as-is/INDEX.md) | 3 (3 deferred) | 17, in six root causes ([register](geo-grapher/as-is/weaknesses.yaml)) | `IMPLEMENTED_VERIFIED`, code at `e71967a` |
 | [Geo-Grapher, to-be](geo-grapher/to-be/INDEX.md) | 4 | all 17 handled ([handles](geo-grapher/to-be/handles.yaml)) | `PROPOSED_UNACCEPTED` |
 
@@ -24,6 +24,23 @@
 - **Second pass** (DeepInfra readers and reviewers, 19 calls, $0.83 of the $5 allowed):
   - The [regression matrix](REGRESSION-MATRIX.md) traces 224 checked requirements from the 20–24 November research, designs and graphs: 210 preserved, 12 deferred on the record, 2 rejected with evidence, none unresolved.
   - The [adversarial review](ADVERSARIAL-REVIEW.md): 56 findings with verbatim quotes, 39 accepted (23 changes), 17 rejected with reasons.
+
+**Coverage and the weave, 26 November** (the Owner asked for improvements, the human and tier-0 use cases, Geo-Grapher woven in, and CI/CD pathways):
+- **Improvements found and made:**
+  - an unquoted comma had split Geo-Grapher's UC-G5 name into a stray key in both packs. The renderer now refuses unknown use-case keys, and it caught a second one while this round was being written;
+  - cite-graph checked whether Geo-Grapher was connected after its search had already succeeded, a branch that could never fire. It is gone;
+  - folder-review read a degraded parse from inside a success receipt; Geo-Grapher's own partial outcome now carries it.
+- **Two missing use cases, now drawn:**
+  - [UC9 Decide the agenda](librarian/to-be/views/agenda.views.md): where every held decision lands under the risk rule. Each is decided once, recorded as the person's, re-screened if its inputs changed, and its run resumes at its recorded point. It costs no tier-0 turn from the Web UI and one through chat;
+  - [UC0.4 Delegate a task](librarian/to-be/views/delegate.views.md): tier 0's own read-only work through `delegate` and `dispatch_plan`. The Core plans waves within the effort cap instead of refusing a long list, and tier 0 spends two turns.
+- **[Who starts each use case](librarian/to-be/initiators.md):** the person, tier 0 for the Owner, tier 0 for an external project, a schedule, or a parent process. It maps the eight MCP session purposes; five run today with no to-be flow and are listed as UC11 to UC15 (add_project, suggest, start_pursuit, tutoring, add_capability), with search-and-read (UC10) and scheduled pipelines (UC16).
+- **[Geo-Grapher woven in](librarian/to-be/weave.md):** every Librarian call to Geo-Grapher is now a reference to the Geo-Grapher to-be process it runs. The renderer checks that the Librarian handles each of that process's outcomes:
+  - folder review to graph-building;
+  - publication to paper-import;
+  - citing and placing findings to query-graph;
+  - comparing projects to federated search;
+  - delegation's packets to query-graph.
+- **[Stage contracts and CI/CD pathways](librarian/to-be/stages.md):** MCP sessions already declare each phase's tools and exit gate; the batch's nine stages share one flat tool grant. The table proposes one stage contract (tools, entry, exit gate, receipt, recipe, risk) and eight CI and CD checks. These include a pack check (none runs in CI today), a reports-only path, tool-to-stage coverage, a Geo-Grapher receipt schema tested in both repositories, and hosted CI for Geo-Grapher, which has none.
 
 **Each pack holds:**
 - **G1** a use case diagram;
@@ -52,6 +69,8 @@ Weaknesses link to their evidence, and as-is and to-be use cases pair by id.
   - may a person's own surface skip the Broker (`W-ACT-05`);
   - correct the attester on the 96 notes of 20 November (`W-ACC-04`).
 - **Owner decision, from the authority table:** whether to delegate any reserved decision (such as sensitivity review in the test vault) to tier 0. That would change the policy.
+- **Not drawn yet, from the initiators table:** UC10 to UC16 (search and read, the five session purposes with no to-be flow, and scheduled pipelines).
+- **Proposed, not built:** the stage contracts and the eight CI and CD pathways in the [stages table](librarian/to-be/stages.md). Each is a code or CI change that needs its own task.
 - **Open question, from the catalogue:** the accepted layer table allows same-layer components only for workflows; the 20 November UC-C allowed them at every layer.
 - **Decisions the performance tables leave open:** retention numbers, the concurrency cap (the rule that reading is capped within a stage is settled; the number is not), the target rate for folder descriptions.
 - **Decided 26 November:** an unlicensed repository is treated the same as any external source. Its licence status is a label, never a gate: licence status alone no longer holds a folder (`folder-review:dfolderauth`), while scope, linked content, sensitivity and reserved decisions still can. Work that uses an external source cites it; that is a provenance rule applied when the work is written, not a block on ingestion. The [ingest sequence by source kind](librarian/to-be/source-kinds.md) shows how a repository and a document differ: their units, their relations, the graph each feeds. A repository's functions and classes are symbols on its module records (at most 25 each, in `dik.py`); records of their own are marked as a proposed expansion.

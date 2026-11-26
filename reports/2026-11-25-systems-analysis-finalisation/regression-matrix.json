@@ -2509,7 +2509,7 @@
     "quote": "Core wrapper (`geo_service.py`) injects graph-capability metadata (`repo_ids`, supported `kinds`) from `list_graphs` before model dispatch",
     "requirement": "The Core must inject graph capability metadata before model graph queries.",
     "disposition": "preserved",
-    "pack_ref": "librarian/to-be/cite-graph:search",
+    "pack_ref": "librarian/to-be/cite-graph:query",
     "pack_quote": null,
     "note": "The graph labels are in the Lead's context before it queries.",
     "call": "trace-t5-recon-tobe",

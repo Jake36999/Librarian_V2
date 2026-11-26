@@ -1,4 +1,4 @@
-# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
+# Geo-Grapher woven in by tools/s9_weave.py (2026-11-26).
 diagram: cite-graph
 use_case: UC4
 status: PROPOSED_UNACCEPTED
@@ -16,35 +16,27 @@ nodes:
 - id: s
   kind: start
   label: start
-- id: search
-  kind: activity
+- id: query
+  kind: ref
   lane: Geo-Grapher
-  label: answers a search of the library's paper graph (labels in the Lead's context)
+  use_case: geo-grapher/to-be/query-graph
+  label: searches the library's paper graph and returns the paper's outline, labels in the Lead's context (UC-G3)
   step: 1
-- id: outline
-  kind: activity
-  lane: Geo-Grapher
-  label: returns the paper's outline
-  step: 2
 - id: sections
   kind: activity
   lane: Lead (tier 1)
   label: reads the methods and results sections
-  step: 3
+  step: 2
 - id: put
   kind: activity
   lane: Lead (tier 1)
   label: puts the paper forward by its citation handle
-  step: 4
-- id: dconnected
-  kind: decision
-  lane: Core
-  label: is the library's Geo-Grapher connected?
+  step: 3
 - id: resolve
   kind: activity
   lane: Core
   label: follows the paper's stored link to its Source note, or to its staged item
-  step: 5
+  step: 4
 - id: dlink
   kind: decision
   lane: Core
@@ -66,7 +58,7 @@ nodes:
   kind: activity
   lane: Lead (tier 1)
   label: cites the paper with a quote from what the link resolved to
-  step: 6
+  step: 5
 - id: e1
   kind: end
   outcome: success
@@ -77,22 +69,9 @@ nodes:
   label: 'no graph, or no link: the handle is refused'
 edges:
 - from: s
-  to: search
-- from: search
-  to: outline
-- from: outline
-  to: sections
+  to: query
 - from: sections
   to: put
-- from: put
-  to: dconnected
-- from: dconnected
-  to: resolve
-  guard: 'yes'
-- from: dconnected
-  to: e_unavailable
-  guard: 'no'
-  ext: 5a
 - from: resolve
   to: dlink
 - from: dlink
@@ -101,11 +80,11 @@ edges:
 - from: dlink
   to: staged
   guard: a staged item, read but not accepted
-  ext: 6a
+  ext: 5a
 - from: dlink
   to: ticket
   guard: nowhere
-  ext: 6b
+  ext: 5b
 - from: staged
   to: cite
 - from: ticket
@@ -121,5 +100,14 @@ edges:
 - from: ref_doctor
   to: e_unavailable
   guard: escalated
+- from: query
+  to: sections
+  guard: success
+- from: query
+  to: e_unavailable
+  guard: refused
+  ext: 1a
+- from: put
+  to: resolve
 evidence:
 - AS-IS-FINDINGS.md T8; as-is cite-graph 6b and the title assumption in USE-CASES.md UC4.

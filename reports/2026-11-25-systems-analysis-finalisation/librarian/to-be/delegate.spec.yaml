@@ -1,0 +1,174 @@
+# New on 26 November: tier 0 hands its own read-only work to the library's workers (delegate, dispatch_plan).
+diagram: delegate
+use_case: UC0.4
+status: PROPOSED_UNACCEPTED
+kind: activity
+title: Delegate a task to the library's workers, as tier 0 (proposed)
+perspective: Overseer (tier 0)
+problem:
+  symptom: 'Tier 0 can hand questions to helpers (delegate) or run a task graph (dispatch_plan), but no flow was drawn: delegate
+    refuses a question list longer than the effort cap, and a task needing graph evidence depends on Geo-Grapher with no stated
+    outcome when the graph is unreadable.'
+  root: 'One delegation path that only reads: the Core checks the grant once, plans waves within the cap instead of refusing,
+    compiles graph packets through Geo-Grapher, verifies every citation, has the Oracle judge the result, and returns one
+    advisory result, so tier 0 spends two turns.'
+lanes:
+- Overseer (tier 0)
+- Core
+- Clerk (tier 2)
+- Oracle
+- Geo-Grapher
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: ask
+  kind: activity
+  lane: Overseer (tier 0)
+  label: 'hands the library a task it can split: independent questions, or a task graph for a bounded code or source investigation,
+    with a budget'
+  step: 1
+- id: dwrite
+  kind: decision
+  lane: Core
+  label: does the task only read?
+- id: dgrant
+  kind: decision
+  lane: Core
+  label: 'is it within the grant: the session''s tier, the budget, and graphs its workers may read (tier 3 never reads a third-party
+    graph)?'
+- id: plan
+  kind: activity
+  lane: Core
+  label: plans the tasks into waves within the effort setting's concurrency cap, instead of refusing a list longer than the
+    cap
+  step: 2
+- id: dgraph
+  kind: decision
+  lane: Core
+  label: does any task need graph evidence?
+- id: ref_packet
+  kind: ref
+  lane: Geo-Grapher
+  use_case: geo-grapher/to-be/query-graph
+  label: compiles each such task's evidence packet from a pinned graph snapshot (UC-G3)
+- id: nopacket
+  kind: activity
+  lane: Core
+  label: marks the tasks that needed the unreadable graph as not run, with the reason, and runs the rest
+- id: run
+  kind: activity
+  lane: Clerk (tier 2)
+  label: 'the helpers work their tasks at once, read-only and each in its own context: tiers 1 and 2 on their assigned models,
+    tier 3 on its packet alone'
+  step: 3
+- id: cite
+  kind: activity
+  lane: Core
+  label: checks every citation against its source or graph handle, and drops an unverified one with its reason
+  step: 4
+- id: ref_oracle
+  kind: ref
+  lane: Oracle
+  use_case: oracle
+  label: judges the results against the task, on a route distinct from the helpers'
+  step: 5
+- id: dshort
+  kind: decision
+  lane: Core
+  label: is this the first shortfall?
+- id: result
+  kind: activity
+  lane: Core
+  label: 'packs one result: answers with their handles, what was not found or not run, the spend, and the advisory label'
+  step: 6
+- id: take
+  kind: activity
+  lane: Overseer (tier 0)
+  label: reads the one result, without redoing the helpers' work
+  step: 7
+- id: e1
+  kind: end
+  outcome: success
+  label: one advisory result, its citations verified, with any short or unrun task named
+- id: e_refused
+  kind: end
+  outcome: refused
+  label: refused before anything ran, with the bound named; nothing spent
+- id: e_redirected
+  kind: end
+  outcome: redirected
+  label: 'writing work is named for a commission instead (UC0.1): nothing written'
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: the budget was reached or the task cancelled; the finished results are kept
+- id: e_escalated
+  kind: end
+  outcome: escalated
+  label: 'a critical fault: the Owner is alerted, and tier 0'
+edges:
+- from: s
+  to: ask
+- from: ask
+  to: dwrite
+- from: dwrite
+  to: dgrant
+  guard: it only reads
+- from: dwrite
+  to: e_redirected
+  guard: it writes, captures or decides
+  ext: 2a
+- from: dgrant
+  to: plan
+  guard: within the grant
+- from: dgrant
+  to: e_refused
+  guard: out of bounds
+  ext: 2b
+- from: plan
+  to: dgraph
+- from: dgraph
+  to: run
+  guard: 'no'
+- from: dgraph
+  to: ref_packet
+  guard: 'yes: a code or paper investigation'
+  ext: 3a
+- from: ref_packet
+  to: run
+  guard: success
+- from: ref_packet
+  to: nopacket
+  guard: refused
+- from: nopacket
+  to: run
+- from: run
+  to: cite
+- from: cite
+  to: ref_oracle
+- from: ref_oracle
+  to: result
+  guard: success
+- from: ref_oracle
+  to: dshort
+  guard: shortfall
+  ext: 5a
+- from: ref_oracle
+  to: e_paused
+  guard: paused
+  ext: 5b
+- from: ref_oracle
+  to: e_escalated
+  guard: escalated
+  ext: 5c
+- from: dshort
+  to: run
+  guard: 'first: one bounded rerun of the short tasks'
+- from: dshort
+  to: result
+  guard: 'again: the short tasks are named in the result'
+- from: result
+  to: take
+- from: take
+  to: e1

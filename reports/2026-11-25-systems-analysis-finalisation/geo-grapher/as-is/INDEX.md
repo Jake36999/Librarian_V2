@@ -12,7 +12,7 @@ How Geo-Grapher builds, publishes and serves the library's graphs today, and how
 | UC1d | [graph-building](views/graph-building.views.md) | `IMPLEMENTED_VERIFIED` | 36 | 18 | 11 | — | 12 | 0 | 0 | 0 |
 | UC-G3 | [query-graph](views/query-graph.views.md) | `IMPLEMENTED_VERIFIED` | 15 | 6 | 4 | — | 2 | 0 | 0 | 0 |
 
-Not drawn yet: UC-G5 Compare (deferred: diff-graphs, clone-report, drift-report, merge, copy-graph, delete-graph: not on the Librarian's path); UC-G6 Explore a graph in the 3D workspace (deferred: the person's UI; not on the Librarian's path); UC-G7 Build graphs of the Owner's own projects (deferred: ingest-graphs, ingest-workspace, init-workspace: outside folder review).
+Not drawn yet: UC-G5 Compare, merge and copy graphs (deferred: diff-graphs, clone-report, drift-report, merge, copy-graph, delete-graph: not on the Librarian's path); UC-G6 Explore a graph in the 3D workspace (deferred: the person's UI; not on the Librarian's path); UC-G7 Build graphs of the Owner's own projects (deferred: ingest-graphs, ingest-workspace, init-workspace: outside folder review).
 
 ## Root causes
 

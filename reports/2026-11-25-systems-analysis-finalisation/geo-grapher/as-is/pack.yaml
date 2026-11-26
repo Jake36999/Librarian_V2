@@ -58,6 +58,6 @@ use_cases:
       open_questions: "Who turns bridge candidates into bridges?"
     boundaries:
       - {at: dvalid, values: ["1 graph", "2", "8", "9", "budget 2047", "2048", "32768", "32769"], expect: "outside 2-8 graphs or 2048-32768 tokens: refused"}
-  - {id: UC-G5, name: Compare, merge and copy graphs, actors: [owner], deferred: "diff-graphs, clone-report, drift-report, merge, copy-graph, delete-graph: not on the Librarian's path"}
+  - {id: UC-G5, name: "Compare, merge and copy graphs", actors: [owner], deferred: "diff-graphs, clone-report, drift-report, merge, copy-graph, delete-graph: not on the Librarian's path"}
   - {id: UC-G6, name: Explore a graph in the 3D workspace, actors: [owner], deferred: "the person's UI; not on the Librarian's path"}
   - {id: UC-G7, name: Build graphs of the Owner's own projects, actors: [owner], deferred: "ingest-graphs, ingest-workspace, init-workspace: outside folder review"}

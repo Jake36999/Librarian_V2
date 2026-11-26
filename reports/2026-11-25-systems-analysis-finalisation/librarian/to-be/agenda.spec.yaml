@@ -1,0 +1,175 @@
+# New on 26 November: the Owner's agenda, where the risk rule sends what no tier 0 may decide.
+diagram: agenda
+use_case: UC9
+status: PROPOSED_UNACCEPTED
+kind: activity
+title: Decide the agenda and resume held work (proposed)
+perspective: Owner
+problem:
+  symptom: The to-be sends reserved decisions, high-risk decisions from runs no tier 0 oversaw, and tickets assigned to the
+    Owner to the agenda, but no process said how the Owner works through it or how a held run resumes.
+  root: A held item carries its evidence and the point its run resumes from; the Owner decides it once, the decision is recorded
+    as the person's, and the run resumes at that point with nothing redone.
+lanes:
+- Owner
+- Overseer (tier 0)
+- Lead (tier 1)
+- Doctor
+- Core
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: open
+  kind: activity
+  lane: Owner
+  label: opens the agenda, in the Web UI or by asking tier 0 in chat
+  step: 1
+- id: gather
+  kind: activity
+  lane: Core
+  label: gathers the held items by risk level, each with its evidence, its run's owner, its review date and the point its
+    run resumes from; routine items are only counted
+  step: 2
+- id: dempty
+  kind: decision
+  lane: Core
+  label: is anything held?
+- id: dcurrent
+  kind: decision
+  lane: Core
+  label: 'is each item still current: are its inputs unchanged since it was held?'
+- id: rescreen
+  kind: activity
+  lane: Lead (tier 1)
+  label: re-screens the item against its changed inputs and refreshes its evidence, so nothing is decided on stale evidence
+- id: dvia
+  kind: decision
+  lane: Core
+  label: opened in the Web UI, or through tier 0?
+- id: t0show
+  kind: activity
+  lane: Overseer (tier 0)
+  label: shows the gathered agenda in one turn and passes back the Owner's own words as the decisions; it decides nothing
+    reserved
+- id: decide
+  kind: activity
+  lane: Owner
+  label: 'decides each item, together or one by one: approve, decline, defer to a date, or approve and make a standing policy
+    for a high-risk kind (never for a reserved kind, which needs a policy change)'
+  step: 3
+- id: record
+  kind: activity
+  lane: Core
+  label: records each decision attested as the person, with its evidence, and any standing policy with its scope and review
+    date
+  step: 4
+- id: dapproved
+  kind: decision
+  lane: Core
+  label: approved, or declined and deferred?
+- id: closehold
+  kind: activity
+  lane: Core
+  label: closes a declined item and tells its run's owner, or keeps a deferred one held with its new review date
+- id: resume
+  kind: activity
+  lane: Core
+  label: resumes each approved run at its recorded point; nothing already done is redone
+  step: 5
+- id: dresumed
+  kind: decision
+  lane: Core
+  label: did the run resume from its point?
+- id: ref_doctor
+  kind: ref
+  lane: Doctor
+  use_case: doctor
+  label: restores the run's resume point through a ticket
+- id: tell
+  kind: activity
+  lane: Core
+  label: tells each run's owner what was decided; tier 0, when it oversees the run, gets it in its handover, not as a new
+    turn
+  step: 6
+- id: e1
+  kind: end
+  outcome: success
+  label: the decisions are recorded, the approved runs resumed, and the rest closed or held with dates
+- id: e_clear
+  kind: end
+  outcome: nothing held
+  label: nothing is held; the counts of routine work are shown
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: 'a run could not resume: its ticket is back on the agenda'
+- id: e_escalated
+  kind: end
+  outcome: escalated
+  label: 'a critical fault on resuming: the Owner is alerted at once'
+edges:
+- from: s
+  to: open
+- from: open
+  to: gather
+- from: gather
+  to: dempty
+- from: dempty
+  to: dcurrent
+  guard: 'yes'
+- from: dempty
+  to: e_clear
+  guard: 'no'
+  ext: 3a
+- from: dcurrent
+  to: dvia
+  guard: current
+- from: dcurrent
+  to: rescreen
+  guard: its inputs changed
+  ext: 3b
+- from: rescreen
+  to: dvia
+- from: dvia
+  to: decide
+  guard: in the Web UI
+- from: dvia
+  to: t0show
+  guard: through tier 0, in chat
+  ext: 3c
+- from: t0show
+  to: decide
+- from: decide
+  to: record
+- from: record
+  to: dapproved
+- from: dapproved
+  to: resume
+  guard: approved
+- from: dapproved
+  to: closehold
+  guard: declined or deferred
+  ext: 5a
+- from: closehold
+  to: tell
+- from: resume
+  to: dresumed
+- from: dresumed
+  to: tell
+  guard: resumed
+- from: dresumed
+  to: ref_doctor
+  guard: its state is missing or stale
+  ext: 6a
+- from: ref_doctor
+  to: tell
+  guard: resolved
+- from: ref_doctor
+  to: e_paused
+  guard: declined
+- from: ref_doctor
+  to: e_escalated
+  guard: escalated
+- from: tell
+  to: e1

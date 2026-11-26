@@ -1,4 +1,4 @@
-# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
+# Geo-Grapher woven in by tools/s9_weave.py (2026-11-26).
 diagram: paper-publication
 use_case: UC1c.3
 status: PROPOSED_UNACCEPTED
@@ -16,9 +16,10 @@ nodes:
   lane: Core
   label: eligible for Geo paper publication?
 - id: publish
-  kind: activity
+  kind: ref
   lane: Geo-Grapher
-  label: imports the fully converted paper and returns its claim, concept and error counts
+  label: publishes the converted paper in Geo-Grapher as one checked insert, and returns its receipt and stored link (UC-G2)
+  use_case: geo-grapher/to-be/paper-import
   step: 1
 - id: pubreceipt
   kind: activity
@@ -40,7 +41,7 @@ nodes:
 - id: e_gap
   kind: end
   outcome: gap
-  label: Geo-Grapher disabled, a refusal, or an empty paper graph
+  label: Geo-Grapher disabled, a refusal, a partial publication (its Geo-Grapher ticket kept), or an empty paper graph
 edges:
 - from: s
   to: dpub
@@ -55,8 +56,6 @@ edges:
   to: e_gap
   guard: Geo-Grapher disabled for this library
   ext: 1b
-- from: publish
-  to: pubreceipt
 - from: pubreceipt
   to: dpubok
 - from: dpubok
@@ -66,3 +65,14 @@ edges:
   to: e_gap
   guard: an empty paper graph, or a late refusal
   ext: 2a
+- from: publish
+  to: pubreceipt
+  guard: success
+- from: publish
+  to: e_gap
+  guard: partial
+  ext: 1c
+- from: publish
+  to: e_gap
+  guard: refused
+  ext: 1d

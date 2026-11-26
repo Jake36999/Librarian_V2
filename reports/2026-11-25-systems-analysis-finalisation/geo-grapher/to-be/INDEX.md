@@ -13,7 +13,7 @@ The preferred Geo-Grapher: a decision changes its own group as a delta, a paper 
 | UC-G2 | [paper-import](views/paper-import.views.md) | `PROPOSED_UNACCEPTED` | 22 | 7 | 7 | — | 0 | 7 | 0 | 0 |
 | UC-G3 | [query-graph](views/query-graph.views.md) | `PROPOSED_UNACCEPTED` | 14 | 6 | 3 | — | 0 | 2 | 0 | 0 |
 
-Not drawn yet: UC-G5 Compare (deferred: not on the Librarian's path); UC-G6 Explore a graph in the 3D workspace (deferred: the person's UI); UC-G7 Build graphs of the Owner's own projects (deferred: outside folder review).
+Not drawn yet: UC-G5 Compare, merge and copy graphs (deferred: not on the Librarian's path); UC-G6 Explore a graph in the 3D workspace (deferred: the person's UI); UC-G7 Build graphs of the Owner's own projects (deferred: outside folder review).
 
 ## Checks
 

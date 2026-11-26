@@ -85,6 +85,23 @@ use_cases:
       success_guarantee: "A judged, findable note, with spend and coverage shown"
       minimal_guarantee: "A pause or failure shows its ticket and resume path"
       open_questions: "W-ACC-01: keeping the person's draft through a conflict"
+  - id: UC0.4
+    name: Delegate a task to the library's workers, as tier 0
+    spec: delegate
+    actors: [overseer, geo]
+    includes: [UC-O, UC-G3]
+    boundaries:
+      - {at: dgrant, values: ["a budget equal to the grant", "one unit over the grant"], expect: "at the grant the task runs; over it, it is refused before anything is spent"}
+      - {at: plan, values: ["as many tasks as the effort cap", "one task more than the cap"], expect: "at the cap one wave; one more makes a second wave, never a refusal"}
+    fields:
+      brief: "Tier 0 hands read-only questions or a task graph to the library's helpers; the Core checks the grant once, plans waves within the effort cap, compiles graph packets through Geo-Grapher, verifies every citation, and the Oracle judges the one result."
+      primary_actor: Overseer (tier 0)
+      supporting_actors: "Core, Clerks and Scribes as helpers, Oracle, Geo-Grapher"
+      preconditions: "A session at contribute tier; the task only reads"
+      trigger: "Tier 0's own work splits into independent questions or a task graph"
+      success_guarantee: "One advisory result with verified citations, in two tier-0 turns"
+      minimal_guarantee: "A task out of bounds is refused before anything runs or is spent; writing work is named for a commission"
+      open_questions: "Should writing work be composed as a sprint under the same commission, instead of being named back (which costs tier 0 a third turn)?"
   - id: UC1
     name: Make a folder of documents into Source notes
     spec: ingestion
@@ -193,7 +210,17 @@ use_cases:
      fields: {brief: "A ticket, a matching accepted remedy, a blast-radius check, the repair, then the Oracle's confirmation.", primary_actor: Doctor, supporting_actors: "Clerk, Lead, Owner, Oracle, Core", preconditions: "An open ticket", trigger: "A failure at a mapped extension", success_guarantee: "Resolved, confirmed by the Oracle", minimal_guarantee: "Never beyond the mandate without the Owner", open_questions: "The repair role's code name (W-DOC-05)"}}
   - {id: UC-L, name: Learn a remedy, spec: learn, actors: [owner],
      fields: {brief: "A remedy the Doctor drafted for an unmapped case is put to the Owner by the Lead, and kept only if accepted.", primary_actor: Owner, supporting_actors: "Lead, Doctor, Core", preconditions: "A resolved case with no remedy", trigger: "The Lead proposes the Doctor's draft", success_guarantee: "An accepted catalogue entry", minimal_guarantee: "Nothing is installed without acceptance", open_questions: "—"}}
+  - {id: UC9, name: Decide the agenda and resume held work, spec: agenda, actors: [owner, overseer], includes: [UC-D],
+     fields: {brief: "The Owner works through what was held for them (reserved decisions, high-risk decisions from runs no tier 0 oversaw, tickets assigned to them); each decision is recorded as the person's, and approved runs resume where they stopped.", primary_actor: Owner, supporting_actors: "Core, Lead, Doctor; tier 0 when the Owner asks in chat", preconditions: "Items held on the agenda, each with its evidence and resume point", trigger: "The Owner opens the agenda, or a review date arrives", success_guarantee: "Every decided item is recorded as the person's, and each approved run resumes at its point with nothing redone", minimal_guarantee: "An item whose inputs changed is re-screened before it is decided; an undecided item stays held", open_questions: "May a standing policy ever cover a reserved kind (the open delegation decision)? How long may an item stay held before its run's state is dropped (retention)?"}}
   - {id: UC8.1, name: Run a saved workflow from the Web UI, actors: [owner], deferred: "no separate to-be spec: its steps are wgrant, uinotify and uiagenda in activation-web-ui, under compose (as-is W-WFR-01 to 03 are handled there)"}
   - {id: UC5, name: Trust a relation, actors: [owner], deferred: "USE-CASES.md UC5; not yet drawn"}
   - {id: UC6, name: Reorganise a folder into groups, actors: [owner], deferred: "PLAN.md 2.2"}
   - {id: UC7, name: See the data in another model, actors: [owner], deferred: "PLAN.md 2.2"}
+  # Mapped on 26 November (the initiators table): use cases that run today with no to-be flow yet.
+  - {id: UC10, name: Search and read the library, actors: [owner], deferred: "the Web UI's Search and note view, and the search and get_note tools; it only reads"}
+  - {id: UC11, name: Add a project and map what the library holds for it, actors: [overseer], deferred: "the add_project session purpose; its sources go through UC1"}
+  - {id: UC12, name: Suggest work for the vault, actors: [overseer], deferred: "the suggest session purpose"}
+  - {id: UC13, name: "Start a pursuit (a course, a role or a project)", actors: [overseer, owner], deferred: "the start_pursuit session purpose"}
+  - {id: UC14, name: Study a topic with the library, actors: [overseer, owner], deferred: "the learn session purpose (tutoring); not UC-L, which learns a remedy"}
+  - {id: UC15, name: Add a capability (an MCP server), actors: [overseer, owner], deferred: "the add_capability session purpose; the person decides the install"}
+  - {id: UC16, name: Run a scheduled pipeline, actors: [owner], deferred: "weekly-review and clear-enrichment-backlog; not overseen, so a high-risk decision holds for the Owner"}

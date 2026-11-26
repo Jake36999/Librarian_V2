@@ -66,6 +66,6 @@ use_cases:
       success_guarantee: "Results related through accepted bridges"
       minimal_guarantee: "A bridge is never accepted without its witnesses checked"
       open_questions: "Which bridge kinds a standing policy may accept"
-  - {id: UC-G5, name: Compare, merge and copy graphs, actors: [owner], deferred: "not on the Librarian's path"}
+  - {id: UC-G5, name: "Compare, merge and copy graphs", actors: [owner], deferred: "not on the Librarian's path"}
   - {id: UC-G6, name: Explore a graph in the 3D workspace, actors: [owner], deferred: "the person's UI"}
   - {id: UC-G7, name: Build graphs of the Owner's own projects, actors: [owner], deferred: "outside folder review"}

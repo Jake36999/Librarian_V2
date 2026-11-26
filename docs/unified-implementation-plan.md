@@ -7629,3 +7629,33 @@ Owner direction: high-risk decisions stay with the person when no tier 0 oversee
 - All four packs pass with no warnings. The regression matrix is unchanged: 210 preserved, 12 deferred, 2 rejected, none unresolved. The flows stay proposed and unaccepted.
 
 Tests: reports only; no code changed.
+
+### Coverage, Geo-Grapher woven in, and stage contracts for CI/CD (2026-11-26)
+
+The Owner asked for:
+- improvements to the existing workflows;
+- the human-level and tier-0 use cases mapped, delegation included;
+- Geo-Grapher's processes woven into the Librarian's;
+- where better CI/CD pathways would let tools attach to the right stage of each workflow.
+
+What was done:
+- **Improvements made.**
+  - An unquoted comma had split Geo-Grapher's UC-G5 name into a stray key in both packs. The renderer now refuses unknown use-case keys, and it caught a second one during this round.
+  - cite-graph checked whether Geo-Grapher was connected after its search had already succeeded, so that branch could never fire. It is removed.
+  - folder-review read a degraded parse from inside a success receipt. Geo-Grapher's partial outcome now carries it.
+- **Two new to-be use cases.**
+  - UC9 [Decide the agenda](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/agenda.views.md): held items are re-screened if their inputs changed, decided once, recorded as the person's, and resumed at their recorded point. It costs 0 tier-0 turns from the Web UI and 1 through chat.
+  - UC0.4 [Delegate a task](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/delegate.views.md): tier 0's own read-only work through `delegate` and `dispatch_plan`. Work is planned in waves within the effort cap instead of being refused, and costs 2 tier-0 turns.
+- **[Who starts each use case](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/initiators.md)** maps the person, tier 0, an external project, a schedule and the parent processes, and all eight MCP session purposes.
+  - Seven use cases are listed but not drawn yet: UC10 to UC16.
+  - Five of them are session purposes that run today with no to-be flow.
+- **[The weave](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/weave.md).**
+  - Every Librarian call to Geo-Grapher is now a reference named `geo-grapher/to-be/<process>`: folder review, publication, citing, placing findings, comparing projects and delegation packets.
+  - `render_pack.py` checks the caller handles exactly that process's outcomes. A deliberate wrong guard was refused.
+  - One regression-matrix reference moved with the change: `cite-graph:search` became `cite-graph:query`.
+- **[Stage contracts and CI/CD pathways](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/stages.md)** are proposed only.
+  - MCP sessions already declare each phase's tools and exit gate. The batch's nine stages share one flat grant (`batch.py` 54-67).
+  - The table proposes one stage contract (tools, entry, exit gate, receipt, recipe, risk) and eight CI and CD pathways. Examples: a pack check (none runs in CI today), a reports-only path, tool-to-stage coverage, a Geo-Grapher receipt schema tested in both repositories, and hosted CI for Geo-Grapher (it has no `.github`).
+- All four packs pass with no warnings. The regression matrix still reads 210 preserved, 12 deferred, 2 rejected, none unresolved. The flows stay proposed and unaccepted.
+
+Tests: reports only; no code changed.

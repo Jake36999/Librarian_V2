@@ -19,6 +19,7 @@ flowchart LR
     UC0_1(["UC0.1 Work for the Owner as tier 0 (Context 1)"])
     UC0_2(["UC0.2 Work for an external project through MCP (Context 2)"])
     UC0_3(["UC0.3 Work directly in the Web UI (Context 3)"])
+    UC0_4(["UC0.4 Delegate a task to the library's workers, as tier 0"])
     UC1(["UC1 Make a folder of documents into Source notes"])
     UC1_1(["UC1.1 Review a folder and apply its group"])
     UC1_2(["UC1.2 Capture, title and stage each source"])
@@ -34,10 +35,18 @@ flowchart LR
     UC_O(["UC-O Judge a process's output"])
     UC_D(["UC-D Repair a failure through a ticket"])
     UC_L(["UC-L Learn a remedy"])
+    UC9(["UC9 Decide the agenda and resume held work"])
     UC8_1(["UC8.1 Run a saved workflow from the Web UI (deferred)"])
     UC5(["UC5 Trust a relation (deferred)"])
     UC6(["UC6 Reorganise a folder into groups (deferred)"])
     UC7(["UC7 See the data in another model (deferred)"])
+    UC10(["UC10 Search and read the library (deferred)"])
+    UC11(["UC11 Add a project and map what the library holds for it (deferred)"])
+    UC12(["UC12 Suggest work for the vault (deferred)"])
+    UC13(["UC13 Start a pursuit (a course, a role or a project) (deferred)"])
+    UC14(["UC14 Study a topic with the library (deferred)"])
+    UC15(["UC15 Add a capability (an MCP server) (deferred)"])
+    UC16(["UC16 Run a scheduled pipeline (deferred)"])
   end
   owner --- UC8
   overseer --- UC8
@@ -56,6 +65,10 @@ flowchart LR
   overseer --- UC0_2
   external --- UC0_2
   owner --- UC0_3
+  overseer --- UC0_4
+  geo --- UC0_4
+  UC0_4 -. "«include»" .-> UC_O
+  UC0_4 -. "«include»" .-> UC_G3
   owner --- UC1
   overseer --- UC1
   geo --- UC1
@@ -87,10 +100,23 @@ flowchart LR
   doctor --- UC_D
   owner --- UC_D
   owner --- UC_L
+  owner --- UC9
+  overseer --- UC9
+  UC9 -. "«include»" .-> UC_D
   owner --- UC8_1
   owner --- UC5
   owner --- UC6
   owner --- UC7
+  owner --- UC10
+  overseer --- UC11
+  overseer --- UC12
+  overseer --- UC13
+  owner --- UC13
+  overseer --- UC14
+  owner --- UC14
+  overseer --- UC15
+  owner --- UC15
+  owner --- UC16
 ```
 
 | Use case | Actors | Spec | Status |
@@ -100,6 +126,7 @@ flowchart LR
 | UC0.1 Work for the Owner as tier 0 (Context 1) | Owner, Overseer (tier 0) | [activation-overseer](views/activation-overseer.views.md) | PROPOSED_UNACCEPTED |
 | UC0.2 Work for an external project through MCP (Context 2) | Overseer (tier 0), External project | [activation-external-project](views/activation-external-project.views.md) | PROPOSED_UNACCEPTED |
 | UC0.3 Work directly in the Web UI (Context 3) | Owner | [activation-web-ui](views/activation-web-ui.views.md) | PROPOSED_UNACCEPTED |
+| UC0.4 Delegate a task to the library's workers, as tier 0 | Overseer (tier 0), Geo-Grapher | [delegate](views/delegate.views.md) | PROPOSED_UNACCEPTED |
 | UC1 Make a folder of documents into Source notes | Owner, Overseer (tier 0), Geo-Grapher | [ingestion](views/ingestion.views.md) | PROPOSED_UNACCEPTED |
 | UC1.1 Review a folder and apply its group | Owner, Geo-Grapher | [folder-review](views/folder-review.views.md) | PROPOSED_UNACCEPTED |
 | UC1.2 Capture, title and stage each source |  | [source-intake](views/source-intake.views.md) | PROPOSED_UNACCEPTED |
@@ -115,7 +142,15 @@ flowchart LR
 | UC-O Judge a process's output | Oracle | [oracle](views/oracle.views.md) | PROPOSED_UNACCEPTED |
 | UC-D Repair a failure through a ticket | Doctor, Owner | [doctor](views/doctor.views.md) | PROPOSED_UNACCEPTED |
 | UC-L Learn a remedy | Owner | [learn](views/learn.views.md) | PROPOSED_UNACCEPTED |
+| UC9 Decide the agenda and resume held work | Owner, Overseer (tier 0) | [agenda](views/agenda.views.md) | PROPOSED_UNACCEPTED |
 | UC8.1 Run a saved workflow from the Web UI | Owner | — | deferred: no separate to-be spec: its steps are wgrant, uinotify and uiagenda in activation-web-ui, under compose (as-is W-WFR-01 to 03 are handled there) |
 | UC5 Trust a relation | Owner | — | deferred: USE-CASES.md UC5; not yet drawn |
 | UC6 Reorganise a folder into groups | Owner | — | deferred: PLAN.md 2.2 |
 | UC7 See the data in another model | Owner | — | deferred: PLAN.md 2.2 |
+| UC10 Search and read the library | Owner | — | deferred: the Web UI's Search and note view, and the search and get_note tools; it only reads |
+| UC11 Add a project and map what the library holds for it | Overseer (tier 0) | — | deferred: the add_project session purpose; its sources go through UC1 |
+| UC12 Suggest work for the vault | Overseer (tier 0) | — | deferred: the suggest session purpose |
+| UC13 Start a pursuit (a course, a role or a project) | Overseer (tier 0), Owner | — | deferred: the start_pursuit session purpose |
+| UC14 Study a topic with the library | Overseer (tier 0), Owner | — | deferred: the learn session purpose (tutoring); not UC-L, which learns a remedy |
+| UC15 Add a capability (an MCP server) | Overseer (tier 0), Owner | — | deferred: the add_capability session purpose; the person decides the install |
+| UC16 Run a scheduled pipeline | Owner | — | deferred: weekly-review and clear-enrichment-backlog; not overseen, so a high-risk decision holds for the Owner |

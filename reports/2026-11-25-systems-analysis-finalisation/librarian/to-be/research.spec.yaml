@@ -1,4 +1,4 @@
-# Risk routing and the licence hold, by tools/s8_risk_and_licence.py (2026-11-26).
+# Geo-Grapher woven in by tools/s9_weave.py (2026-11-26).
 diagram: research
 use_case: UC2
 status: PROPOSED_UNACCEPTED
@@ -90,6 +90,19 @@ nodes:
   kind: decision
   lane: Owner
   label: extends or narrows?
+- id: dcompare
+  kind: decision
+  lane: Core
+  label: does the brief compare projects?
+- id: ref_fed
+  kind: ref
+  lane: Lead (tier 1)
+  use_case: geo-grapher/to-be/federated-search
+  label: searches the projects' graphs side by side, related only through accepted bridges (UC-G4)
+- id: nocompare
+  kind: activity
+  lane: Lead (tier 1)
+  label: states the comparison as a gap (the graphs were out of bounds) and reads the papers without it
 - id: ref_cite
   kind: ref
   lane: Lead (tier 1)
@@ -102,10 +115,15 @@ nodes:
   label: records one synthesis per brief
   step: 9
 - id: place
+  kind: ref
+  lane: Lead (tier 1)
+  label: 'places each finding in our code: a code-graph query finds the entity it cites (UC-G3)'
+  use_case: geo-grapher/to-be/query-graph
+  step: 10
+- id: noplace
   kind: activity
   lane: Lead (tier 1)
-  label: places each finding in our code as a claim citing a code entity
-  step: 10
+  label: states the finding as unplaced, a gap in the report, when no code graph is readable
 - id: draft
   kind: activity
   lane: Lead (tier 1)
@@ -184,7 +202,7 @@ edges:
 - from: decide
   to: dbudget
 - from: dbudget
-  to: ref_cite
+  to: dcompare
   guard: inside
 - from: dbudget
   to: scope
@@ -199,11 +217,11 @@ edges:
   to: askonce
   guard: 'no'
 - from: allow
-  to: ref_cite
+  to: dcompare
 - from: askonce
   to: downer
 - from: downer
-  to: ref_cite
+  to: dcompare
   guard: extended or narrowed
 - from: downer
   to: e_paused
@@ -217,8 +235,6 @@ edges:
   ext: 8b
 - from: synth
   to: place
-- from: place
-  to: draft
 - from: draft
   to: ref_verify
 - from: ref_verify
@@ -269,6 +285,30 @@ edges:
   guard: 'no'
 - from: dropclaim
   to: ref_oracle
+- from: place
+  to: draft
+  guard: success
+- from: place
+  to: noplace
+  guard: refused
+  ext: 10a
+- from: noplace
+  to: draft
+- from: dcompare
+  to: ref_cite
+  guard: 'no'
+- from: dcompare
+  to: ref_fed
+  guard: 'yes: two or more projects'' graphs'
+  ext: 8c
+- from: ref_fed
+  to: ref_cite
+  guard: success
+- from: ref_fed
+  to: nocompare
+  guard: refused
+- from: nocompare
+  to: ref_cite
 evidence:
 - AS-IS-FINDINGS.md rules T3 (Oracle), T8 (stored links), T9 (brief scoped, budget from the envelope).
 - docs/proposals/plan-forward-2026-11.md W1b item 5 (permission envelope) and W9 (the Oracle's scope judgments, Rule 17).

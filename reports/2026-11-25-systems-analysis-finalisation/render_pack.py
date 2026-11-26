@@ -42,6 +42,10 @@ ACTORS = ("Owner", "Overseer (tier 0)", "Lead (tier 1)", "Clerk (tier 2)", "Scri
           "Core", "Web UI", "Model worker", "Model host", "Geo-Grapher", "Geo-Grapher CLI", "Geo-Grapher service",
           "Geo-Grapher store", "External project")
 NODE_KEYS = {"id", "kind", "lane", "label", "step", "outcome", "use_case"}
+USE_CASE_KEYS = {"id", "name", "spec", "actors", "includes", "fields", "boundaries", "deferred"}
+# A reference may call a process of the other system, named `<system>/<state>/<spec>`; its outcomes are
+# checked against that pack's spec like any other reference (the weave, 26 November).
+CROSS = re.compile(r"^(librarian|geo-grapher)/(as-is|to-be)/([a-z][a-z0-9-]*)$")
 EDGE_KEYS = {"from", "to", "guard", "ext", "observed"}
 SIZE_LIMIT = 40                      # nodes per activity diagram, notes excluded (PLAN.md 2.3, D3)
 WEAKNESS_KINDS = ("gap", "fault", "risk", "unverified", "drift", "cost")
@@ -91,8 +95,13 @@ class Pack:
         self.tables = {p.name.removesuffix(".table.yaml"): yaml.safe_load(p.read_text(encoding="utf-8"))
                        for p in sorted(path.glob("*.table.yaml"))}
         self.load_errors: list[str] = []
+        self._library: dict | None = None
         # pack.yaml carries each use case's written fields and boundary values; specs carry the flow.
         for uc in self.meta.get("use_cases", []):
+            # an unquoted comma in a flow mapping splits a value into a stray key (UC-G5, 26 November)
+            stray = sorted(set(uc) - USE_CASE_KEYS)
+            if stray:
+                self.load_errors.append(f"use case {uc.get('id')}: unknown keys {stray} (an unquoted comma?)")
             spec = self.specs.get(uc.get("spec"))
             if spec is None:
                 continue
@@ -132,6 +141,19 @@ class Pack:
                     entities[where[6:]].setdefault("weaknesses", []).append(w)
                 else:
                     self.load_errors.append(f"weakness {w.get('id')} names {where!r}, which is no spec or state here")
+
+    def library(self) -> dict:
+        """The specs a reference may call: this pack's, and each cross-system call's target by its full name."""
+        if self._library is None:
+            self._library = dict(self.specs)
+            called = {n["use_case"] for s in self.specs.values() for n in s["nodes"]
+                      if n["kind"] == "ref" and CROSS.match(str(n.get("use_case", "")))}
+            for name in sorted(called):
+                system, state, diagram = CROSS.match(name).groups()
+                target = HERE / system / state / f"{diagram}.spec.yaml"
+                if target.exists():
+                    self._library[name] = R.load(target)
+        return self._library
 
     def counterpart(self) -> "Pack | None":
         other = self.path.parent / ("to-be" if self.state == "as-is" else "as-is")
@@ -186,7 +208,7 @@ def check_spec(pack: Pack, sid: str, spec: dict) -> tuple[list[str], list[str], 
                if n.get("step") and n["id"] not in main]
     scenarios = R.paths(spec)
     errors += R.cross_check(spec, scenarios)
-    errors += R.check_references(spec, pack.specs)
+    errors += R.check_references(spec, pack.library())
 
     status = spec.get("status")
     if status not in STATUSES[pack.state]:
@@ -394,7 +416,11 @@ def composition(pack: Pack) -> str:
     for sid, cs in calls.items():
         for c in cs:
             target = mermaid_id(c)
-            if c not in pack.specs:
+            if CROSS.match(c):
+                declared = f'  {target}["{c} (the other system)"]'
+                if declared not in lines:
+                    lines.append(declared)
+            elif c not in pack.specs:
                 lines.append(f'  {target}["{c} (no spec)"]')
             lines.append(f"  {mermaid_id(sid)} --> {target}")
     text = ["# Process composition: " + pack.name, "",

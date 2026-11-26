@@ -1,4 +1,4 @@
-# Risk routing and the licence hold, by tools/s8_risk_and_licence.py (2026-11-26).
+# Geo-Grapher woven in by tools/s9_weave.py (2026-11-26).
 diagram: folder-review
 use_case: UC1.1
 status: PROPOSED_UNACCEPTED
@@ -68,14 +68,15 @@ nodes:
   label: submits only the changed or selected group
   step: 4
 - id: geoapply
-  kind: activity
+  kind: ref
   lane: Geo-Grapher
-  label: indexes the changed group incrementally and returns its parse and coverage receipt
+  label: applies the one decided group in Geo-Grapher as a delta, and returns its receipt (UC-G1)
+  use_case: geo-grapher/to-be/graph-building
   step: 5
 - id: dgeo
   kind: decision
   lane: Core
-  label: single-group Geo receipt?
+  label: 'does the receipt match the one decided group: its fingerprint, coverage and changed entities?'
 - id: doctorgeo
   kind: ref
   lane: Doctor
@@ -172,15 +173,6 @@ edges:
   to: folderapply
 - from: folderapply
   to: geoapply
-- from: geoapply
-  to: dgeo
-- from: dgeo
-  to: m_success
-  guard: valid receipt
-- from: dgeo
-  to: doctorgeo
-  guard: the folder is stale, or a mapped Geo-Grapher fault
-  ext: 6a
 - from: doctorgeo
   to: reentrygeo
   guard: resolved
@@ -192,14 +184,6 @@ edges:
 - from: doctorgeo
   to: e_escalated
   guard: escalated
-- from: dgeo
-  to: oraclecov
-  guard: parse coverage is degraded (some files skipped)
-  ext: 6b
-- from: dgeo
-  to: e_escalated
-  guard: critical Geo DB or security violation
-  ext: 6c
 - from: oraclecov
   to: m_success
   guard: acceptable for scope (gap recorded)
@@ -210,3 +194,25 @@ edges:
   to: markstale
 - from: markstale
   to: e_success
+- from: geoapply
+  to: dgeo
+  guard: success
+- from: geoapply
+  to: oraclecov
+  guard: partial
+  ext: 5a
+- from: geoapply
+  to: doctorgeo
+  guard: refused
+  ext: 5b
+- from: dgeo
+  to: m_success
+  guard: it matches
+- from: dgeo
+  to: doctorgeo
+  guard: the folder changed since the decision, or a mapped Geo-Grapher fault
+  ext: 6a
+- from: dgeo
+  to: e_escalated
+  guard: critical Geo DB or security violation
+  ext: 6b

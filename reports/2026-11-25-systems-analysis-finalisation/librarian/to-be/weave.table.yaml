@@ -1,0 +1,35 @@
+title: Geo-Grapher woven into the Librarian
+about: >-
+  Each Geo-Grapher to-be process, the Librarian process that calls it, and what the Librarian does with each outcome.
+  Since 26 November every call is a reference named geo-grapher/to-be/<process>, and render_pack.py checks that the
+  caller handles exactly the outcomes the Geo-Grapher process can end with, as it does for the Librarian's own
+  references. Before, the calls were plain activities and an unhandled outcome went unseen. Proposed and unaccepted.
+sections:
+  - heading: Each call, and what each outcome leads to
+    columns: [Geo-Grapher process, Called from, What the Librarian sends, Success, Partial, Refused, The receipt it relies on]
+    rows:
+      - ["UC-G1 graph-building", "`folder-review:geoapply`", "the one decided group, its fingerprint and withheld paths",
+         "the receipt is checked against the decision (`folder-review:dgeo`)", "the Oracle weighs the coverage against the caller's tolerance (`folder-review:oraclecov`)",
+         "a Doctor ticket repairs the group or the service (`folder-review:doctorgeo`)", "changed_entity_ids marks the notes and claims citing a changed entity stale (`folder-review:markstale`)"]
+      - ["UC-G2 paper-import", "`paper-publication:publish`, stage 9 of each source (`source-enrichment:ref_paper_publication`)", "the converted artifact, its hash, the source's identity and the graph",
+         "claims are required for a multi-page PDF and bridges are checked (`paper-publication:pubreceipt`)", "a gap that keeps the requirement open, with Geo-Grapher's ticket (`paper-publication:e_gap`)",
+         "the same gap", "the stored link, kept on both sides, which UC4 follows (`cite-graph:resolve`)"]
+      - ["UC-G3 query-graph, the paper graph", "`cite-graph:query`", "a search in the Lead's labels",
+         "the Lead reads the methods and results sections", "—", "the citation handle is refused (`cite-graph:e_unavailable`)", "cite_as handles, scoped to their graph"]
+      - ["UC-G3 query-graph, the code graph", "`research:place`", "a finding to place in our code",
+         "the finding becomes a claim citing a code entity", "—", "the finding is stated as unplaced, a gap in the report (`research:noplace`)", "entity ids at a snapshot"]
+      - ["UC-G3 query-graph, task packets", "`delegate:ref_packet`", "the tasks that need graph evidence, and their graphs",
+         "each task runs on its pinned packet", "—", "those tasks are marked not run with the reason; the rest go on (`delegate:nopacket`)", "a pinned snapshot per packet"]
+      - ["UC-G4 federated-search", "`research:ref_fed`, when a brief compares projects", "2-8 graphs, a query and a budget",
+         "results related only through accepted bridges", "—", "the comparison is stated as a gap, and the papers are read without it (`research:nocompare`)", "bridges are an operator's assertion, accepted by the Owner or a standing policy (`geo-grapher/to-be/federated-search:decide`)"]
+  - heading: What the weave changed in the flows
+    notes:
+      - "cite-graph checked whether Geo-Grapher was connected after the search had already succeeded, so that branch could never fire. The query's own refusal now carries it, and the check is gone."
+      - "folder-review read a degraded parse from inside a success receipt. Geo-Grapher's partial outcome now carries it straight to the Oracle, and a success receipt is checked only for matching the decision."
+      - "research now places findings through the code graph and compares projects through federated search, both with a stated gap when the graph is not readable."
+  - heading: Not woven, on the record
+    notes:
+      - "UC-G5 Compare, merge and copy graphs: the Owner, in Geo-Grapher's own UI. It is not on the Librarian's path."
+      - "UC-G6 Explore a graph in the 3D workspace: the person's UI. It only reads."
+      - "UC-G7 Build graphs of the Owner's own projects: a repository inside the library's roots is built through UC1.1 and UC-G1, as the source-kinds view shows. A project outside the roots (Geo-Grapher's ingest-workspace) is not woven."
+      - "The Geo-Grapher service lifecycle: the Core starts the pinned wheel per library and refuses an old one (geo_service.py). It is a precondition of every call above, not a process drawn here."
