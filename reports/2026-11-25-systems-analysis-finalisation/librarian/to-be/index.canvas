@@ -250,7 +250,7 @@
       "x": 2320,
       "y": 0,
       "width": 520,
-      "height": 1740
+      "height": 2160
     },
     {
       "id": "librarian-card-4-0",
@@ -282,9 +282,18 @@
     {
       "id": "librarian-card-4-3",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/ticket-routing.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/source-kinds.md",
       "x": 2340,
       "y": 1300,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-4-4",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/ticket-routing.md",
+      "x": 2340,
+      "y": 1720,
       "width": 480,
       "height": 400
     },

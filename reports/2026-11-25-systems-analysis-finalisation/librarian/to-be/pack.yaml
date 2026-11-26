@@ -158,6 +158,7 @@ use_cases:
      fields: {brief: "Validate, extract, convert with a Clerk-assigned and Clerk-reviewed Scribe task, and mark the provisional projection.", primary_actor: Core, supporting_actors: "Clerk, Scribe", preconditions: "Captured evidence", trigger: "Stage 1", success_guarantee: "Text ready with its gaps recorded", minimal_guarantee: "Unrecoverable items quarantined", open_questions: "—"}}
   - {id: UC1c.2, name: Read a source, spec: source-reading,
      boundaries: [{at: drelate, values: ["1 read chapter", "2"], expect: "chapter relations are proposed from 2 read chapters"},
+                  {at: read, values: ["tasks running = the stage's limit", "one more ready"], expect: "the extra task waits; the limit itself is a decision"},
                   {at: dpoison, values: ["a part fails once", "twice", "a third time"], expect: "re-read up to two times; after the second retry the part is partial or the item fails"}],
      fields: {brief: "A Clerk plans the reading; Scribes read bounded parts; every part's answer is checked before it counts.", primary_actor: Clerk, supporting_actors: "Scribe, Model host, Core", preconditions: "Parsed text", trigger: "Stage 3", success_guarantee: "Every part read and checked", minimal_guarantee: "Poison text quarantined after bounded retries", open_questions: "—"}}
   - {id: UC1c.3, name: Publish a paper to the paper graph, spec: paper-publication, actors: [geo],

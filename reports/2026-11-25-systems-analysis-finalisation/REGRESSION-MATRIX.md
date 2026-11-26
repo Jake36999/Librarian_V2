@@ -6,9 +6,9 @@ Each requirement, accepted decision and reviewed element of the 20–24 November
 
 **Reader reliability.** Claude checked 12 reader-preserved items drawn at random (seed 7) by hand: all 12 plausible, 3 only partly carried (t1/trace-t1-16, t1/trace-t1-20, t7/trace-t7-16). Read the reader-preserved rows as likely, not certain; the adjudicated rows were each read by Claude.
 
-**240 items proposed; 224 passed the checks:** 207 preserved, 13 deferred, 2 rejected, 2 unresolved. 16 failed a check and are listed at the end.
+**240 items proposed; 224 passed the checks:** 210 preserved, 12 deferred, 2 rejected, 0 unresolved. 16 failed a check and are listed at the end.
 
-## Preserved (207)
+## Preserved (210)
 
 | Id | Requirement | Source | Where in the packs | Note |
 |---|---|---|---|---|
@@ -76,6 +76,7 @@ Each requirement, accepted decision and reviewed element of the 20–24 November
 | t3/trace-t3-plan-policy-20 | A run's permissions must be approved once as an envelope predicted by its manifest. | docs/policy/composition.md | librarian/to-be/activation-overseer | The once-only envelope is carried in activation-overseer:commission and compose; per-call always-ask tools are excluded by policy but not drawn as a node. |
 | t3/trace-t3-plan-policy-21 | A permission envelope must exclude reserved decisions, always-ask tools and anything above the parent mandate. | docs/policy/composition.md | librarian/to-be/authority.table.yaml | The authority table carries reserved exclusions; the always-ask and above-mandate exclusions appear only in policy text, so the node-level carry is partial. |
 | t3/trace-t3-plan-policy-22 | An out-of-envelope call must be judged in scope by the Oracle before any permission request. | docs/policy/composition.md | librarian/to-be/compose | Carried in compose:oracle_scope; allowances are logged and reported at the end of the run. |
+| t3/trace-t3-plan-policy-23 | Deterministic checks must be performed by code first, with models given only closed choices. | docs/policy/composition.md | librarian/to-be/verify-claims:review | Code first: Tier A before Tier B. Closed choices: added 26 November, the claim review and the Oracle's Tier B choose among closed verdicts the Core offers (verify-claims:review, oracle:tierb). *(adjudicated)* |
 | t3/trace-t3-plan-policy-25 | Folder ingestion must run as a pipeline with at most two tier-0 turns. | docs/proposals/plan-forward-2026-11.md | librarian/to-be/handles.yaml | The two-turn target is carried as a handled weakness and performance target, but the performance table calls it a model figure until a run shows it. |
 | t3/trace-t3-plan-policy-26 | Each brief must have its own synthesis rather than one session-wide synthesis. | docs/proposals/plan-forward-2026-11.md | librarian/to-be/research | Carried in research:synth and handled against W-RES-03. |
 | t3/trace-t3-plan-policy-27 | Research candidates for an outside-corpus brief must come from the named corpus only. | docs/proposals/plan-forward-2026-11.md | librarian/to-be/research | Carried in research:candidates and handled against W-RES-01 and W-RES-05. |
@@ -129,6 +130,7 @@ Each requirement, accepted decision and reviewed element of the 20–24 November
 | t5/t5-24 | Paper import receipts must validate document, claim, concept, parse-error, and cleanup fields. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | geo-grapher/to-be/paper-import | Document identity and counts are carried, but parse errors and candidate cleanup status are not required by the packs. |
 | t5/t5-27 | Doctor remedies must match accepted entries and stay within three recovery steps and two paid calls. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | librarian/to-be/doctor | The numeric bounds and accepted-remedy matching are carried; FP9 XML stripping is not. |
 | t5/t5-28 | An Oracle route collision must fail closed as unverified and never be marked reviewed or resolved. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | librarian/to-be/oracle | The fail-closed collision rule is carried explicitly. |
+| t5/t5-30 | Decide whether unlicensed nested repositories auto-classify as third-party withheld or flag sensitivity review. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | librarian/to-be/source-kinds | Owner, 26 November: an unlicensed nested repository is an external source like any other, labelled and never withheld (folder-review:folderscreen). *(adjudicated)* |
 | t5/t5-4 | The Owner retains promotion, sensitivity, taxonomy, budget extension, folder acceptance, and reserved decisions. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | librarian/to-be/authority.table.yaml | The authority table carries the reserved decisions; taxonomy is not separately named there. |
 | t5/t5-6 | The to-be design must retain MF-013 chunk-digest reuse and MF-014 attachment hash tracking. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | librarian/to-be/source-enrichment:bind | Work already done is reused by its key (added 26 November: hash, stage, recipe version, route). *(adjudicated)* |
 | t5/t5-7 | The to-be design must retain PromotionGuard's 200-file CAS and queued-reference framing restoration. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | librarian/to-be/acceptance:promote | The guarded writer's compare-and-set is named; the queued reference's framing is restored at source-intake:capture (the plain-language pass had dropped it; restored 26 November). *(adjudicated)* |
@@ -166,6 +168,7 @@ Each requirement, accepted decision and reviewed element of the 20–24 November
 | t7/trace-t7-10 | Only affirmative authorized acceptance, including expressly permitted partials, may admit a Source. | reports/2026-11-20-workflow-map/USE-CASES.md | librarian/to-be/acceptance:leadaccept | Authorized acceptance is carried; the digest does not explicitly limit acceptance to affirmative decisions or expressly permitted partials. |
 | t7/trace-t7-11 | Acceptance must record the decision, use the guarded writer and validate title, Bottom Line and concept findability. | reports/2026-11-20-workflow-map/USE-CASES.md | librarian/to-be/acceptance:promote | The guarded writer and indexing are carried; the specific title, Bottom-Line and concept checks are not enumerated. |
 | t7/trace-t7-12 | The final result must report actual Source and publication states, separate lens decisions and named owners of remaining decisions. | reports/2026-11-20-workflow-map/USE-CASES.md | librarian/to-be/ingestion:deliver | Coverage and deferred decisions are carried, but separate lens states and named remaining decision owners are not explicit. |
+| t7/trace-t7-13 | Model-task concurrency must remain bounded within stages, and Source acceptance must not accept a lens. | reports/2026-11-20-workflow-map/USE-CASES.md | librarian/to-be/source-reading:read | Lens separation at source-reading:lenses; bounded concurrency within a stage added 26 November (the limit itself is a decision). *(adjudicated)* |
 | t7/trace-t7-14 | A stale root must be refused and re-surveyed only after the authorized actor assesses the actual rebuild scope. | reports/2026-11-20-workflow-map/USE-CASES.md | librarian/to-be/folder-review:doctorroot | Scoped stale-root recovery is carried; the explicit requirement to assess rebuild scope before re-survey is not stated. |
 | t7/trace-t7-15 | A lost route qualification must block the affected draft until an authorized operator restores and rechecks it. | reports/2026-11-20-workflow-map/USE-CASES.md | librarian/to-be/folder-review:doctorroot | Route repair is carried; blocking the draft and the required fresh recheck are not explicit in the digest. |
 | t7/trace-t7-16 | Sensitive or reserved folder decisions require the Owner, and exclusion must remove the subtree without reading it. | reports/2026-11-20-workflow-map/USE-CASES.md | librarian/to-be/folder-review:ownerfolder | Owner control and exclusion are carried through ownerfolder and excl; the digest does not restate the no-reading exclusion guarantee. |
@@ -220,7 +223,7 @@ Each requirement, accepted decision and reviewed element of the 20–24 November
 | t8/trace-t8-8 | A retrieval-gap diagnosis must never invent concepts or enable vectors just to make a check pass. | tmp/second-pass/superseded.md | librarian/to-be/ingestion:doctorphase | Added 26 November. *(adjudicated)* |
 | t8/trace-t8-9 | A reindex must not be assumed to fix content or retrieval failures beyond the index itself. | tmp/second-pass/superseded.md | librarian/to-be/ingestion:doctorphase | Added 26 November: a repair re-indexes only. *(adjudicated)* |
 
-## Deferred (13)
+## Deferred (12)
 
 | Id | Requirement | Source | Where in the packs | Note |
 |---|---|---|---|---|
@@ -236,7 +239,6 @@ Each requirement, accepted decision and reviewed element of the 20–24 November
 | t4/recon-29 | Conversions must not persist a source graph. | reports/2026-11-24-librarian-reconstruction-and-offering/02-current-state-systems-analysis.md | README.md | Deferred in the README: conversions persisting a source graph, pending a code check. *(adjudicated)* |
 | t4/recon-30 | Code repositories must be attached read-only and must not be opened directly as Librarian libraries. | reports/2026-11-24-librarian-reconstruction-and-offering/02-current-state-systems-analysis.md | README.md | Deferred in the README: code repositories attached read-only. *(adjudicated)* |
 | t5/t5-25 | Paper import should support a batch or group import session where available. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | geo-grapher/to-be/performance | Added as a decision-needed row 26 November. *(adjudicated)* |
-| t5/t5-30 | Decide whether unlicensed nested repositories auto-classify as third-party withheld or flag sensitivity review. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | README.md | Listed in the README as an open Owner decision. *(adjudicated)* |
 
 ## Rejected (2)
 
@@ -244,13 +246,6 @@ Each requirement, accepted decision and reviewed element of the 20–24 November
 |---|---|---|---|---|
 | t2/dw-29 | Trying multiple remedies requires an isolated dry run or a verified compensation step behind the scope check. | docs/proposals/diagram-workflows.md | librarian/to-be/doctor:runremedy | The to-be runs one accepted remedy per ticket (a single repair attempt), so trying several remedies is not permitted at all. *(adjudicated)* |
 | t5/t5-26 | Critical source-enrichment escalations must return strictly to the Lead, not the Owner. | reports/2026-11-24-librarian-reconstruction-and-offering/03-proposed-librarian-tobe.md | librarian/to-be/ticket-routing | Conflicts with the policy (agent-roles lines 75-79): a critical case goes to tier 0 and the Owner at once, not only to the Lead. *(adjudicated)* |
-
-## Unresolved (2)
-
-| Id | Requirement | Source | Where in the packs | Note |
-|---|---|---|---|---|
-| t3/trace-t3-plan-policy-23 | Deterministic checks must be performed by code first, with models given only closed choices. | docs/policy/composition.md | — | Code-first is carried (Tier A before Tier B); giving models only closed choices is not drawn anywhere. *(adjudicated)* |
-| t7/trace-t7-13 | Model-task concurrency must remain bounded within stages, and Source acceptance must not accept a lens. | reports/2026-11-20-workflow-map/USE-CASES.md | — | Lens separation is carried (source-reading:lenses); bounded concurrency within a stage is not drawn. *(adjudicated)* |
 
 ## Items that failed a check (not counted)
 

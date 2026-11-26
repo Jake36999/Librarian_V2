@@ -1,0 +1,39 @@
+title: Ingest sequence by source kind (a repository and a document)
+about: >-
+  One ingestion pathway, two sequences. A repository and a document pass the same gates (capture, staging,
+  the batch, acceptance), but their content is split into different layers of detail, and the stages do
+  different work on each. Owner, 26 November: an unlicensed repository is treated the same as any external
+  source. Its licence status is a label that keeps it out of work published as our own unless it is cited;
+  it is never a gate. The unit names and relation rules are those of src/resource_librarian/dik.py; the
+  to-be steps are proposed and unaccepted.
+sections:
+  - heading: The stages for each kind
+    columns: [Stage, "A repository (code)", "A document (PDF, paper, long text)", Where in the to-be]
+    rows:
+      - ["Authorship and licence", "own code, or an external source (third-party authorship); an unlicensed repository is an external source like any other, labelled and never withheld",
+         "own documents, research documents or third-party, from the folder's purpose", "`folder-review:folderscreen`"]
+      - ["Capture", "the README and the tree at a commit, the licence id where there is one; a nested repository is its own source",
+         "the immutable file, with its literal header and DOI metadata", "`source-intake:capture`"]
+      - ["Parse", "a syntax tree per file, by script (tree-sitter, Python AST); no model call",
+         "the text with its page map; conversion or OCR where needed, by a Scribe and reviewed by a Clerk", "`source-parse:parse`, `source-parse:convplan`"]
+      - ["Data: the finest units", "files, modules, entry points, endpoints, settings, languages, dependencies",
+         "chapters or sections, then chunks for reading", "`source-reading:data`"]
+      - ["Reading", "bounded reading of the components that need describing; most structure is scripted",
+         "bounded chunk reading by Scribes, then a whole-document pass", "`source-reading:read`"]
+      - ["Relations: Information", "static structure only (imports, routes), by script; never runtime behaviour",
+         "document order, and chapter relations a Clerk proposes from two or more read chapters, marked inferred", "`source-reading:relateskip`, `source-reading:relate`"]
+      - ["The note: Knowledge", "Components, How It Fits Together", "Chapters, the Bottom Line", "`source-reading:review`"]
+      - ["Graph", "a code graph, through the folder group's application in Geo-Grapher",
+         "the paper graph, once a PDF is fully converted", "`folder-review:folderapply`, `paper-publication:dpub`"]
+  - heading: The layers of detail
+    columns: [Layer, A repository, A document]
+    rows:
+      - ["Source", "the repository at a commit", "the document at its capture"]
+      - ["Component", "a module, package or entry point", "a chapter or section"]
+      - ["Unit", "a file, function or class", "a chunk or page"]
+      - ["Claim", "a static relation or a described behaviour, cited by its locator", "a claim with its verbatim quote"]
+  - heading: Rules
+    notes:
+      - "A document-level claim needs document-level coverage: a chapter not read has no relations drawn to it (dik.py)."
+      - "A repository's relations are static structure, never runtime behaviour (dik.py)."
+      - "Third-party material, an unlicensed repository included, is read-only and shares the library's third-party graphs by default (folder_review.py READ_ONLY, suggested_graph)."

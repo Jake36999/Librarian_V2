@@ -129,7 +129,7 @@
     },
     {
       "spec": "folder-review.spec.yaml",
-      "sha256": "22bf10b35add05a7f48cd68ab2fedcbd8c23795955b099361c8d6620cfb5cac2",
+      "sha256": "ad330bb806a7bfe6f14090aeb9ec76a2687eee1c70eeb9fa00af016750ed94d7",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 23,
       "steps": 6,
@@ -171,7 +171,7 @@
     },
     {
       "spec": "oracle.spec.yaml",
-      "sha256": "12add467f3214e228ccb9a1f1f5a9dcb1d26b5a21b20a85f284674790a16694f",
+      "sha256": "2d0dc6f981e16aff8e55691d83062a4a1ea0429b6cd943cf718b0f03610f23bf",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 16,
       "steps": 5,
@@ -255,7 +255,7 @@
     },
     {
       "spec": "source-reading.spec.yaml",
-      "sha256": "f3118085e944e16dc0f00e67c70b1f715208aad1b24755ada97c567a78024818",
+      "sha256": "ec7759ea8e2fd5d88500e47e020d579c0ad28a74a1569deb9f74d3f7b1db862b",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 20,
       "steps": 12,
@@ -269,7 +269,7 @@
     },
     {
       "spec": "verify-claims.spec.yaml",
-      "sha256": "5978aec9f85fc6045a95e84820738cde30397330fdad4ff537addbff103ada7a",
+      "sha256": "cd01afaecc0abfd574f7a7fc170be3c8bb236b053a44b0da23a22dd92bbb4d55",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 20,
       "steps": 6,

@@ -1,4 +1,4 @@
-# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
+# Owner decision and closing fixes by tools/s7_owner_decisions.py (2026-11-26).
 diagram: folder-review
 use_case: UC1.1
 status: PROPOSED_UNACCEPTED
@@ -37,8 +37,8 @@ nodes:
 - id: folderscreen
   kind: activity
   lane: Clerk (tier 2)
-  label: screens only the new or ambiguous folders for purpose, unlicensed third-party risk and sensitivity, without reading
-    documents
+  label: screens only the new or ambiguous folders for purpose, authorship and sensitivity, without reading documents; an
+    unlicensed repository is an external source, labelled and never withheld
   step: 2
 - id: dfolderauth
   kind: decision

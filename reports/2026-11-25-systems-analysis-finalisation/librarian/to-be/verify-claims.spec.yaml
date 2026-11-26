@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Owner decision and closing fixes by tools/s7_owner_decisions.py (2026-11-26).
 diagram: verify-claims
 use_case: UC3
 status: PROPOSED_UNACCEPTED
@@ -51,7 +51,8 @@ nodes:
   kind: activity
   lane: Clerk (tier 2)
   step: 4
-  label: reviews each claim against the passage around its quote; review is always on
+  label: 'reviews each claim against the passage around its quote, choosing one of the Core''s closed verdicts: supported,
+    goes beyond the passage, or not a readable sentence; review is always on'
 - id: dverdict
   kind: decision
   lane: Core

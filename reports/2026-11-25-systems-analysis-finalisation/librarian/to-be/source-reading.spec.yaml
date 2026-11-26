@@ -1,4 +1,4 @@
-# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
+# Owner decision and closing fixes by tools/s7_owner_decisions.py (2026-11-26).
 diagram: source-reading
 use_case: UC1c.2
 status: PROPOSED_UNACCEPTED
@@ -21,7 +21,8 @@ nodes:
 - id: read
   kind: activity
   lane: Scribe (tier 3)
-  label: carries out bounded reading and synthesis tasks within the reserved budget
+  label: carries out bounded reading and synthesis tasks, at most a set number at a time within the stage, within the reserved
+    budget
   step: 2
 - id: host
   kind: activity

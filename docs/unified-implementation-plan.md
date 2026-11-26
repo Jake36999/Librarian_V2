@@ -7595,3 +7595,18 @@ Before handing back to the main workflow, the Owner passed on a focused subset o
 All four packs pass with no warnings; the regression matrix still resolves every reference (224 checked items). The table check now resolves references across systems. Every flow stays `PROPOSED_UNACCEPTED`.
 
 Tests: reports only; no code changed.
+
+### Unlicensed repositories are external sources; the last open requirements closed (2026-11-26)
+
+Owner decision: an unlicensed repository is treated the same as any external source; the ingest sequence differs per repository and per document, because of their content and how their layers of detail are treated. This reaffirms the 19 November ruling: licence status is a label, never a gate.
+- **The decision.** `folder-review:folderscreen` labels an unlicensed repository as an external source and never withholds it.
+- **The new view.** [source-kinds](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/source-kinds.md) shows the two sequences through the same gates, from `dik.py`:
+  - a repository splits into files, modules, entry points and settings, with static-structure relations only;
+  - a document splits into chapters, sections and chunks, with document-order relations and chapter relations inferred from two or more read chapters;
+  - each feeds its own graph.
+- **The regression matrix's last two unresolved requirements are closed:**
+  - the claim review and the Oracle's Tier B choose among closed verdicts the Core offers;
+  - reading tasks are bounded in number within a stage, with the limit itself a decision.
+- The matrix now reads 210 preserved, 12 deferred on the record, 2 rejected with evidence, none unresolved. All four packs pass with no warnings.
+
+Tests: reports only; no code changed.

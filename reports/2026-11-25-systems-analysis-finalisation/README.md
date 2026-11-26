@@ -22,7 +22,7 @@
 - **All four packs pass with no warnings.** [VALIDATION.md](VALIDATION.md) says what that does and does not prove.
 - **Handoff review** (same day): fifteen fixes for bounded retries, reachable paths, complete handoffs, rechecks, a single owner for drafting remedies, and Geo-Grapher's receipt contract. They are listed at the end of the [adversarial review](ADVERSARIAL-REVIEW.md).
 - **Second pass** (DeepInfra readers and reviewers, 19 calls, $0.83 of the $5 allowed):
-  - The [regression matrix](REGRESSION-MATRIX.md) traces 224 checked requirements from the 20–24 November research, designs and graphs: 207 preserved, 13 deferred on the record, 2 rejected with evidence, 2 unresolved.
+  - The [regression matrix](REGRESSION-MATRIX.md) traces 224 checked requirements from the 20–24 November research, designs and graphs: 210 preserved, 12 deferred on the record, 2 rejected with evidence, none unresolved.
   - The [adversarial review](ADVERSARIAL-REVIEW.md): 56 findings with verbatim quotes, 39 accepted (23 changes), 17 rejected with reasons.
 
 **Each pack holds:**
@@ -54,7 +54,7 @@ Weaknesses link to their evidence, and as-is and to-be use cases pair by id.
 - **Owner decision, from the authority table:** whether to delegate any reserved decision (such as sensitivity review in the test vault) to tier 0. That would change the policy.
 - **Open question, from the catalogue:** the accepted layer table allows same-layer components only for workflows; the 20 November UC-C allowed them at every layer.
 - **Decisions the performance tables leave open:** retention numbers, bounded concurrency, the target rate for folder descriptions.
-- **Owner decision, from the 24 November proposals:** should an unlicensed nested repository be classed as third-party and withheld automatically, or flagged for a sensitivity review?
+- **Decided 26 November:** an unlicensed repository is treated the same as any external source. Its licence status is a label, never a gate. The [ingest sequence by source kind](librarian/to-be/source-kinds.md) shows how a repository and a document differ: their units, their relations, the graph each feeds.
 
 ## Out of scope of these packs (deferred, on the record)
 

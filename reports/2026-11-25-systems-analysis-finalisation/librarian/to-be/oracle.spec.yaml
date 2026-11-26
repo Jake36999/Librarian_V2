@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Owner decision and closing fixes by tools/s7_owner_decisions.py (2026-11-26).
 diagram: oracle
 use_case: UC-O
 status: PROPOSED_UNACCEPTED
@@ -55,7 +55,8 @@ nodes:
   kind: activity
   lane: Oracle
   step: 3
-  label: 'reviews what Tier A cannot decide: claims against passages, neutrality, whether the question is answered'
+  label: reviews what Tier A cannot decide (claims against passages, neutrality, whether the question is answered), choosing
+    among closed verdicts the Core offers, each with its evidence
 - id: dtierb
   kind: decision
   lane: Oracle
