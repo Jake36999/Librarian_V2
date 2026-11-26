@@ -1,13 +1,14 @@
 // Real native UI/Core M1a smoke check and screenshot capture (zero model calls).
-//   node m1a-smoke.mjs <url> <artifacts-dir> [source-dir]
+//   node m1a-smoke.mjs <url> <artifacts-dir> [source-dir] <vault-dir>
 import { chromium } from 'playwright-core';
 import assert from 'node:assert/strict';
-import { mkdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-const [url, artifacts, source] = process.argv.slice(2);
-assert.ok(url, 'usage: node m1a-smoke.mjs <url> <artifacts-dir> [source-dir]');
+const [url, artifacts, source, vault] = process.argv.slice(2);
+assert.ok(url, 'usage: node m1a-smoke.mjs <url> <artifacts-dir> [source-dir] <vault-dir>');
 assert.ok(artifacts, 'artifacts directory is required');
+assert.ok(vault, 'vault directory is required');
 mkdirSync(artifacts, { recursive: true });
 
 const TOKEN = 'synthetic-qa-token';
@@ -22,6 +23,22 @@ const apiPost = async (path, body = {}) => {
   });
   const data = await res.json();
   return { status: res.status, data };
+};
+
+const attachAndIngest = async (name, body) => {
+  const attachRes = await fetch(new URL(`/api/attach?dir=Inbox&name=${encodeURIComponent(name)}`, url), {
+    method: 'POST',
+    headers: { 'X-Librarian-Token': TOKEN },
+    body,
+  });
+  assert.equal(attachRes.status, 200, `expected 200 from /api/attach for ${name}, got ${attachRes.status}`);
+  const attached = await attachRes.json();
+  const ingested = await apiPost('/api/tool/ingest', { arguments: { ref: attached.path }, session: '' });
+  assert.equal(ingested.status, 200, `expected 200 from ingest for ${name}, got ${ingested.status}`);
+  const id = ingested.data.id || ingested.data.item;
+  assert.equal(ingested.data.status, 'staged', `expected staged item for ${name}, got ${JSON.stringify(ingested.data)}`);
+  assert.ok(id, `expected staged item id from ingest for ${name}, got ${JSON.stringify(ingested.data)}`);
+  return id;
 };
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' });
@@ -63,25 +80,17 @@ try {
   console.log('✓ M1a Check 1: finished run chip Details button opens run_status record');
 
   // 2. Stale-revision conflict -> "Reload item, keeping your edits" keeps edited Bottom Line.
-  const attachRes = await fetch(new URL('/api/attach?dir=Inbox&name=m1a-fixture.txt', url), {
-    method: 'POST',
-    headers: { 'X-Librarian-Token': TOKEN },
-    body: 'M1a Fixture Source\n\nSynthetic text source for M1a stale-revision and Which-sources verification.\n',
-  });
-  assert.equal(attachRes.status, 200, `expected 200 from /api/attach, got ${attachRes.status}`);
-  const attached = await attachRes.json();
-  const ingested = await apiPost('/api/tool/ingest', { arguments: { ref: attached.path }, session: '' });
-  assert.equal(ingested.status, 200);
-  const itemId = ingested.data.id || ingested.data.item;
-  assert.equal(ingested.data.status, 'staged', `expected staged item, got ${JSON.stringify(ingested.data)}`);
-  assert.ok(itemId, `expected staged item id from ingest, got ${JSON.stringify(ingested.data)}`);
+  const acceptedId = await attachAndIngest(
+    'm1a-accepted-fixture.txt',
+    'M1a Accepted Fixture Source\n\nSynthetic text source for M1a stale-revision and accepted-filter verification.\n',
+  );
 
   await page.getByRole('tab', { name: 'Staging', exact: true }).click();
   const statusSelect = page.getByLabel('Which sources');
   await statusSelect.waitFor();
   await statusSelect.selectOption('staged');
 
-  const itemRow = page.locator(`[data-item="${itemId}"]`);
+  const itemRow = page.locator(`[data-item="${acceptedId}"]`);
   await itemRow.waitFor({ timeout: 10000 });
   await itemRow.click();
 
@@ -92,12 +101,12 @@ try {
 
   // Bump item revision externally (flag sensitive, then clear) while item stays status=staged.
   const flag1 = await apiPost('/api/tool/staging_flag', {
-    arguments: { item_id: itemId, sensitive: true, reason: 'M1a conflict probe' },
+    arguments: { item_id: acceptedId, sensitive: true, reason: 'M1a conflict probe' },
     session: '',
   });
   assert.equal(flag1.status, 200);
   const flag2 = await apiPost('/api/tool/staging_flag', {
-    arguments: { item_id: itemId, sensitive: false, reason: 'cleared before reload' },
+    arguments: { item_id: acceptedId, sensitive: false, reason: 'cleared before reload' },
     session: '',
   });
   assert.equal(flag2.status, 200);
@@ -116,9 +125,23 @@ try {
   await page.screenshot({ path: `${artifacts}/m1a-stale-reloaded-kept.png`, fullPage: true });
   console.log('✓ M1a Check 2: Reload item, keeping your edits preserves Bottom Line');
 
-  // 3. "Which sources" lists processing ("Being ingested") and accepted ("Accepted into the library").
+  // 3. "Which sources" lists distinct processing ("Being ingested") and accepted ("Accepted into the library") items.
   await page.getByRole('button', { name: 'Accept as captured', exact: true }).click();
   await page.getByText('Accepted into the library and catalogued', { exact: false }).waitFor({ timeout: 15000 });
+
+  const processingId = await attachAndIngest(
+    'm1a-processing-fixture.txt',
+    'M1a Processing Fixture Source\n\nSynthetic text source held in status=processing for M1a filter verification.\n',
+  );
+  assert.notEqual(processingId, acceptedId, 'processing and accepted fixture IDs must be distinct');
+
+  const procPath = join(vault, '.librarian', 'staging', 'source', `${processingId}.json`);
+  const procItem = JSON.parse(readFileSync(procPath, 'utf8'));
+  procItem.status = 'processing';
+  procItem.batch = 'batch-m1a-demo';
+  const procTmp = `${procPath}.tmp`;
+  writeFileSync(procTmp, JSON.stringify(procItem, null, 1), 'utf8');
+  renameSync(procTmp, procPath);
 
   const options = await statusSelect.locator('option').evaluateAll((els) =>
     els.map((el) => ({ value: el.getAttribute('value'), label: el.textContent?.trim() }))
@@ -134,18 +157,34 @@ try {
     'Which sources must include accepted ("Accepted into the library")'
   );
 
-  // Exercise processing filter first to confirm it queries without error.
+  // Select processing: processingId renders and acceptedId is absent.
   await statusSelect.selectOption('processing');
-  await page.waitForTimeout(300);
   assert.equal(await statusSelect.inputValue(), 'processing');
+  const processingRow = page.locator(`[data-item="${processingId}"]`);
+  await processingRow.waitFor({ state: 'visible', timeout: 10000 });
+  assert.equal(
+    await page.locator(`[data-item="${acceptedId}"]`).count(),
+    0,
+    `accepted fixture ${acceptedId} must not appear under processing filter`
+  );
+  await processingRow.click();
+  await page.getByText('Being ingested in batch-m1a-demo.', { exact: true }).waitFor({ timeout: 10000 });
+  await page.screenshot({ path: `${artifacts}/m1a-which-sources-processing.png`, fullPage: true });
 
-  // Then select accepted and confirm the newly accepted item is listed.
+  // Select accepted: acceptedId renders and processingId is absent.
   await statusSelect.selectOption('accepted');
-  const acceptedRow = page.locator(`[data-item="${itemId}"]`);
-  await acceptedRow.waitFor({ timeout: 10000 });
+  assert.equal(await statusSelect.inputValue(), 'accepted');
+  const acceptedRow = page.locator(`[data-item="${acceptedId}"]`);
+  await acceptedRow.waitFor({ state: 'visible', timeout: 10000 });
+  assert.equal(
+    await page.locator(`[data-item="${processingId}"]`).count(),
+    0,
+    `processing fixture ${processingId} must not appear under accepted filter`
+  );
   await acceptedRow.click();
-  await page.screenshot({ path: `${artifacts}/m1a-which-sources.png`, fullPage: true });
-  console.log('✓ M1a Check 3: Which sources lists processing and accepted items');
+  await page.locator('.lib-view-head, .view-head', { hasText: /m1a-accepted-fixture/i }).waitFor({ timeout: 10000 });
+  await page.screenshot({ path: `${artifacts}/m1a-which-sources-accepted.png`, fullPage: true });
+  console.log(`✓ M1a Check 3: Which sources mutually excludes (${processingId} under processing, ${acceptedId} under accepted)`);
 
   // 4. Folder cards distinguish "Selected for the description batch; not decided yet"
   //    from "Decided and applied by a person".
