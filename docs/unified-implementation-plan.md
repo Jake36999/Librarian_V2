@@ -7610,3 +7610,22 @@ Owner decision: an unlicensed repository is treated the same as any external sou
 - The matrix now reads 210 preserved, 12 deferred on the record, 2 rejected with evidence, none unresolved. All four packs pass with no warnings.
 
 Tests: reports only; no code changed.
+
+### High risk stays with the person when no tier 0 oversees; licence status never holds a folder (2026-11-26)
+
+Owner direction: high-risk decisions stay with the person when no tier 0 oversees the run, and the design should cut the tokens and turns tier 0 spends using the Librarian on the person's behalf. ChatGPT's review of `8b9cac2` found one policy conflict and two wording gaps; all three are fixed.
+- **Risk levels.** The [authority table](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/authority.md) gives each gate a level: routine, bounded, high, critical or reserved. It also adds a column for runs with no tier 0 overseeing and no person present.
+  - A run is overseen when tier 0 commissioned it and receives its handover.
+  - With no tier 0 overseeing, a high-risk decision (gates 1 and 2, starting a batch, a code change, an uncovered bridge) is held on the Owner's agenda. It is never passed down to a Lead, unless a standing policy the Owner set covers that kind.
+- **Fewer tier-0 turns** (`tools/s8_risk_and_licence.py`):
+  - the catalogue's wider radius goes straight to the Owner's agenda; the model's worst path drops from 2 tier-0 turns to none;
+  - a critical fault is alerted by the Core to the Owner and tier 0 at once, so tier 0 no longer relays it;
+  - the code-change and critical-fault routes in the doctor, learn, Oracle, research and ticket-routing flows now name the Owner when no tier 0 oversees;
+  - two performance rows carry the baseline, metric and target.
+- **Licence status alone no longer holds a folder** (`folder-review:dfolderauth`). Scope, content linked from outside the roots, sensitivity and reserved decisions still can. Attribution is stated as a provenance rule, applied when work is written, never a block on ingestion.
+- **Wording:**
+  - the README lists "the concurrency cap" as open (the rule itself is settled);
+  - the source-kinds view says a repository's functions and classes are symbols on its module records (at most 25, in `dik.py`), with records of their own marked as a proposed expansion.
+- All four packs pass with no warnings. The regression matrix is unchanged: 210 preserved, 12 deferred, 2 rejected, none unresolved. The flows stay proposed and unaccepted.
+
+Tests: reports only; no code changed.

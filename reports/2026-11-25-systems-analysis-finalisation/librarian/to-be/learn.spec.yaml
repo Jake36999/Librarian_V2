@@ -1,4 +1,4 @@
-# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
+# Risk routing and the licence hold, by tools/s8_risk_and_licence.py (2026-11-26).
 diagram: learn
 use_case: UC-L
 status: PROPOSED_UNACCEPTED
@@ -27,7 +27,8 @@ nodes:
 - id: a1
   kind: activity
   lane: Lead (tier 1)
-  label: owns an unmapped case resolved without a catalogued remedy (tier 0 only when it needed a code change)
+  label: owns an unmapped case resolved without a catalogued remedy; a code change goes to tier 0 when it oversees the run,
+    otherwise to the Owner's agenda
   step: 1
 - id: a2
   kind: activity

@@ -1,4 +1,4 @@
-# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
+# Risk routing and the licence hold, by tools/s8_risk_and_licence.py (2026-11-26).
 diagram: research
 use_case: UC2
 status: PROPOSED_UNACCEPTED
@@ -156,7 +156,7 @@ nodes:
 - id: e_escalated
   kind: end
   outcome: escalated
-  label: 'the graph is unavailable, or the Oracle escalates: tier 0 and the Owner are told'
+  label: 'the graph is unavailable, or the Oracle escalates: the Owner is told, and tier 0 when it oversees the run'
 edges:
 - from: s
   to: brief

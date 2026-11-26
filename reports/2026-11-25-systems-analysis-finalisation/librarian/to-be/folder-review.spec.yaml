@@ -1,4 +1,4 @@
-# Owner decision and closing fixes by tools/s7_owner_decisions.py (2026-11-26).
+# Risk routing and the licence hold, by tools/s8_risk_and_licence.py (2026-11-26).
 diagram: folder-review
 use_case: UC1.1
 status: PROPOSED_UNACCEPTED
@@ -148,8 +148,8 @@ edges:
   guard: within the commission, or a standing policy for non-sensitive folders
 - from: dfolderauth
   to: dheldcaller
-  guard: 'outside it: the person in the Web UI, an external project''s out-of-scope folder, unlicensed or linked content,
-    or a reserved decision'
+  guard: 'outside it: the person in the Web UI, an external project''s out-of-scope folder, linked content reaching outside
+    the roots, or a reserved decision such as a sensitivity flag (licence status alone is never a reason)'
   ext: 3a
 - from: dheldcaller
   to: ownerfolder

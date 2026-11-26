@@ -37,7 +37,7 @@ handles:
   - {weakness: W-BAT-02, spec: ingestion, at: ledger, how: "The ledger separates each kind of decision the batch leaves, and the acceptance child assigns them."}
   - {weakness: W-STI-02, spec: "state:staged-item", at: "enriched, partial", how: "An enriched or partial item has an assigned decider and a place on the agenda."}
   - {weakness: W-INT-01, spec: source-intake, at: describe, how: "A Clerk proposes a readable title when the header is a slug or file name, with its topics."}
-  - {weakness: W-FOL-03, spec: folder-review, at: folderscreen, how: "A Clerk screens the new or ambiguous folders for purpose, licence risk and sensitivity."}
+  - {weakness: W-FOL-03, spec: folder-review, at: folderscreen, how: "A Clerk screens the new or ambiguous folders for purpose, authorship and sensitivity; licence status is recorded as a label, never a reason to hold."}
   # T6 Results do not reach the person
   - {weakness: W-WFR-01, spec: activation-web-ui, at: uinotify, how: "The run's result, spend and coverage open in a drawer, from the Core's record."}
   - {weakness: W-WFR-03, spec: source-enrichment, at: userread, how: "A reread from the Web UI runs through source enrichment, which records each stage's status."}

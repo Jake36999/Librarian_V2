@@ -1,4 +1,4 @@
-# Owner decision and closing fixes by tools/s7_owner_decisions.py (2026-11-26).
+# Risk routing and the licence hold, by tools/s8_risk_and_licence.py (2026-11-26).
 diagram: oracle
 use_case: UC-O
 status: PROPOSED_UNACCEPTED
@@ -86,7 +86,7 @@ nodes:
 - id: e_escalated
   kind: end
   outcome: escalated
-  label: 'the repair failed or a critical fault: tier 0 is told'
+  label: 'the repair failed or a critical fault: the Owner is told, and tier 0 when it oversees the run'
 edges:
 - from: s
   to: handin

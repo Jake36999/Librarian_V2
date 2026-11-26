@@ -1,4 +1,4 @@
-# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
+# Risk routing and the licence hold, by tools/s8_risk_and_licence.py (2026-11-26).
 diagram: doctor
 use_case: UC-D
 status: PROPOSED_UNACCEPTED
@@ -118,7 +118,8 @@ nodes:
 - id: haltescalate
   kind: activity
   lane: Lead (tier 1)
-  label: routes the critical ticket at once, with its flags, hashes and the compensation shown
+  label: routes the critical ticket at once to the Owner, and to tier 0 when it oversees the run, with its flags, hashes and
+    the compensation shown
 - id: e1
   kind: end
   outcome: resolved

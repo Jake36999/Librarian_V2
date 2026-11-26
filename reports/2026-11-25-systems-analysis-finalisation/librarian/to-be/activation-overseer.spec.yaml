@@ -1,4 +1,4 @@
-# Correction round by tools/s5_regression_fixes.py (2026-11-26).
+# Risk routing and the licence hold, by tools/s8_risk_and_licence.py (2026-11-26).
 diagram: activation-overseer
 use_case: UC0
 status: PROPOSED_UNACCEPTED
@@ -129,15 +129,12 @@ nodes:
 - id: escrec
   kind: activity
   lane: Core
-  label: routes the critical ticket at once, with its flags, evidence hashes and the compensation shown
-- id: failnotify
-  kind: activity
-  lane: Overseer (tier 0)
-  label: alerts the Owner at once with the critical ticket, evidence, spend and state
+  label: alerts the Owner and tier 0 at once with the critical ticket, its flags, evidence hashes, spend and state, and the
+    compensation shown; tier 0 does not relay it
 - id: useresc
   kind: activity
   lane: Owner
-  label: receives the urgent failure alert and the ticket's link
+  label: receives the urgent alert and the ticket's link, at the same moment as tier 0
 - id: oraclesprint
   kind: activity
   lane: Oracle
@@ -292,8 +289,6 @@ edges:
   to: escrec
   guard: escalated
 - from: escrec
-  to: failnotify
-- from: failnotify
   to: useresc
 - from: useresc
   to: eescalated

@@ -13,7 +13,7 @@
 - **The process catalogue is restored** as [`catalogue`](librarian/to-be/views/catalogue.views.md) (UC8.2). It covers reuse, the layer rule as accepted, the manifest against the mandate, the Oracle's dry run, the duplicate check, the Owner's acceptance into the repertoire, and storage in the Core with the digest pinned.
 - **New checked tables:**
   - the [data contract](librarian/to-be/data-contract.md) (Medallion and DIK, kept distinct from Geo-Grapher's trust tiers);
-  - [authority](librarian/to-be/authority.md) (permissions against reserved decisions, reconciling tier 0's authority with the policy);
+  - [authority](librarian/to-be/authority.md) (permissions against reserved decisions, reconciling tier 0's authority with the policy, and the risk levels that say who holds a decision when no tier 0 oversees the run);
   - [ticket routing](librarian/to-be/ticket-routing.md);
   - performance baselines for the [Librarian](librarian/to-be/performance.md) and [Geo-Grapher](geo-grapher/to-be/performance.md);
   - Geo-Grapher's [incremental safety cases](geo-grapher/to-be/incremental-safety.md).
@@ -53,8 +53,9 @@ Weaknesses link to their evidence, and as-is and to-be use cases pair by id.
   - correct the attester on the 96 notes of 20 November (`W-ACC-04`).
 - **Owner decision, from the authority table:** whether to delegate any reserved decision (such as sensitivity review in the test vault) to tier 0. That would change the policy.
 - **Open question, from the catalogue:** the accepted layer table allows same-layer components only for workflows; the 20 November UC-C allowed them at every layer.
-- **Decisions the performance tables leave open:** retention numbers, bounded concurrency, the target rate for folder descriptions.
-- **Decided 26 November:** an unlicensed repository is treated the same as any external source. Its licence status is a label, never a gate. The [ingest sequence by source kind](librarian/to-be/source-kinds.md) shows how a repository and a document differ: their units, their relations, the graph each feeds.
+- **Decisions the performance tables leave open:** retention numbers, the concurrency cap (the rule that reading is capped within a stage is settled; the number is not), the target rate for folder descriptions.
+- **Decided 26 November:** an unlicensed repository is treated the same as any external source. Its licence status is a label, never a gate: licence status alone no longer holds a folder (`folder-review:dfolderauth`), while scope, linked content, sensitivity and reserved decisions still can. Work that uses an external source cites it; that is a provenance rule applied when the work is written, not a block on ingestion. The [ingest sequence by source kind](librarian/to-be/source-kinds.md) shows how a repository and a document differ: their units, their relations, the graph each feeds. A repository's functions and classes are symbols on its module records (at most 25 each, in `dik.py`); records of their own are marked as a proposed expansion.
+- **Decided 26 November: high risk stays with the person when no tier 0 oversees the run.** The [authority table](librarian/to-be/authority.md) now gives each gate a risk level and says who holds it when no tier 0 oversees: a high-risk decision (gates 1 and 2, starting a batch, a code change, an uncovered bridge) is held on the Owner's agenda, never passed down to a Lead, unless a standing policy the Owner set covers it. To cut tier 0's tokens and turns, routine and bounded items are counted in the handover rather than asked, a reserved decision goes straight to the Owner's agenda (the catalogue's wider radius no longer costs tier 0 two relay turns), and the Core alerts the Owner and tier 0 at once on a critical fault.
 
 ## Out of scope of these packs (deferred, on the record)
 

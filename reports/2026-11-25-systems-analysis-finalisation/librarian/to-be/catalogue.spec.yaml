@@ -1,4 +1,4 @@
-# Handoff review by tools/s6_handoff_fixes.py (2026-11-26).
+# Risk routing and the licence hold, by tools/s8_risk_and_licence.py (2026-11-26).
 diagram: catalogue
 use_case: UC8.2
 status: PROPOSED_UNACCEPTED
@@ -23,7 +23,6 @@ lens:
 perspective: Owner
 lanes:
 - Owner
-- Overseer (tier 0)
 - Oracle
 - Lead (tier 1)
 - Core
@@ -94,11 +93,8 @@ nodes:
 - id: x3
   kind: activity
   lane: Lead (tier 1)
-  label: reports the wider radius to tier 0
-- id: x4
-  kind: activity
-  lane: Overseer (tier 0)
-  label: puts the wider radius to the Owner as one reserved decision
+  label: puts the wider radius on the Owner's agenda as one reserved decision, with the manifest and its evidence; tier 0,
+    when it oversees the run, is told in its handover and never asked to relay it
 - id: x5
   kind: activity
   lane: Owner
@@ -155,12 +151,13 @@ nodes:
   step: 12
 - id: xe
   kind: activity
-  lane: Overseer (tier 0)
-  label: takes over the composition
+  lane: Lead (tier 1)
+  label: 'hands the draft and its two revisions to the specification''s owner: tier 0 when it oversees the run, otherwise
+    the Owner, on the agenda'
 - id: xp
   kind: activity
-  lane: Overseer (tier 0)
-  label: reports the paused composition to the Owner
+  lane: Core
+  label: records the paused composition and the Owner's reason; the specification's owner is told in its handover
 - id: e1
   kind: end
   outcome: success
@@ -176,7 +173,7 @@ nodes:
 - id: e4
   kind: end
   outcome: escalated
-  label: 'escalated to tier 0: a failure of this use case'
+  label: 'escalated to the specification''s owner: a failure of this use case'
 - id: e5
   kind: end
   outcome: paused
@@ -235,8 +232,6 @@ edges:
   guard: wider
   ext: 7a
 - from: x3
-  to: x4
-- from: x4
   to: x5
 - from: x5
   to: d6
