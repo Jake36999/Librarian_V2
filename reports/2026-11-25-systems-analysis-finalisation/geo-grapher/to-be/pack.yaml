@@ -42,6 +42,8 @@ use_cases:
     name: Query a graph through MCP
     spec: query-graph
     actors: [lead]
+    boundaries:
+      - {at: dsize, values: ["one character under the limit", "exactly at it", "one over", "ten times over"], expect: "at or under: returned whole; over: its outline and the handles of its parts"}
     fields:
       brief: "Paged labels, ranked hits, and large items answered by their parts."
       primary_actor: "Lead (tier 1), or any agent"

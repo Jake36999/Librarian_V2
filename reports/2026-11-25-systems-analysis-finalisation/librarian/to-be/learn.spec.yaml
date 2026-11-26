@@ -4,7 +4,6 @@ use_case: UC-L
 status: PROPOSED_UNACCEPTED
 supersedes:
 - reports/2026-11-20-workflow-map/examples/ingestion/learn.spec.yaml
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/learn.spec.yaml
 kind: activity
 title: Learn a remedy from an escalated case
 target:

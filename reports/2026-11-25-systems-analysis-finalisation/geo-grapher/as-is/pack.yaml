@@ -26,6 +26,7 @@ use_cases:
       minimal_guarantee: "Scope, hash and disk checks refuse a bad import"
       open_questions: "OP2: apply only the changed group"
     boundaries:
+      - {at: d2, values: ["free space 5 GiB above the build's need", "exactly at the reserve", "1 byte under"], expect: "under the 5 GiB reserve the folder build is refused"}
       - {at: a14, values: ["free space 5 GiB + required", "exactly at the reserve", "1 byte under"], expect: "under the reserve: DISK_RESERVE"}
   - id: UC-G3
     name: Query a graph through MCP

@@ -17,7 +17,7 @@
     },
     {
       "spec": "graph-building.spec.yaml",
-      "sha256": "5988aceabcb4b184a08ae4029b6a91b1ac9c53c06d9ca8a38412445a9b2e220c",
+      "sha256": "95f2344a99b9537a5f5d5060478dbda4512020667995a6eeb7fe186652cd9408",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 17,
       "steps": 7,
@@ -31,7 +31,7 @@
     },
     {
       "spec": "paper-import.spec.yaml",
-      "sha256": "f47c3d44659c4139d9872792fdd741513485e0abae97920f8590d2a37677e06f",
+      "sha256": "addd83a100ead29f509dacf574597388423f363bf96721ee95a1012f26e2a202",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 21,
       "steps": 7,
@@ -55,13 +55,9 @@
       "weaknesses": 0,
       "handles": 2,
       "errors": [],
-      "warnings": [
-        "decision dsize ('does the item fit the connection's limit?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     }
   ],
   "errors": [],
-  "warnings": [
-    "query-graph: decision dsize ('does the item fit the connection's limit?') tests a quantity but declares no boundary values"
-  ]
+  "warnings": []
 }

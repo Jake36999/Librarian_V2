@@ -4,7 +4,6 @@ use_case: UC1b
 status: IMPLEMENTED_VERIFIED
 supersedes:
 - reports/2026-11-21-enrichment-baseline/batch-enrichment-current.spec.yaml
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/batch-enrichment.spec.yaml
 kind: activity
 title: 'Current approved batch: source and folder-metadata dispatch'
 target:

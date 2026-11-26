@@ -3,7 +3,7 @@
   "receipts": [
     {
       "spec": "acceptance.spec.yaml",
-      "sha256": "41d854cabc98de1d7794fdf298837fbf09ee7d76d30e2c7d9b7f6d34133c4bfd",
+      "sha256": "d1b973ba85f945e6ceecab530349f41a6bc32988738e85ee40ec40281bb795f0",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 9,
       "steps": 2,
@@ -17,7 +17,7 @@
     },
     {
       "spec": "activation-external-project.spec.yaml",
-      "sha256": "9b6af8e8d51920fe1fc9cc7f109f09afdfcdd783f226fa7dfb0b69992a2efa6e",
+      "sha256": "29aa2b74e8b118fc10379be3f350cda76d92acb0814f7b1ca48af10d70c37160",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 34,
       "steps": 8,
@@ -31,7 +31,7 @@
     },
     {
       "spec": "activation-overseer.spec.yaml",
-      "sha256": "58adc9bff4bdea7e0d4573afa693395dac4eab6e11a97955ca307d076e306fef",
+      "sha256": "5f6e23994fc36cc13a5d076393ac6898a81f3f53fd1fcb44e0bfa84571f7259f",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 40,
       "steps": 9,
@@ -45,21 +45,21 @@
     },
     {
       "spec": "activation-web-ui.spec.yaml",
-      "sha256": "6c1b633cc098a46a9cd7cf00f51ffc81827284889538913d93e7e0faeb812e2e",
+      "sha256": "408e3ba710cb4b67698eb8e81470e66f99a33f31e755a52a28424dbb287222c0",
       "status": "PROPOSED_UNACCEPTED",
-      "nodes": 37,
+      "nodes": 39,
       "steps": 12,
-      "scenarios": 23,
+      "scenarios": 24,
       "tier0_turns_mss": null,
       "tier0_turns_worst": null,
       "weaknesses": 0,
-      "handles": 2,
+      "handles": 3,
       "errors": [],
       "warnings": []
     },
     {
       "spec": "batch-enrichment.spec.yaml",
-      "sha256": "b6003d2a41b2cb5ae199f178f34803bd50c866f1387205c895e9e48b1a690217",
+      "sha256": "2cbe2c9a7616e73299a156cd6f724c46d34446a37e9c45bd59133eee6b71d80c",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 37,
       "steps": 10,
@@ -68,6 +68,20 @@
       "tier0_turns_worst": null,
       "weaknesses": 0,
       "handles": 1,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "spec": "catalogue.spec.yaml",
+      "sha256": "5d42ca4784c6502a31d71c9867a95ed472366e854212b401366bff4cc7818586",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 35,
+      "steps": 12,
+      "scenarios": 11,
+      "tier0_turns_mss": 0,
+      "tier0_turns_worst": 2,
+      "weaknesses": 0,
+      "handles": 0,
       "errors": [],
       "warnings": []
     },
@@ -87,11 +101,11 @@
     },
     {
       "spec": "compose.spec.yaml",
-      "sha256": "af2f3266602bd0366c5d3da40d31f297647563fbe875b8b26042c800044c727a",
+      "sha256": "09ca1b2140b822cf1da247db727eddb46db9b4a4ebe7ed0f12c84725d8bd6bfa",
       "status": "PROPOSED_UNACCEPTED",
-      "nodes": 34,
-      "steps": 9,
-      "scenarios": 22,
+      "nodes": 35,
+      "steps": 10,
+      "scenarios": 26,
       "tier0_turns_mss": 1,
       "tier0_turns_worst": 1,
       "weaknesses": 0,
@@ -101,7 +115,7 @@
     },
     {
       "spec": "doctor.spec.yaml",
-      "sha256": "7b740c92b754b90cef19d658c57ebb1c73220260e52b5ddea2407c4d463516aa",
+      "sha256": "452fdb9abc09520a611bf900f570db45d9687bf85729725e509c70dcab2ab866",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 26,
       "steps": 6,
@@ -111,13 +125,11 @@
       "weaknesses": 0,
       "handles": 5,
       "errors": [],
-      "warnings": [
-        "decision drepaired ('deterministic checks passed?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "folder-review.spec.yaml",
-      "sha256": "eaf98ea51d648e85cb6264d99d9f3da568ee7c2101238eeadab901ca42665465",
+      "sha256": "be9e6b11520ef2be9823876105b4187c9ef53a27e0939354c8466fd839c1a518",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 22,
       "steps": 5,
@@ -131,9 +143,9 @@
     },
     {
       "spec": "ingestion.spec.yaml",
-      "sha256": "551e0ce83c9f1eb7f818fb0304ca4ef24a44dedf0e2f2dbd7cbf2653ab11c73d",
+      "sha256": "69000751d4a98d5463002d3b6e413040aebefcdd584032d17c932feabd6201b8",
       "status": "PROPOSED_UNACCEPTED",
-      "nodes": 36,
+      "nodes": 37,
       "steps": 13,
       "scenarios": 30,
       "tier0_turns_mss": null,
@@ -145,7 +157,7 @@
     },
     {
       "spec": "learn.spec.yaml",
-      "sha256": "d986ebe40072fcb60356e4f468dea5fce06b5a862aea612ce6382a4f7f186fff",
+      "sha256": "abcfebb79fdb7ec0e74649c6d2bbdb1a6e372753f4d17cb77c8bdeca4035edad",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 10,
       "steps": 5,
@@ -159,7 +171,7 @@
     },
     {
       "spec": "oracle.spec.yaml",
-      "sha256": "630ba907976fc640fb1ed49a034b03e6d766d7f269392cb0592152202b36c4f2",
+      "sha256": "12add467f3214e228ccb9a1f1f5a9dcb1d26b5a21b20a85f284674790a16694f",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 16,
       "steps": 5,
@@ -173,7 +185,7 @@
     },
     {
       "spec": "paper-publication.spec.yaml",
-      "sha256": "77f1a610b75119f463d1c5d3341ddf1669e7a244641637eb0fe6c02922ad2fd7",
+      "sha256": "a7758446eb2a4d01ce75852c1acafcc543a2700939201ba6b9c44f696e813196",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 8,
       "steps": 2,
@@ -187,11 +199,11 @@
     },
     {
       "spec": "research.spec.yaml",
-      "sha256": "c11a483e62cf2da33374cf5610c87a73cb3ae0d96469124b17dccdaa4560b1d6",
+      "sha256": "c3470ff57d000db579bce379f8a2f302d20d57200652e6a6b03fdc731c7faa8b",
       "status": "PROPOSED_UNACCEPTED",
-      "nodes": 27,
+      "nodes": 28,
       "steps": 15,
-      "scenarios": 12,
+      "scenarios": 13,
       "tier0_turns_mss": null,
       "tier0_turns_worst": null,
       "weaknesses": 0,
@@ -201,7 +213,7 @@
     },
     {
       "spec": "source-enrichment.spec.yaml",
-      "sha256": "34c52887a66cbd11c04e879a252900dcc674c46886939e715c04c97d6526460a",
+      "sha256": "3cbc81f712f75aa785563dde1cdd48deaeb423f61e2fe00f47a39bfecf4ad1c3",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 26,
       "steps": 7,
@@ -215,21 +227,21 @@
     },
     {
       "spec": "source-intake.spec.yaml",
-      "sha256": "a19a3496eeee6db5f1c50278a35e6069fc3bc3a9accab56dd34aeda1754bc653",
+      "sha256": "c5f3866d623bf56182333f146ae1c0bdbfb5ce419b9b2d02e593729372ef141b",
       "status": "PROPOSED_UNACCEPTED",
-      "nodes": 8,
-      "steps": 3,
+      "nodes": 9,
+      "steps": 4,
       "scenarios": 3,
       "tier0_turns_mss": null,
       "tier0_turns_worst": null,
       "weaknesses": 0,
-      "handles": 1,
+      "handles": 2,
       "errors": [],
       "warnings": []
     },
     {
       "spec": "source-parse.spec.yaml",
-      "sha256": "d3ae5896445e487741c5ada3f3caf4575d5851dc7fa6aab139cf8915cad46d37",
+      "sha256": "28c92e3a2d2cd193d54fe12db20e364b41243d0a1fac084bc71a19c1c06b23c2",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 17,
       "steps": 3,
@@ -243,7 +255,7 @@
     },
     {
       "spec": "source-reading.spec.yaml",
-      "sha256": "345cb88236736ca5058b0d53a899f8d63a6783fd49385b9b5c06bf703bd6fee6",
+      "sha256": "03c929fa3f6f9154e56c19224f031c1707ca67f5bd27f05fe87e7443a48712b8",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 20,
       "steps": 12,
@@ -257,7 +269,7 @@
     },
     {
       "spec": "verify-claims.spec.yaml",
-      "sha256": "58de168a2ac1f9366cbfda899f76490de6be656274c90c561fdf5f3e39384a6e",
+      "sha256": "5978aec9f85fc6045a95e84820738cde30397330fdad4ff537addbff103ada7a",
       "status": "PROPOSED_UNACCEPTED",
       "nodes": 20,
       "steps": 6,
@@ -271,7 +283,5 @@
     }
   ],
   "errors": [],
-  "warnings": [
-    "doctor: decision drepaired ('deterministic checks passed?') tests a quantity but declares no boundary values"
-  ]
+  "warnings": []
 }

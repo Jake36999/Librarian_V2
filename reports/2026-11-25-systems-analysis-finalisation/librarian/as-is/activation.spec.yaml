@@ -6,7 +6,6 @@ supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-current-activation.spec.yaml
 kind: activity
 title: 'Current Activation Paths: Present-Day UI, Folders, Workflows, MCP & Staging (d9435e1)'
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/activation.spec.yaml
 problem:
   symptom: MCP agents hit contribute caps, 0 folder MCP tools, curate process_approved refusals, 150s Ask waits, F-09 form
     wipes, and dropped workflow results (app.js:8472).

@@ -242,6 +242,7 @@ One test per path: the main success scenario, then each extension.
 | Decision | Values to test | Expected |
 |---|---|---|
 | answers within 10 minutes? | answered at 9 min 59 s; at 10 min; unanswered at 10 min 1 s | the session parks at 10 minutes |
+| extends the phase's budget? | — | reviewed: no numeric threshold. the person's yes or no; how much to extend is theirs |
 | is the phase's budget enough to decide them all? | candidates = 0; = calls left; = calls left + 1 | judge's 40 calls per visit; a run of candidates sharing a reason is one call |
 
 ## Weaknesses and gaps
@@ -265,5 +266,4 @@ One test per path: the main success scenario, then each extension.
 
 Errors: none
 
-Warnings: 
-- decision dextend ('extends the phase's budget?') tests a quantity but declares no boundary values
+Warnings: none

@@ -6,7 +6,6 @@ supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-batch-enrichment-tobe.spec.yaml
 - reports/2026-11-23-proposed-process-family/proposed-batch-enrichment.spec.yaml
 title: Run the approved batch (proposed)
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/batch-enrichment.spec.yaml
 problem:
   symptom: 'As-is: batches ran outside a session, checked the budget only before each item, drafted folders twice, and were
     repaired without an Oracle''s check.'

@@ -1,11 +1,10 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: activation-external-project
 use_case: UC0
 status: PROPOSED_UNACCEPTED
 supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-context2-external-project-mcp.spec.yaml
 title: Work for an external project through MCP (proposed)
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/activation-external-project.spec.yaml
 problem:
   symptom: 'As-is: delegation refused at the external project''s tier, permission asks timing out, acceptance authority confused
     with the other contexts, and Applications/ notes that record no authorship or locators.'
@@ -78,7 +77,7 @@ nodes:
 - id: queueasync
   kind: activity
   lane: Core
-  label: queues the unresolved sources for the library's staging, without holding up the external work
+  label: queues the unresolved sources on the library's agenda for the Lead, without holding up the external work
 - id: ingestchild
   kind: ref
   lane: Core
@@ -103,7 +102,8 @@ nodes:
 - id: queuepause
   kind: activity
   lane: Core
-  label: keeps the staged sources on the library's agenda for a person, or tier 0, to accept; returns how to resume
+  label: keeps the staged sources on the library's agenda for the Owner, or tier 0 under its own commission, to accept; returns
+    how to resume
 - id: doctorex
   kind: ref
   lane: Doctor
@@ -134,7 +134,8 @@ nodes:
   kind: activity
   lane: Core
   step: 7
-  label: validates the citations, stores the append-only Applications/ note with its locators, and queues the unresolved sources
+  label: validates the citations, stores the append-only Applications/ note with its locators, external constraints, when
+    it may be reused, the verification used and its evaluation status, and queues the unresolved sources
 - id: userhandover
   kind: activity
   lane: Owner

@@ -9,6 +9,7 @@ flowchart TD
   activation_overseer["activation-overseer<br/>UC0"]
   activation_web_ui["activation-web-ui<br/>UC0"]
   batch_enrichment["batch-enrichment<br/>UC1b"]
+  catalogue["catalogue<br/>UC8.2"]
   cite_graph["cite-graph<br/>UC4"]
   compose["compose<br/>UC8"]
   doctor["doctor<br/>UC-D"]
@@ -35,6 +36,7 @@ flowchart TD
   compose --> activation_external_project
   compose --> activation_overseer
   compose --> activation_web_ui
+  compose --> catalogue
   folder_review --> doctor
   ingestion --> acceptance
   ingestion --> batch_enrichment

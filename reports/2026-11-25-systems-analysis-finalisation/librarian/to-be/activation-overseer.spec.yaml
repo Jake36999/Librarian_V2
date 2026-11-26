@@ -1,11 +1,10 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: activation-overseer
 use_case: UC0
 status: PROPOSED_UNACCEPTED
 supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-context1-tier0-delegated.spec.yaml
 title: Work for the Owner as tier 0 (proposed)
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/activation-overseer.spec.yaml
 problem:
   symptom: 'As-is: tier 0 is refused the curate tier, stalls on hidden 150- and 600-second permission asks, is asked to approve
     twice, and has to watch low-value steps.'
@@ -54,8 +53,9 @@ nodes:
 - id: policy_note
   kind: note
   lane: Core
-  label: 'Proposed: full in-scope delegation to tier 0. Sensitivity and challenged-claim exceptions stay flagged for the Owner
-    (an open Owner decision).'
+  label: 'Proposed: within the commission tier 0 holds every permission and is never prompted for one. Reserved by policy,
+    and asked as agenda decisions that do not block the run: sensitivity reviews, rebuttals of challenged claims, spend beyond
+    the budget, a wider mandate, promotion-mode changes and lead overrides (see the authority table).'
 - id: leaddispatch
   kind: activity
   lane: Lead (tier 1)
@@ -156,7 +156,8 @@ nodes:
   kind: activity
   lane: Overseer (tier 0)
   step: 8
-  label: 'writes the final handover: evidence, spend, coverage, deferred work, review status and tickets'
+  label: 'writes the final handover without redoing the workers'' tasks: evidence, spend, coverage, deferred work, review
+    status and tickets'
 - id: userreuse
   kind: activity
   lane: Owner

@@ -17,7 +17,7 @@
     },
     {
       "spec": "graph-building.spec.yaml",
-      "sha256": "6127b17d0542315b0efe1e7bcb7244ec0068085e90cdc34c08552e8614bbb626",
+      "sha256": "29ae81e5e4d9529ab67e612810b1f478d92ddeccc28b0f5fff23809f1b26aa7f",
       "status": "IMPLEMENTED_VERIFIED",
       "nodes": 36,
       "steps": 18,
@@ -27,9 +27,7 @@
       "weaknesses": 12,
       "handles": 0,
       "errors": [],
-      "warnings": [
-        "decision d2 ('strata, store ownership, and disk valid?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "query-graph.spec.yaml",
@@ -47,7 +45,5 @@
     }
   ],
   "errors": [],
-  "warnings": [
-    "graph-building: decision d2 ('strata, store ownership, and disk valid?') tests a quantity but declares no boundary values"
-  ]
+  "warnings": []
 }

@@ -1,4 +1,4 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: acceptance
 use_case: UC1.3
 status: PROPOSED_UNACCEPTED
@@ -19,8 +19,8 @@ nodes:
 - id: leadaccept
   kind: activity
   lane: Lead (tier 1)
-  label: accepts the in-scope sources and folder cards, recorded as accepted by an agent with their flags kept; defers the
-    reserved ones
+  label: accepts the in-scope sources and folder cards when the Owner has set promotion mode to agent, recorded as accepted
+    by an agent; an item with a sensitivity flag or a low-confidence draft goes to the Owner
   step: 1
 - id: dgate2caller
   kind: decision
@@ -33,7 +33,8 @@ nodes:
 - id: promote
   kind: activity
   lane: Core
-  label: commits the accepted sources through the guarded writer, indexes them, and hands any undecided candidates on
+  label: commits the accepted sources through the guarded writer (compare-and-set over the files it writes), indexes them,
+    and hands any undecided candidates on
   step: 2
 - id: e_success
   kind: end

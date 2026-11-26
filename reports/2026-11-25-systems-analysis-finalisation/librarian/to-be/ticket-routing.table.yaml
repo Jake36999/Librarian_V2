@@ -1,0 +1,103 @@
+title: Ticket routing (who owns each ticket class)
+about: 'The fault register is a ticket service: each ticket class has one owner, a queue, and a named recipient of its handover.
+  The routing follows docs/policy/agent-roles-and-authority.md lines 75-93: - a mapped, bounded repair goes to the Doctor;
+  - an unmapped failure goes to the Lead; - a critical case goes to tier 0 and the Owner at once; - a reserved decision goes
+  to the Owner. The lifecycle is the ticket entity in states.md. Proposed and unaccepted.'
+sections:
+- heading: Ticket classes
+  columns:
+  - Ticket class
+  - Recognised by
+  - Owner
+  - Queue
+  - Handover when it closes
+  - Where in the to-be
+  rows:
+  - - A mapped shortfall with an accepted remedy
+    - its extension and symptom match a catalogue entry (`doctor:dremedy`)
+    - Doctor
+    - the ticket service
+    - the Oracle re-checks; a pass goes once to the specification's owner
+    - '`doctor:runremedy`'
+  - - Mapped, but the blast radius exceeds the mandate
+    - '`doctor:dgrant`'
+    - Owner (reserved)
+    - the Owner's agenda
+    - the Doctor runs once the scope is granted
+    - '`doctor:askowner`'
+  - - An unmapped failure or a misalignment
+    - no catalogue entry matches
+    - Lead (tier 1), with the Clerk's read-only scout
+    - the Lead's queue
+    - the Lead drafts a remedy for the Owner (UC-L) or hands it to tier 0
+    - '`doctor:scout`'
+  - - A failure that needs a code change (the R7 class)
+    - outside every remedy's scope
+    - Overseer (tier 0)
+    - tier 0, with the diagnosis attached
+    - the Owner is told what changed
+    - 'not drawn: a code change is outside the flows'
+  - - 'Critical: security, data loss, a boundary crossed'
+    - a critical flag
+    - Overseer (tier 0) and the Owner, at once
+    - an immediate alert
+    - the run stops with its state kept
+    - '`doctor:haltescalate`'
+  - - A reserved decision
+    - the authority table
+    - Owner
+    - the agenda
+    - the run resumes at its recorded point
+    - '`ingestion:queueagenda`'
+  - - The Oracle is unavailable, or has no route distinct from the workers'
+    - '`oracle:droute`'
+    - Owner (assigns a distinct route)
+    - the agenda, flagged unverified
+    - the review re-runs on the new route
+    - '`oracle:collision`'
+  - - A quarantined sibling
+    - '`source-intake:qticket`'
+    - Doctor
+    - the ticket service
+    - the parent's ledger is updated
+    - '`source-intake:qticket`'
+  - - A repair that failed its recheck
+    - the Oracle's verdict
+    - Owner (informed); the ticket stays open
+    - the agenda, with the compensation shown
+    - the Owner decides whether to undo
+    - '`doctor:showcomp`'
+  - - 'A held claim: no review completed on two routes'
+    - '`verify-claims:hold`'
+    - Lead (tier 1)
+    - the Lead's queue
+    - the claim is rewritten, dropped, or re-reviewed when a route returns
+    - '`verify-claims:hold`'
+  - - A published paper with no stored link
+    - '`cite-graph:ticket`'
+    - Doctor (re-link from the publication receipt)
+    - the ticket service
+    - the citation is retried
+    - '`cite-graph:ticket`'
+  - - A permitted partial, or unmet tasks
+    - '`source-enrichment:retpartial`'
+    - Lead (tier 1), for the parent
+    - the agenda, with a review date
+    - re-run, accepted as partial, or dropped
+    - '`source-enrichment:retpartial`'
+  - - A ticket whose remedy is unavailable or declined
+    - '`doctor:haltdecline`'
+    - Owner (assigned), or the Lead when no reserved decision is needed
+    - the agenda, with a review date
+    - the Owner decides, or the Lead hands it to tier 0
+    - '`doctor:haltdecline`'
+- heading: Rules
+  notes:
+  - One owner per ticket at a time; a handover names the next owner and is recorded on the ticket.
+  - 'A worker never closes its own ticket: the Oracle''s recheck closes it (`doctor:oracle`).'
+  - A compensation is shown, never run by the runner (composition rule 8).
+  - A failure inside the Doctor's own steps (computing the blast radius, running a remedy) is a critical ticket for tier 0.
+  - 'Every open ticket and agenda decision has an owner and a review date; past its date it is raised to the next owner: the
+    Lead, then tier 0, then the Owner. The dates are a decision.'
+  - 'A remedy never writes an attached original: originals are read-only to every agent.'
+  - 'A findability repair re-indexes only: it never invents concepts or enables vectors to pass a check.'

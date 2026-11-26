@@ -11,7 +11,7 @@ The same use case has the same id in both packs, so `librarian/as-is/ingestion` 
 | Process | As-is (pack: `librarian/as-is`) | To-be (pack: `librarian/to-be`) | Superseded generations |
 |---|---|---|---|
 | UC0 Activation | `activation` ← `2026-11-24…/librarian-current-activation` (to split, S3) | `activation-overseer`, `activation-external-project`, `activation-web-ui` ← the three 24 November contexts | — |
-| UC8 Compose | gap (new in S3) | `compose` ← `librarian-process-composition-tobe` | `examples/ingestion/compose` (UC-C) |
+| UC8 Compose | gap (new in S3) | `compose` ← `librarian-process-composition-tobe`; and `catalogue` (UC8.2, 26 November) ← the UC-C lifecycle, which S1 had dropped | `examples/ingestion/compose` (UC-C) |
 | UC1 Ingestion | gap: a general current ingestion is new in S3. The observed trace of 19–20 November (`examples/ingestion/ingestion`) stays as its evidence, `IMPLEMENTED_OBSERVED` | `ingestion` ← `librarian-ingestion-tobe` (to split, S4) | `examples/ingestion/ingestion-tobe`, `2026-11-23…/proposed-ingestion` |
 | UC1b Batch enrichment | `batch-enrichment` ← `2026-11-21-enrichment-baseline/batch-enrichment-current` | `batch-enrichment` ← `librarian-batch-enrichment-tobe` | `2026-11-23…/proposed-batch-enrichment` |
 | UC1c Source enrichment | `source-enrichment` ← `…/source-enrichment-current` (to split, S3) | `source-enrichment` ← `librarian-source-enrichment-tobe` (to split, S4) | `enrichment-cycle` (an as-is and to-be hybrid), `proposed-tobe-enrichment`, `proposed-source-enrichment` |

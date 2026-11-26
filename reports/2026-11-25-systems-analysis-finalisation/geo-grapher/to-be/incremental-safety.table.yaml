@@ -1,0 +1,58 @@
+title: Incremental safety cases
+about: 'How the proposed incremental group application and the single active paper database behave in the cases that make
+  incremental systems unsafe. Each case names the step that carries it and the runtime acceptance test it would need. None
+  of this is implemented: passing the diagram checks says nothing about runtime behaviour.'
+sections:
+- heading: Cases
+  columns:
+  - Case
+  - Proposed behaviour
+  - Where
+  - Acceptance test needed
+  rows:
+  - - A file is deleted
+    - the delta records a tombstone; the file's entities leave the active snapshot, and earlier snapshots keep them
+    - '`graph-building:delta`, `graph-building:write`'
+    - delete a file, apply; search finds none of its entities, and a pinned snapshot still does
+  - - A file is renamed or moved
+    - a delete plus an add, matched by content hash so its identity and its links are kept
+    - '`graph-building:delta`'
+    - rename a file; its entity ids and inbound links survive
+  - - The parser version changes
+    - every file of the group is re-parsed, not only the changed ones; the receipt records both versions
+    - '`graph-building:delta`'
+    - bump the grammar version; every file is re-parsed once and the receipt names the old and new versions
+  - - A write is interrupted
+    - one transaction per group; on restart the store is at the last snapshot, and the ticket names the interrupted group
+    - '`graph-building:write`'
+    - kill the process mid-write; the store opens at the last snapshot with no partial rows
+  - - Snapshots are retained or pinned
+    - pruning keeps every pinned snapshot and the one a rollback still needs; the retention numbers are a decision
+    - '`graph-building:prune`'
+    - pin a snapshot, prune past the policy; the pinned one survives
+  - - Two applications at once
+    - one writer per group (the check refuses a held group); different groups may run in parallel up to a bounded number,
+      still a decision
+    - '`graph-building:check`'
+    - start two applications for one group; the second is refused, and two groups run side by side
+  - - The disk is short
+    - the reserve is checked for this delta (a group) or this paper's own size (a paper) before anything is written
+    - '`graph-building:check`, `paper-import:dscope`'
+    - fill the disk to just under the reserve; the apply is refused with nothing written
+  - - The graph row changed during a paper import
+    - compare-and-set on the row; one retry against the current row, then a refusal
+    - '`paper-import:dcas`'
+    - change the row mid-import; one retry, then a named refusal
+  - - A paper import is interrupted
+    - the insert's transaction rolls back; no candidate file is left (as-is leaves one)
+    - '`paper-import:insert`'
+    - kill the import mid-insert; no new file, and the active database unchanged
+  - - Other groups refer to what changed
+    - references across groups are links resolved when read, never copies; the receipt lists the changed entity ids so their
+      dependants can be re-checked
+    - '`graph-building:receipt`'
+    - change an entity another group links to; the link resolves to the new version and the dependant is listed
+  - - The retention numbers are not yet decided
+    - 'nothing is pruned until they are: a safe default that costs disk, not history'
+    - '`graph-building:prune`'
+    - with no policy set, apply twice; both snapshots remain

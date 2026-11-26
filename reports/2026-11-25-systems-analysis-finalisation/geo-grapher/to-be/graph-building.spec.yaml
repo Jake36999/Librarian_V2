@@ -1,49 +1,142 @@
-# UC-G1 to-be: apply one decided folder group as a change (GT1, GT2, GT4).
+# Correction round by tools/s5_labels.py (2026-11-26).
 diagram: graph-building
 use_case: UC-G1
 status: PROPOSED_UNACCEPTED
-supersedes: [reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/graph-building.spec.yaml]
+supersedes:
+- reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/graph-building.spec.yaml
 kind: activity
 title: Apply one decided folder group to its graph (proposed)
 problem:
-  symptom: "As-is: every accept rebuilds every group, appends full snapshots (77.2 GB), publishes complete over parse failures, and can leave a loop half committed."
-  root: "A decision changes its own group, as a delta, in one transaction, and its receipt says exactly what was parsed."
-lanes: [Core, Geo-Grapher service, Geo-Grapher store, Oracle]
+  symptom: 'As-is: every accept rebuilds every group, appends full snapshots (77.2 GB), publishes complete over parse failures,
+    and can leave a loop half committed.'
+  root: A decision changes its own group, as a delta, in one transaction, and its receipt says exactly what was parsed.
+lanes:
+- Core
+- Geo-Grapher service
+- Geo-Grapher store
+- Oracle
 nodes:
-  - {id: s, kind: start, label: start}
-  - {id: submit, kind: activity, lane: Core, step: 1, label: "submits the one decided group, with its fingerprint and withheld paths"}
-  - {id: check, kind: activity, lane: Geo-Grapher service, step: 2, label: "checks this group's stratum, store ownership and disk reserve"}
-  - {id: dvalid, kind: decision, lane: Geo-Grapher service, label: "valid?"}
-  - {id: refuse, kind: activity, lane: Geo-Grapher service, label: "refuses with a named code; nothing is written"}
-  - {id: delta, kind: activity, lane: Geo-Grapher store, step: 3, label: "computes what changed since the group's last snapshot and parses only that"}
-  - {id: dparse, kind: decision, lane: Geo-Grapher store, label: "did every changed file parse?"}
-  - {id: partial, kind: activity, lane: Geo-Grapher store, label: "marks the snapshot partial and names each unparsed file and its cause (a missing grammar, bad UTF-8)"}
-  - {id: write, kind: activity, lane: Geo-Grapher store, step: 4, label: "writes the delta snapshot in one transaction, and checkpoints the WAL"}
-  - {id: prune, kind: activity, lane: Geo-Grapher store, step: 5, label: "prunes snapshots beyond the retention policy, keeping any that are pinned"}
-  - {id: receipt, kind: activity, lane: Geo-Grapher service, step: 6, label: "returns the group's receipt: snapshot id, parse coverage, counts"}
-  - {id: judge, kind: activity, lane: Oracle, step: 7, label: "checks the receipt against the group's decision: coverage, status, counts"}
-  - {id: dverdict, kind: decision, lane: Oracle, label: "the verdict?"}
-  - {id: ticket, kind: activity, lane: Core, label: "opens a ticket for the partial parse, with its files"}
-  - {id: e1, kind: end, outcome: success, label: "the group's graph is current, and fully parsed"}
-  - {id: e_partial, kind: end, outcome: partial, label: "current, but partial, with a ticket"}
-  - {id: e_refused, kind: end, outcome: refused, label: "refused before anything was written"}
+- id: s
+  kind: start
+  label: start
+- id: submit
+  kind: activity
+  lane: Core
+  step: 1
+  label: submits the one decided group, with its fingerprint and withheld paths
+- id: check
+  kind: activity
+  lane: Geo-Grapher service
+  step: 2
+  label: checks this group's stratum and store ownership, that no other application holds the group, and the disk reserve
+    for this delta
+- id: dvalid
+  kind: decision
+  lane: Geo-Grapher service
+  label: valid?
+- id: refuse
+  kind: activity
+  lane: Geo-Grapher service
+  label: refuses with a named code; nothing is written
+- id: delta
+  kind: activity
+  lane: Geo-Grapher store
+  step: 3
+  label: 'computes what changed since the group''s last snapshot: added, changed and deleted files, and every file again when
+    the parser version changed'
+- id: dparse
+  kind: decision
+  lane: Geo-Grapher store
+  label: did every changed file parse?
+- id: partial
+  kind: activity
+  lane: Geo-Grapher store
+  label: marks the snapshot partial and names each unparsed file and its cause (a missing grammar, bad UTF-8)
+- id: write
+  kind: activity
+  lane: Geo-Grapher store
+  step: 4
+  label: writes the delta in one transaction, deletions as tombstones, and checkpoints the WAL; an interrupted transaction
+    rolls back to the last snapshot
+- id: prune
+  kind: activity
+  lane: Geo-Grapher store
+  step: 5
+  label: prunes snapshots beyond the retention policy, never a pinned one or the one a rollback still needs
+- id: receipt
+  kind: activity
+  lane: Geo-Grapher service
+  step: 6
+  label: 'returns the group''s receipt: snapshot id, parse coverage, counts'
+- id: judge
+  kind: activity
+  lane: Oracle
+  step: 7
+  label: 'checks the receipt against the group''s decision: coverage, status, counts'
+- id: dverdict
+  kind: decision
+  lane: Oracle
+  label: the verdict?
+- id: ticket
+  kind: activity
+  lane: Core
+  label: opens a ticket for the partial parse, with its files
+- id: e1
+  kind: end
+  outcome: success
+  label: the group's graph is current, and fully parsed
+- id: e_partial
+  kind: end
+  outcome: partial
+  label: current, but partial, with a ticket
+- id: e_refused
+  kind: end
+  outcome: refused
+  label: refused before anything was written
 edges:
-  - {from: s, to: submit}
-  - {from: submit, to: check}
-  - {from: check, to: dvalid}
-  - {from: dvalid, to: delta, guard: "yes"}
-  - {from: dvalid, to: refuse, guard: "no", ext: 3a}
-  - {from: refuse, to: e_refused}
-  - {from: delta, to: dparse}
-  - {from: dparse, to: write, guard: "yes"}
-  - {from: dparse, to: partial, guard: "no", ext: 4a}
-  - {from: partial, to: write}
-  - {from: write, to: prune}
-  - {from: prune, to: receipt}
-  - {from: receipt, to: judge}
-  - {from: judge, to: dverdict}
-  - {from: dverdict, to: e1, guard: complete}
-  - {from: dverdict, to: ticket, guard: partial, ext: 7a}
-  - {from: ticket, to: e_partial}
+- from: s
+  to: submit
+- from: submit
+  to: check
+- from: check
+  to: dvalid
+- from: dvalid
+  to: delta
+  guard: 'yes'
+- from: dvalid
+  to: refuse
+  guard: 'no'
+  ext: 3a
+- from: refuse
+  to: e_refused
+- from: delta
+  to: dparse
+- from: dparse
+  to: write
+  guard: 'yes'
+- from: dparse
+  to: partial
+  guard: 'no'
+  ext: 4a
+- from: partial
+  to: write
+- from: write
+  to: prune
+- from: prune
+  to: receipt
+- from: receipt
+  to: judge
+- from: judge
+  to: dverdict
+- from: dverdict
+  to: e1
+  guard: complete
+- from: dverdict
+  to: ticket
+  guard: partial
+  ext: 7a
+- from: ticket
+  to: e_partial
 evidence:
-  - "As-is graph-building and its weaknesses G-BLD-01 to G-BLD-05; Librarian to-be folder-review (folderapply: only the changed group)."
+- 'As-is graph-building and its weaknesses G-BLD-01 to G-BLD-05; Librarian to-be folder-review (folderapply: only the changed
+  group).'

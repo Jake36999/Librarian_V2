@@ -15,6 +15,7 @@ flowchart LR
   external(["External project"])
   subgraph system["Librarian (to-be)"]
     UC8(["UC8 Compose and start a sprint"])
+    UC8_2(["UC8.2 Compose a process and promote it into the repertoire"])
     UC0_1(["UC0.1 Work for the Owner as tier 0 (Context 1)"])
     UC0_2(["UC0.2 Work for an external project through MCP (Context 2)"])
     UC0_3(["UC0.3 Work directly in the Web UI (Context 3)"])
@@ -33,6 +34,7 @@ flowchart LR
     UC_O(["UC-O Judge a process's output"])
     UC_D(["UC-D Repair a failure through a ticket"])
     UC_L(["UC-L Learn a remedy"])
+    UC8_1(["UC8.1 Run a saved workflow from the Web UI (deferred)"])
     UC5(["UC5 Trust a relation (deferred)"])
     UC6(["UC6 Reorganise a folder into groups (deferred)"])
     UC7(["UC7 See the data in another model (deferred)"])
@@ -42,7 +44,11 @@ flowchart LR
   UC8 -. "«include»" .-> UC0_1
   UC8 -. "«include»" .-> UC0_2
   UC8 -. "«include»" .-> UC0_3
+  UC8 -. "«include»" .-> UC8_2
   UC8 -. "«include»" .-> UC_O
+  lead --- UC8_2
+  owner --- UC8_2
+  oracle --- UC8_2
   owner --- UC0_1
   overseer --- UC0_1
   UC0_1 -. "«include»" .-> UC1
@@ -81,6 +87,7 @@ flowchart LR
   doctor --- UC_D
   owner --- UC_D
   owner --- UC_L
+  owner --- UC8_1
   owner --- UC5
   owner --- UC6
   owner --- UC7
@@ -89,6 +96,7 @@ flowchart LR
 | Use case | Actors | Spec | Status |
 |---|---|---|---|
 | UC8 Compose and start a sprint | Owner, Overseer (tier 0) | [compose](views/compose.views.md) | PROPOSED_UNACCEPTED |
+| UC8.2 Compose a process and promote it into the repertoire | Lead (tier 1), Owner, Oracle | [catalogue](views/catalogue.views.md) | PROPOSED_UNACCEPTED |
 | UC0.1 Work for the Owner as tier 0 (Context 1) | Owner, Overseer (tier 0) | [activation-overseer](views/activation-overseer.views.md) | PROPOSED_UNACCEPTED |
 | UC0.2 Work for an external project through MCP (Context 2) | Overseer (tier 0), External project | [activation-external-project](views/activation-external-project.views.md) | PROPOSED_UNACCEPTED |
 | UC0.3 Work directly in the Web UI (Context 3) | Owner | [activation-web-ui](views/activation-web-ui.views.md) | PROPOSED_UNACCEPTED |
@@ -107,6 +115,7 @@ flowchart LR
 | UC-O Judge a process's output | Oracle | [oracle](views/oracle.views.md) | PROPOSED_UNACCEPTED |
 | UC-D Repair a failure through a ticket | Doctor, Owner | [doctor](views/doctor.views.md) | PROPOSED_UNACCEPTED |
 | UC-L Learn a remedy | Owner | [learn](views/learn.views.md) | PROPOSED_UNACCEPTED |
+| UC8.1 Run a saved workflow from the Web UI | Owner | — | deferred: no separate to-be spec: its steps are wgrant, uinotify and uiagenda in activation-web-ui, under compose (as-is W-WFR-01 to 03 are handled there) |
 | UC5 Trust a relation | Owner | — | deferred: USE-CASES.md UC5; not yet drawn |
 | UC6 Reorganise a folder into groups | Owner | — | deferred: PLAN.md 2.2 |
 | UC7 See the data in another model | Owner | — | deferred: PLAN.md 2.2 |

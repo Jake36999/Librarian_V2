@@ -1,0 +1,104 @@
+title: Authority (permissions and reserved decisions)
+about: 'The Owner said tier 0 should have the authority to act on the Owner''s behalf, so routine permission gates must not
+  interrupt it. The policy also says some decisions stay with the person, whichever agent asks (docs/policy/agent-roles-and-authority.md
+  lines 61-62 and 70). This table reconciles the two. A **permission** is granted once, by the commission or the person''s
+  own start, and is never asked again inside the run. A **reserved decision** is the person''s by policy. It is never a permission
+  prompt: it goes on the agenda with its owner and evidence, and the run carries on with everything that does not depend on
+  it. Proposed and unaccepted.'
+sections:
+- heading: Each gate, and who holds it
+  columns:
+  - Decision
+  - Kind
+  - Tier 0 under a commission
+  - Tier 0 for an external project
+  - The person in the Web UI
+  - Evidence
+  - Where in the to-be
+  rows:
+  - - A folder decision, in scope and not sensitive
+    - permission
+    - decides
+    - no; queues a lead
+    - decides
+    - 'policy line 55: tier 0 acts within its granted permissions'
+    - '`folder-review:leadfolder`'
+  - - 'Gate 1: approve the staged sources'
+    - permission
+    - decides, within the commission
+    - stages only
+    - decides
+    - as-is W-ACT-01, W-ING-03
+    - '`ingestion:dgate1`'
+  - - Start the batch
+    - permission
+    - starts
+    - 'no'
+    - starts
+    - as-is W-ING-03
+    - '`ingestion:startrun`'
+  - - 'Gate 2: accept sources, under promotion mode agent (which only the Owner sets)'
+    - permission
+    - accepts, attested as an agent
+    - no acceptance
+    - accepts
+    - 'policy: attestation names who accepted'
+    - '`acceptance:leadaccept`'
+  - - Extra work inside the mandate
+    - permission
+    - the Oracle judges its scope; allowed and logged
+    - same
+    - same
+    - docs/policy/composition.md rules 15-17
+    - '`compose:oracle_scope`'
+  - - A sensitivity review, a sensitivity flag, or a low-confidence draft
+    - reserved
+    - the Owner decides, on the agenda
+    - same
+    - the person
+    - policy lines 61-62
+    - '`acceptance:leadaccept`'
+  - - Keeping a challenged claim with a rebuttal
+    - reserved
+    - the Owner decides
+    - same
+    - the person
+    - 'policy line 70: a verdict is rebutted with evidence, and a person decides'
+    - '`verify-claims:challenge`'
+  - - Spending beyond the approved budget
+    - reserved
+    - one consolidated question to the Owner
+    - same
+    - the person
+    - 'policy line 62; remedy R8: never extend its own budget'
+    - '`research:askonce`'
+  - - Widening the parent's mandate (a blast radius beyond it)
+    - reserved
+    - the Owner decides
+    - same
+    - the person
+    - composition rule 16; to-be doctor
+    - '`doctor:askowner`'
+  - - Changing the promotion mode
+    - reserved
+    - the Owner
+    - same
+    - the person
+    - policy line 61
+    - 'not drawn: outside the flows'
+  - - A lead-override checkpoint
+    - reserved
+    - the Owner
+    - same
+    - the person
+    - policy line 61
+    - 'not drawn: outside the flows'
+- heading: How the earlier open decision (OD-05) resolves
+  notes:
+  - 'The two exceptions the 24 November proposal kept for the Owner, sensitivity reviews and challenged claims, are both reserved
+    decisions under the current policy. They are not permission prompts, so they do not conflict with tier 0''s authority
+    to act: the to-be asks them as agenda decisions and never blocks the rest of the run.'
+  - Everything else tier 0 was being asked about is a permission, granted once by the commission.
+  - Delegating a reserved decision to tier 0 (for example, sensitivity review in the test vault) would change the policy.
+    That is the Owner's decision, and it is still open.
+  - 'Also open, and the Owner''s: may the person''s own Web UI surface keep skipping the Broker (as-is W-ACT-05)?'

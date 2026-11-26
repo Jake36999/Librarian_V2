@@ -226,7 +226,7 @@
       "height": 400
     },
     {
-      "id": "librarian-group-4",
+      "id": "librarian-group-5",
       "type": "group",
       "label": "Index",
       "x": 2320,
@@ -235,7 +235,7 @@
       "height": 480
     },
     {
-      "id": "librarian-card-4-0",
+      "id": "librarian-card-5-0",
       "type": "file",
       "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/INDEX.md",
       "x": 2340,

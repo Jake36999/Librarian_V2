@@ -32,6 +32,8 @@ use_cases:
     boundaries:
       - {at: dchat_broker, values: ["answered at 599 s", "at 600 s", "unanswered at 601 s"], expect: "the Chat's Ask waits 600 s, then parks the thread"}
       - {at: dc1_broker, values: ["answered at 149 s", "at 150 s", "unanswered at 151 s"], expect: "the Broker's Ask times out at 150 s with PERMISSION_UNANSWERED"}
+      - {at: dqueue_drain, values: ["10 queued", "11 queued", "the spend ceiling reached mid-queue"], expect: "intake_run takes 10 per call (tools/intake.py:132); at the ceiling the rest stay queued"}
+      - {at: dcontext, none: "a choice of surface; its guards quote the 150 s wait, tested at dc1_broker"}
   - id: UC0.2
     name: Work for an external project through MCP
     spec: activation-external-project
@@ -93,6 +95,8 @@ use_cases:
     name: Run the approved batch
     spec: batch-enrichment
     actors: [owner]
+    boundaries:
+      - {at: dfoldercontrols, values: ["spend below the ceiling", "equal to it", "the next folder item would pass it", "cancelled between items"], expect: "the run stops before the item that would pass the ceiling"}
     includes: [UC1c]
     fields:
       brief: "One worker runs the frozen, approved selection: each source through its nine stages, each folder card through its three."
@@ -187,6 +191,7 @@ use_cases:
       open_questions: "OP3 one synthesis per session; OP4 own notes in the pool; OP5 budget per visit; OP10 code placement unchecked"
     boundaries:
       - {at: danswer, values: ["answered at 9 min 59 s", "at 10 min", "unanswered at 10 min 1 s"], expect: "the session parks at 10 minutes"}
+      - {at: dextend, none: "the person's yes or no; how much to extend is theirs"}
       - {at: dbudget, values: ["candidates = 0", "= calls left", "= calls left + 1"], expect: "judge's 40 calls per visit; a run of candidates sharing a reason is one call"}
   - id: UC3
     name: Verify a report's claims
@@ -242,6 +247,7 @@ use_cases:
       minimal_guarantee: "A refusal ends the run as failed"
       open_questions: "The Web UI drops the result (app.js:8472): what should the person see?"
     boundaries:
+      - {at: dwf_route, none: "a routing choice; the item and chunk limits are tested at wf_deep_read"}
       - {at: wf_deep_read, values: ["0 staged sources", "10", "11", "a source of 12 chunks", "of 13"], expect: "10 items per run, 12 chunks per item"}
   - id: UC-D
     name: Repair a failed step

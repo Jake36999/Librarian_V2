@@ -1,4 +1,4 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: source-intake
 use_case: UC1.2
 status: PROPOSED_UNACCEPTED
@@ -14,8 +14,14 @@ nodes:
 - id: capture
   kind: activity
   lane: Core
-  label: captures immutable evidence and literal header or DOI metadata, quarantining failed siblings
+  label: captures immutable evidence and literal header or DOI metadata, quarantining failed siblings and restoring a queued
+    reference's framing
   step: 1
+- id: qticket
+  kind: activity
+  lane: Core
+  label: opens a ticket for each quarantined sibling, routed to the Doctor's re-capture remedy, and carries on with the rest
+  step: 2
 - id: dcap
   kind: decision
   lane: Core
@@ -25,12 +31,13 @@ nodes:
   lane: Clerk (tier 2)
   label: proposes a readable title when the header is a slug or file name, a neutral description, its fields (Unknown where
     unsupported) and topics
-  step: 2
+  step: 3
 - id: stage
   kind: activity
   lane: Core
-  label: validates and stages the title, the record and its unknowns; asks for topics if it would be Unfiled
-  step: 3
+  label: validates and stages the title, the record and its unknowns; if the library has only Unfiled, queues a topic proposal
+    on the agenda
+  step: 4
 - id: e_success
   kind: end
   outcome: success
@@ -46,7 +53,7 @@ nodes:
 edges:
 - from: s
   to: capture
-- from: capture
+- from: qticket
   to: dcap
 - from: dcap
   to: describe
@@ -54,12 +61,14 @@ edges:
 - from: dcap
   to: e_reused
   guard: duplicates only
-  ext: 2a
+  ext: 3a
 - from: dcap
   to: e_paused
   guard: every target quarantined or unreachable
-  ext: 2b
+  ext: 3b
 - from: describe
   to: stage
 - from: stage
   to: e_success
+- from: capture
+  to: qticket

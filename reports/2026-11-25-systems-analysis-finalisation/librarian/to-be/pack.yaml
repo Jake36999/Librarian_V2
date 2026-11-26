@@ -22,7 +22,7 @@ use_cases:
     name: Compose and start a sprint
     spec: compose
     actors: [owner, overseer]
-    includes: [UC0.1, UC0.2, UC0.3, UC-O]
+    includes: [UC0.1, UC0.2, UC0.3, UC8.2, UC-O]
     fields:
       brief: "Whichever context starts the work, it becomes one composed sprint: an owned specification, a compiled manifest, one envelope, a rolled-up Oracle verdict."
       primary_actor: "Owner, or tier 0 on the Owner's behalf"
@@ -32,6 +32,19 @@ use_cases:
       success_guarantee: "One result, judged against the sprint's specification, with spend and coverage"
       minimal_guarantee: "Nothing runs outside the parent's mandate; an ungranted call is judged before anyone is asked"
       open_questions: "Which rules let the Oracle allow extra work without the Owner (W9)?"
+  - id: UC8.2
+    name: Compose a process and promote it into the repertoire
+    spec: catalogue
+    actors: [lead, owner, oracle]
+    fields:
+      brief: "Reuse an accepted process; if none covers the task, compose one under the layer rule, check its manifest against the mandate, dry-run it with the Oracle, and keep it only if the Owner accepts it into the repertoire, stored in the Core with its digest pinned."
+      primary_actor: "Lead (tier 1)"
+      supporting_actors: "Core, Oracle, Overseer (tier 0), Owner"
+      preconditions: "Every action the draft names is registered and declares its effects"
+      trigger: "A task needs a capability"
+      success_guarantee: "An accepted process in the Core's repertoire, digest-pinned, with its manifest and provenance"
+      minimal_guarantee: "Nothing enters the repertoire without the Owner's acceptance; a duplicate is reused, not added"
+      open_questions: "Layer rule: the accepted table (section 11.1) allows same-layer components only for workflows; the 20 November UC-C step 5 allowed them at every layer. Which holds?"
   - id: UC0.1
     name: Work for the Owner as tier 0 (Context 1)
     spec: activation-overseer
@@ -171,10 +184,12 @@ use_cases:
   - {id: UC-O, name: Judge a process's output, spec: oracle, actors: [oracle],
      fields: {brief: "Tier A checks, then Tier B review, on a route distinct from every worker; the verdict is a checked claim.", primary_actor: Oracle, supporting_actors: "Core, Doctor", preconditions: "A process with a specification", trigger: "The parent's check step", success_guarantee: "A verdict with evidence, re-checked", minimal_guarantee: "No distinct route: unverified, never a pass", open_questions: "Which model is assigned to the Oracle (revisable)"}}
   - {id: UC-D, name: Repair a failure through a ticket, spec: doctor, actors: [doctor, owner],
-     boundaries: [{at: dgrant, values: ["3 recovery steps", "4", "2 paid calls", "3"], expect: "over 3 steps or 2 paid calls goes to the Owner"}],
+     boundaries: [{at: dgrant, values: ["3 recovery steps", "4", "2 paid calls", "3"], expect: "over 3 steps or 2 paid calls goes to the Owner"},
+                  {at: drepaired, values: ["the checks pass on the last allowed step", "a fourth step or third paid call would be needed"], expect: "at the limit the ticket stops and shows its compensation"}],
      fields: {brief: "A ticket, a matching accepted remedy, a blast-radius check, the repair, then the Oracle's confirmation.", primary_actor: Doctor, supporting_actors: "Clerk, Lead, Owner, Oracle, Core", preconditions: "An open ticket", trigger: "A failure at a mapped extension", success_guarantee: "Resolved, confirmed by the Oracle", minimal_guarantee: "Never beyond the mandate without the Owner", open_questions: "The repair role's code name (W-DOC-05)"}}
   - {id: UC-L, name: Learn a remedy, spec: learn, actors: [owner],
      fields: {brief: "A repair tier 0 made by hand becomes a proposed remedy that the Owner accepts.", primary_actor: Owner, supporting_actors: "Overseer, Core", preconditions: "A resolved case with no remedy", trigger: "Tier 0 proposes the remedy", success_guarantee: "An accepted catalogue entry", minimal_guarantee: "Nothing is installed without acceptance", open_questions: "—"}}
+  - {id: UC8.1, name: Run a saved workflow from the Web UI, actors: [owner], deferred: "no separate to-be spec: its steps are wgrant, uinotify and uiagenda in activation-web-ui, under compose (as-is W-WFR-01 to 03 are handled there)"}
   - {id: UC5, name: Trust a relation, actors: [owner], deferred: "USE-CASES.md UC5; not yet drawn"}
   - {id: UC6, name: Reorganise a folder into groups, actors: [owner], deferred: "PLAN.md 2.2"}
   - {id: UC7, name: See the data in another model, actors: [owner], deferred: "PLAN.md 2.2"}

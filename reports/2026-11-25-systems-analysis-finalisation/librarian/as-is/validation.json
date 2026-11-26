@@ -31,7 +31,7 @@
     },
     {
       "spec": "activation.spec.yaml",
-      "sha256": "107c8d11cf3f24b724cfcaef2ac70a5d6753e4fbaef3def01bf8535d699ffd57",
+      "sha256": "33b5cc472aadc167a917bb223eba10eaf25bbd3ca73774c8828a7f9a30c73600",
       "status": "IMPLEMENTED_VERIFIED",
       "nodes": 36,
       "steps": 8,
@@ -41,14 +41,11 @@
       "weaknesses": 5,
       "handles": 0,
       "errors": [],
-      "warnings": [
-        "decision dcontext ('which present-day activation surface enters Core?') tests a quantity but declares no boundary values",
-        "decision dqueue_drain ('queued intake refs drained via intake_run / run-queue?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "batch-enrichment.spec.yaml",
-      "sha256": "f6553fb14155728abd2f482c17bae1dcb0b0f187587b3a3d2317d224d657b46d",
+      "sha256": "f72a805085704823c7397fc14bd6261535243377566013147096465f0da353a1",
       "status": "IMPLEMENTED_VERIFIED",
       "nodes": 29,
       "steps": 5,
@@ -58,9 +55,7 @@
       "weaknesses": 2,
       "handles": 0,
       "errors": [],
-      "warnings": [
-        "decision dfoldercontrols ('folder item controls permit continuation?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "cite-graph.spec.yaml",
@@ -172,13 +167,11 @@
       "weaknesses": 6,
       "handles": 0,
       "errors": [],
-      "warnings": [
-        "decision dextend ('extends the phase's budget?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     },
     {
       "spec": "source-enrichment.spec.yaml",
-      "sha256": "a017c2e7efdfab646807aa7a1ecc25dfd57924b7fed9aac5a39e72433aa8b7e3",
+      "sha256": "27cc178a43b49171e5c400fef9dd75929c10857fd85c021261b4e0c2978925bc",
       "status": "IMPLEMENTED_VERIFIED",
       "nodes": 21,
       "steps": 7,
@@ -258,17 +251,9 @@
       "weaknesses": 3,
       "handles": 0,
       "errors": [],
-      "warnings": [
-        "decision dwf_route ('which paperclip workflow & grant check?') tests a quantity but declares no boundary values"
-      ]
+      "warnings": []
     }
   ],
   "errors": [],
-  "warnings": [
-    "activation: decision dcontext ('which present-day activation surface enters Core?') tests a quantity but declares no boundary values",
-    "activation: decision dqueue_drain ('queued intake refs drained via intake_run / run-queue?') tests a quantity but declares no boundary values",
-    "batch-enrichment: decision dfoldercontrols ('folder item controls permit continuation?') tests a quantity but declares no boundary values",
-    "research: decision dextend ('extends the phase's budget?') tests a quantity but declares no boundary values",
-    "workflow-run: decision dwf_route ('which paperclip workflow & grant check?') tests a quantity but declares no boundary values"
-  ]
+  "warnings": []
 }

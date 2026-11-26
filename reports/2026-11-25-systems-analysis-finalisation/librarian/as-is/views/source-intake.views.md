@@ -98,7 +98,7 @@ _None declared._
 | Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
 |---|---|---|---|---|---|
 | W-INT-01 | gap | clerk_draft | Titles fall back to slugs or file names, and the topic to Unfiled; nothing schedules the fix. | clerk_draft label | `source-intake` |
-| W-INT-02 | gap | quar_curr | A quarantined capture waits for someone to retry it, and nobody is told. | quar_curr label | open: The to-be capture quarantines a failed sibling and carries on, but opens no ticket for it. |
+| W-INT-02 | gap | quar_curr | A quarantined capture waits for someone to retry it, and nobody is told. | quar_curr label | `source-intake` |
 
 ## Checks
 

@@ -1,0 +1,72 @@
+# Claude's adjudication of every item the readers marked unresolved, rejected or deferred (26 November).
+# An entry overrides the reader's disposition, with a reason; `pack_ref` must resolve, or the item is not counted.
+# Several items became "preserved" because this correction round added the element (marked "added 26 November").
+t1/trace-t1-4: {disposition: preserved, pack_ref: librarian/to-be/ticket-routing, note: "Rule added 26 November: a remedy never writes an attached original; originals are read-only to every agent."}
+t1/trace-t1-30: {disposition: preserved, pack_ref: librarian/to-be/states, note: "Added 26 November: the accepted-note entity; a later reading stages a revision and never overwrites the note."}
+t2/dw-3: {disposition: deferred, pack_ref: README.md, note: "Model assignment is revisable and not part of the design; the README records that GLM-5.3 was named on 24 November."}
+t2/dw-4: {disposition: preserved, pack_ref: reports/2026-11-25-systems-analysis-finalisation/render_pack.py, note: "The pack renderer reports a malformed spec as an error and never repairs it."}
+t2/dw-5: {disposition: deferred, pack_ref: README.md, note: "Parent specs carry problem statements; requiring one in every spec is diagram tooling, deferred in the README."}
+t2/dw-6: {disposition: preserved, pack_ref: librarian/to-be/use-case-diagram, note: "G1 draws the Owner and outside systems as actors outside the system boundary."}
+t2/dw-7: {disposition: preserved, pack_ref: reports/2026-11-25-systems-analysis-finalisation/render_pack.py, note: "Cross-view checks (render_spec.cross_check) are reported as errors, never repaired."}
+t2/dw-8: {disposition: preserved, pack_ref: reports/2026-11-25-systems-analysis-finalisation/render_pack.py, note: "Lanes must be terminology roles; model names were removed from labels (tools/s4_plain_language.py)."}
+t2/dw-9: {disposition: preserved, pack_ref: librarian/to-be/catalogue:a12, note: "The to-be stores specifications in the Core; these packs are review artifacts, as docs/terminology.md says."}
+t2/dw-10: {disposition: preserved, pack_ref: reports/2026-11-20-workflow-map/examples/ingestion/render_spec.py, note: "validate() refuses an unknown node kind."}
+t2/dw-11: {disposition: deferred, pack_ref: README.md, note: "Lens-pack acceptance and lens provenance are diagram tooling, deferred in the README."}
+t2/dw-13: {disposition: deferred, pack_ref: README.md, note: "Canvas approval is diagram tooling (D1 stopped swim-lane canvases); the index canvases are wholly generated."}
+t2/dw-14: {disposition: preserved, pack_ref: src/resource_librarian/canvas/service.py, note: "The W2 canvas service enforces the librarian- prefix and keeps every other node; render_pack writes index canvases through it."}
+t2/dw-15: {disposition: preserved, pack_ref: src/resource_librarian/canvas/service.py, note: "The canvas service refuses to merge into a canvas with no librarian- node unless adopted."}
+t2/dw-26: {disposition: preserved, pack_ref: librarian/to-be/oracle:tiera, note: "Deterministic Tier A checks run before any Tier B model review."}
+t2/dw-29: {disposition: rejected, pack_ref: librarian/to-be/doctor:runremedy, note: "The to-be runs one accepted remedy per ticket (a single repair attempt), so trying several remedies is not permitted at all."}
+t3/trace-t3-plan-policy-1: {disposition: deferred, pack_ref: librarian/to-be/handles, note: "The rule is in acceptance:leadaccept; correcting the 96 historical notes is the Owner's open decision (W-ACC-04)."}
+t3/trace-t3-plan-policy-8: {disposition: preserved, pack_ref: librarian/to-be/activation-overseer:t0deliver, note: "Each handover states the deferred work and tickets left; policy line 58."}
+t3/trace-t3-plan-policy-9: {disposition: preserved, pack_ref: README.md, note: "The README records assignments as revisable and outside the design; docs/terminology.md says assign, never bind."}
+t3/trace-t3-plan-policy-13: {disposition: preserved, pack_ref: librarian/to-be/catalogue:a4, note: "Added 26 November: validation refuses a step declaring less than its action's registered effects."}
+t3/trace-t3-plan-policy-19: {disposition: preserved, pack_ref: librarian/to-be/compose:worker_roles, note: "Added 26 November: a worker sees only the repertoire mounted for its role."}
+t3/trace-t3-plan-policy-23: {disposition: unresolved, pack_ref: null, note: "Code-first is carried (Tier A before Tier B); giving models only closed choices is not drawn anywhere."}
+t3/trace-t3-plan-policy-24: {disposition: deferred, pack_ref: README.md, note: "A repository-boundary constraint, not a process; deferred in the README."}
+t3/trace-t3-plan-policy-29: {disposition: deferred, pack_ref: librarian/to-be/handles, note: "The Owner's open decision W-ACC-04."}
+t4/recon-9: {disposition: preserved, pack_ref: librarian/to-be/activation-web-ui:keepdraft, note: "Added 26 November: the person's draft is kept beside the new revision."}
+t4/recon-10: {disposition: preserved, pack_ref: librarian/to-be/activation-web-ui:uiagenda, note: "The to-be updates the staging filters; the spec's problem names the hidden accepted and processing items."}
+t4/recon-11: {disposition: preserved, pack_ref: librarian/to-be/ingestion:ledger, note: "The ledger is paged; the Web UI pager's own defect is implementation."}
+t4/recon-25: {disposition: deferred, pack_ref: README.md, note: "A Geo-Grapher implementation defect, deferred in the README pending a code check."}
+t4/recon-26: {disposition: deferred, pack_ref: README.md, note: "A Geo-Grapher implementation defect, deferred in the README pending a code check."}
+t4/recon-27: {disposition: preserved, pack_ref: librarian/to-be/batch-enrichment:admit, note: "The batch validates the session's checkpoint and the frozen selection."}
+t4/recon-28: {disposition: preserved, pack_ref: librarian/to-be/compose:compile_manifest, note: "The manifest and envelope, nested grants included, are compiled before anything runs."}
+t4/recon-29: {disposition: deferred, pack_ref: README.md, note: "Deferred in the README: conversions persisting a source graph, pending a code check."}
+t4/recon-30: {disposition: deferred, pack_ref: README.md, note: "Deferred in the README: code repositories attached read-only."}
+t5/t5-6: {disposition: preserved, pack_ref: librarian/to-be/source-enrichment:bind, note: "Work already done is reused by its key (added 26 November: hash, stage, recipe version, route)."}
+t5/t5-7: {disposition: preserved, pack_ref: librarian/to-be/acceptance:promote, note: "The guarded writer's compare-and-set is named; the queued reference's framing is restored at source-intake:capture (the plain-language pass had dropped it; restored 26 November)."}
+t5/t5-8: {disposition: preserved, pack_ref: README.md, note: "The weakness register, handles.yaml and this matrix carry the failure branches; the README lists what is open."}
+t5/t5-10: {disposition: preserved, pack_ref: reports/2026-11-25-systems-analysis-finalisation/render_pack.py, note: "Added 26 November: a clone node (_at_) is an error."}
+t5/t5-12: {disposition: preserved, pack_ref: librarian/to-be/source-enrichment:bind, note: "Added 26 November: the reuse key's fields."}
+t5/t5-18: {disposition: preserved, pack_ref: librarian/to-be/cite-graph:search, note: "The graph labels are in the Lead's context before it queries."}
+t5/t5-21: {disposition: preserved, pack_ref: librarian/to-be/source-intake:stage, note: "A library with only Unfiled queues a topic proposal."}
+t5/t5-22: {disposition: preserved, pack_ref: librarian/to-be/batch-enrichment:admit, note: "Checkpoint binding here; the paged ledger at ingestion:ledger; grants disclosed at compose:compile_manifest."}
+t5/t5-25: {disposition: deferred, pack_ref: geo-grapher/to-be/performance, note: "Added as a decision-needed row 26 November."}
+t5/t5-26: {disposition: rejected, pack_ref: librarian/to-be/ticket-routing, note: "Conflicts with the policy (agent-roles lines 75-79): a critical case goes to tier 0 and the Owner at once, not only to the Lead."}
+t5/t5-30: {disposition: deferred, pack_ref: README.md, note: "Listed in the README as an open Owner decision."}
+t6/recon-10: {disposition: preserved, pack_ref: librarian/to-be/activation-external-project:recordapp, note: "Added 26 November: external constraints and when it may be reused."}
+t6/recon-11: {disposition: preserved, pack_ref: librarian/to-be/activation-external-project:recordapp, note: "Added 26 November: the verification used and the evaluation status."}
+t6/recon-12: {disposition: preserved, pack_ref: librarian/to-be/activation-external-project:applypartial, note: "The workaround path records the leads; an application citing nothing is refused rather than raising a TypeError."}
+t6/recon-16: {disposition: preserved, pack_ref: librarian/to-be/activation-web-ui:wgrant, note: "The workflow grant carries the read access its steps need."}
+t6/recon-19: {disposition: preserved, pack_ref: librarian/to-be/oracle:handin, note: "Added 26 November: a context shared with no worker; the Doctor's remedy also runs in an isolated context."}
+t6/recon-20: {disposition: preserved, pack_ref: README.md, note: "Assignments are revisable configuration, outside the design."}
+t6/recon-29: {disposition: preserved, pack_ref: librarian/to-be/batch-enrichment:assess, note: "The Core owns the literal counts and the Clerk the semantic explanation."}
+t7/trace-t7-13: {disposition: unresolved, pack_ref: null, note: "Lens separation is carried (source-reading:lenses); bounded concurrency within a stage is not drawn."}
+t7/trace-t7-24: {disposition: preserved, pack_ref: librarian/to-be/ingestion:doctorphase, note: "Added 26 November: a repair never invents concepts or enables vectors."}
+t7/trace-t7-25: {disposition: preserved, pack_ref: librarian/to-be/source-reading:lenses, note: "Accepting lenses is a separate decision; the Owner's consolidated decision keeps them apart."}
+t7/trace-t7-28: {disposition: preserved, pack_ref: librarian/to-be/research:propose, note: "The Clerk proposes a decision per run of candidates sharing a reason."}
+t7/trace-t7-29: {disposition: preserved, pack_ref: librarian/to-be/research:decide, note: "Added 26 November: an incomplete decision is refused."}
+t8/trace-t8-5: {disposition: preserved, pack_ref: librarian/to-be/source-reading:host, note: "Added 26 November: never another model in its place."}
+t8/trace-t8-8: {disposition: preserved, pack_ref: librarian/to-be/ingestion:doctorphase, note: "Added 26 November."}
+t8/trace-t8-9: {disposition: preserved, pack_ref: librarian/to-be/ingestion:doctorphase, note: "Added 26 November: a repair re-indexes only."}
+t8/trace-t8-10: {disposition: preserved, pack_ref: librarian/to-be/source-enrichment:pubgap, note: "Added 26 November: a publication gap never triggers a reread."}
+t8/trace-t8-12: {disposition: preserved, pack_ref: librarian/to-be/ingestion:ledger, note: "Added 26 November: reconciled from current state, never from what was queued."}
+t8/trace-t8-13: {disposition: preserved, pack_ref: librarian/to-be/states, note: "Added 26 November: a partial revision gives no acceptance authority or full-reading credit."}
+t8/trace-t8-14: {disposition: preserved, pack_ref: librarian/to-be/states, note: "Added 26 November: a revision merges into the same note."}
+t8/trace-t8-17: {disposition: preserved, pack_ref: geo-grapher/to-be/paper-import:empty, note: "Added 26 November."}
+t8/trace-t8-18: {disposition: preserved, pack_ref: librarian/to-be/activation-overseer:t0deliver, note: "Added 26 November: without redoing the workers' tasks."}
+t8/trace-t8-19: {disposition: preserved, pack_ref: librarian/to-be/oracle:verdict, note: "Added 26 November: the Oracle never directs the workers."}
+t8/trace-t8-22: {disposition: preserved, pack_ref: librarian/to-be/research:dshort, note: "Added 26 November: one bounded revision after a shortfall, then escalation."}
+t8/trace-t8-24: {disposition: preserved, pack_ref: librarian/to-be/ingestion:startrun, note: "Added 26 November: the active run is returned, not duplicated."}
+t8/trace-t8-29: {disposition: preserved, pack_ref: librarian/to-be/acceptance:leadaccept, note: "Added 26 November: a low-confidence draft goes to the Owner."}

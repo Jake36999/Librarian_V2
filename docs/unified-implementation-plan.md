@@ -7564,3 +7564,21 @@ Owner direction: reword the 14 to-be specs inherited from 24 November before the
   - The quantity check no longer reads "within" as a quantity.
 
 Tests: reports only; no code changed.
+
+### The correction round and second pass on the systems-analysis packs (2026-11-26)
+
+ChatGPT reviewed the packs; the Owner asked for a correction round and a secondary, adversarial pass (DeepInfra allowed, $5).
+- **Corrections.**
+  - The process catalogue is restored as the to-be `catalogue` (UC8.2): reuse, the accepted layer table, the manifest against the mandate, the Oracle's dry run, the duplicate check, the Owner's acceptance into the repertoire, and storage in the Core.
+  - New checked tables: the Medallion and DIK data contract (kept distinct from Geo-Grapher's trust tiers), authority, ticket routing, Geo-Grapher's incremental safety cases, and performance baselines with M/R/C provenance.
+  - The authority table reconciles tier 0's authority with the policy. A permission is granted once and never prompted; the policy's reserved decisions (sensitivity reviews, rebuttals, spend beyond the budget, a wider mandate, promotion mode, lead overrides) are non-blocking agenda decisions.
+  - W-INT-02 and W-ACC-01 now have to-be elements. The Oracle checks unchanged children by their receipts' hashes. The pack specs' self-pointing `superseded_by` is removed and now refused by the renderer, as are clone nodes. All four packs pass with no warnings.
+- **Second pass** (19 DeepInfra calls, $0.83 charged).
+  - [REGRESSION-MATRIX.md](../reports/2026-11-25-systems-analysis-finalisation/REGRESSION-MATRIX.md): 240 reader items, 224 passing the script's quote and reference checks. Claude adjudicated every unresolved, rejected and deferred item; result 207 preserved, 13 deferred on the record, 2 rejected with evidence, 2 unresolved.
+  - It found one regression from the plain-language pass (the capture step had lost "restores a queued reference's framing"), now restored.
+  - [ADVERSARIAL-REVIEW.md](../reports/2026-11-25-systems-analysis-finalisation/ADVERSARIAL-REVIEW.md): Qwen3.5 and MiMo, 56 findings with verbatim quotes, 39 accepted (23 changes), 17 rejected with reasons. Among the changes: sensitivity flags and low-confidence drafts go to the Owner; only unmet items are held, not the whole ingestion; every ticket and agenda decision has an owner and a review date.
+- [VALIDATION.md](../reports/2026-11-25-systems-analysis-finalisation/VALIDATION.md) separates what the model checks prove from what needs runtime implementation or acceptance tests. Every to-be flow stays `PROPOSED_UNACCEPTED`.
+
+Open: the Owner's decisions (delegating a reserved decision, W-ACT-05, W-ACC-04, unlicensed nested repositories, the layer rule's same-layer question); the retention, concurrency and review-date numbers; two unresolved requirements (closed choices for models; bounded concurrency within a stage).
+
+Tests: reports only; no code changed.

@@ -1,4 +1,4 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: ingestion
 use_case: UC1
 status: PROPOSED_UNACCEPTED
@@ -7,7 +7,6 @@ supersedes:
 - reports/2026-11-20-workflow-map/examples/ingestion/ingestion-tobe.spec.yaml
 - reports/2026-11-23-proposed-process-family/proposed-ingestion.spec.yaml
 title: Make a folder of documents into Source notes (proposed)
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/ingestion.spec.yaml
 problem:
   symptom: The earlier draft hid three different callers behind one trigger, gave the Owner seven main-path steps and three
     serial acceptance prompts, could block an external tier 0 at curate, and skipped the final Oracle check on code-only folders.
@@ -68,7 +67,8 @@ nodes:
 - id: startrun
   kind: activity
   lane: Core
-  label: checks the Lead's approval against the grant and the run's checkpoint, and freezes the mixed batch
+  label: checks the Lead's approval against the grant and the run's checkpoint, freezes the mixed batch, and returns the active
+    run instead of starting a duplicate
   step: 5
 - id: batch
   kind: ref
@@ -79,7 +79,8 @@ nodes:
 - id: ledger
   kind: activity
   lane: Core
-  label: reconciles one paged ledger for the folder, and separates the folder, source, lens, topic and bridge lists
+  label: reconciles one paged ledger for the folder from each item's current state, never from what was queued, and separates
+    the folder, source, lens, topic and bridge lists
   step: 7
 - id: oraclebatch
   kind: activity
@@ -90,6 +91,10 @@ nodes:
   kind: decision
   lane: Oracle
   label: pre-promotion batch quality?
+- id: holdunmet
+  kind: activity
+  lane: Core
+  label: holds only the unmet items on the agenda, each with its ticket and owner; the clean items go on to acceptance
 - id: doctorbatch
   kind: ref
   lane: Doctor
@@ -118,7 +123,8 @@ nodes:
   kind: ref
   lane: Doctor
   use_case: doctor
-  label: repairs findability, or another mapped shortfall, through a ticket
+  label: repairs findability, or another mapped shortfall, through a ticket; a repair re-indexes only, and never invents concepts
+    or enables vectors to pass the check
 - id: reentryfinal
   kind: activity
   lane: Core
@@ -263,7 +269,7 @@ edges:
   to: escout
   guard: escalated
 - from: dbatchscreen
-  to: pauseout
+  to: holdunmet
   guard: unmet required output blocks promotion
   ext: 9b
 - from: dbatchscreen
@@ -368,3 +374,5 @@ edges:
   to: pauseout
   guard: paused
   ext: 9f
+- from: holdunmet
+  to: ref_acceptance

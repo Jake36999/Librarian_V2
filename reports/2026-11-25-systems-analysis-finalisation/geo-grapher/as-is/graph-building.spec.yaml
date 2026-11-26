@@ -4,7 +4,6 @@ use_case: UC1d
 status: IMPLEMENTED_VERIFIED
 supersedes:
 - reports/2026-11-22-geographer-graph-building/geographer-graph-building.spec.yaml
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/graph-building.spec.yaml
 kind: activity
 title: Geo-Grapher graph building across folder review and Librarian enrichment (as-is)
 target:

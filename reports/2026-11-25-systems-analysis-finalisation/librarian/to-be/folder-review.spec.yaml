@@ -1,4 +1,4 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: folder-review
 use_case: UC1.1
 status: PROPOSED_UNACCEPTED
@@ -47,7 +47,8 @@ nodes:
 - id: leadfolder
   kind: activity
   lane: Lead (tier 1)
-  label: decides the in-scope folders under the commission or standing policy, and applies the exclusions
+  label: decides the in-scope folders the Clerk screened as not sensitive, under the commission or standing policy, and applies
+    the exclusions; a sensitivity flag goes to the Owner
   step: 3
 - id: dheldcaller
   kind: decision

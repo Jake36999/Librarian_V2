@@ -1,4 +1,4 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: source-reading
 use_case: UC1c.2
 status: PROPOSED_UNACCEPTED
@@ -26,7 +26,8 @@ nodes:
 - id: host
   kind: activity
   lane: Model host
-  label: answers the task requests on a qualified route, and settles the reserved cost against the actual
+  label: answers the task requests on the qualified route, never another model in its place, and settles the reserved cost
+    against the actual
   step: 3
 - id: readchk
   kind: activity

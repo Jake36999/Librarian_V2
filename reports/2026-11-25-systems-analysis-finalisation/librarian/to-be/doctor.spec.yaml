@@ -1,4 +1,4 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: doctor
 use_case: UC-D
 status: PROPOSED_UNACCEPTED
@@ -6,7 +6,6 @@ supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-doctor-tobe.spec.yaml
 - reports/2026-11-20-workflow-map/examples/ingestion/doctor.spec.yaml
 title: Repair a failure through a ticket (proposed)
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/doctor.spec.yaml
 problem:
   symptom: The earlier doctor rolled compensation back automatically, used a helper role, had no activation or ticket routing,
     and blocked unattended runs on the Owner.
@@ -114,7 +113,8 @@ nodes:
 - id: haltdecline
   kind: activity
   lane: Lead (tier 1)
-  label: keeps the ticket open (declined or deferred) with its evidence, the compensation and an agenda notice
+  label: keeps the ticket open, declined or deferred, assigned to the Owner on the agenda with its evidence, the compensation
+    and a review date
 - id: haltescalate
   kind: activity
   lane: Lead (tier 1)

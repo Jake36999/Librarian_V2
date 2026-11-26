@@ -1,5 +1,4 @@
-# UC-O to-be: the Oracle judges any process's output against its specification (AS-IS-FINDINGS T3, T4).
-# Generalises the audited session's Tier A checks and closure re-check to every process.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: oracle
 use_case: UC-O
 status: PROPOSED_UNACCEPTED
@@ -7,45 +6,137 @@ supersedes: []
 kind: activity
 title: Judge a process's output against its specification (proposed)
 problem:
-  symptom: "As-is: only audited sessions are judged; everything else is judged by whoever ran it."
-  root: "Every parent process ends its run with the Oracle's verdict, which is itself a checked claim."
-lanes: [Core, Oracle, Doctor]
+  symptom: 'As-is: only audited sessions are judged; everything else is judged by whoever ran it.'
+  root: Every parent process ends its run with the Oracle's verdict, which is itself a checked claim.
+lanes:
+- Core
+- Oracle
+- Doctor
 nodes:
-  - {id: s, kind: start, label: start}
-  - {id: handin, kind: activity, lane: Core, step: 1, label: "hands the Oracle the output, the process's specification and the run's receipts"}
-  - {id: droute, kind: decision, lane: Core, label: "is the Oracle's route distinct from every worker's in this run?"}
-  - {id: collision, kind: activity, lane: Core, label: "records the review as unverified (ORACLE_ROUTE_COLLISION); it never passes"}
-  - {id: tiera, kind: activity, lane: Core, step: 2, label: "runs the Tier A checks: counts reconcile, quotes verbatim, findability queries, schemas, links"}
-  - {id: dtiera, kind: decision, lane: Core, label: "does every Tier A check pass?"}
-  - {id: dmapped, kind: decision, lane: Core, label: "is the shortfall at a mapped extension with an accepted remedy?"}
-  - {id: ref_doctor, kind: ref, lane: Doctor, use_case: doctor, label: "repairs it through a ticket"}
-  - {id: tierb, kind: activity, lane: Oracle, step: 3, label: "reviews what Tier A cannot decide: claims against passages, neutrality, whether the question is answered"}
-  - {id: dtierb, kind: decision, lane: Oracle, label: "the Tier B verdict?"}
-  - {id: verdict, kind: activity, lane: Oracle, step: 4, label: "records its verdict as a claim, with its evidence"}
-  - {id: recheck, kind: activity, lane: Core, step: 5, label: "re-checks that the verdict's evidence exists and still holds"}
-  - {id: e1, kind: end, outcome: success, label: "the output meets its specification"}
-  - {id: e_shortfall, kind: end, outcome: shortfall, label: "a shortfall goes back to the worker, with the verdict"}
-  - {id: e_paused, kind: end, outcome: paused, label: "unverified: no distinct route"}
-  - {id: e_escalated, kind: end, outcome: escalated, label: "the repair failed or a critical fault: tier 0 is told"}
+- id: s
+  kind: start
+  label: start
+- id: handin
+  kind: activity
+  lane: Core
+  step: 1
+  label: hands the Oracle, in a context shared with no worker, the output, the specification, the run's receipts and its children's
+    receipts, each linked by hash
+- id: droute
+  kind: decision
+  lane: Core
+  label: is an Oracle route available that is distinct from every worker's in this run?
+- id: collision
+  kind: activity
+  lane: Core
+  label: records the review as unverified and opens a ticket for the Owner to assign or restore a distinct route; the output
+    is held, never passed
+- id: tiera
+  kind: activity
+  lane: Core
+  step: 2
+  label: 'runs the Tier A checks on this level''s own obligations and on changed evidence only: counts reconcile, quotes verbatim,
+    findability, schemas, links; an unchanged child is checked by its receipt''s hash, and a mismatch re-checks that child
+    in full'
+- id: dtiera
+  kind: decision
+  lane: Core
+  label: does every Tier A check pass?
+- id: dmapped
+  kind: decision
+  lane: Core
+  label: is the shortfall at a mapped extension with an accepted remedy?
+- id: ref_doctor
+  kind: ref
+  lane: Doctor
+  use_case: doctor
+  label: repairs it through a ticket
+- id: tierb
+  kind: activity
+  lane: Oracle
+  step: 3
+  label: 'reviews what Tier A cannot decide: claims against passages, neutrality, whether the question is answered'
+- id: dtierb
+  kind: decision
+  lane: Oracle
+  label: the Tier B verdict?
+- id: verdict
+  kind: activity
+  lane: Oracle
+  step: 4
+  label: records its verdict as a claim, with its evidence; it never directs the workers
+- id: recheck
+  kind: activity
+  lane: Core
+  step: 5
+  label: re-checks that the verdict's evidence exists and still holds
+- id: e1
+  kind: end
+  outcome: success
+  label: the output meets its specification
+- id: e_shortfall
+  kind: end
+  outcome: shortfall
+  label: a shortfall goes back to the worker, with the verdict
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: 'unverified: no distinct route'
+- id: e_escalated
+  kind: end
+  outcome: escalated
+  label: 'the repair failed or a critical fault: tier 0 is told'
 edges:
-  - {from: s, to: handin}
-  - {from: handin, to: droute}
-  - {from: droute, to: tiera, guard: "yes"}
-  - {from: droute, to: collision, guard: "no", ext: 2a}
-  - {from: collision, to: e_paused}
-  - {from: tiera, to: dtiera}
-  - {from: dtiera, to: tierb, guard: "yes"}
-  - {from: dtiera, to: dmapped, guard: "no", ext: 3a}
-  - {from: dmapped, to: ref_doctor, guard: "yes"}
-  - {from: dmapped, to: e_shortfall, guard: "no"}
-  - {from: ref_doctor, to: tiera, guard: resolved}
-  - {from: ref_doctor, to: e_shortfall, guard: declined}
-  - {from: ref_doctor, to: e_escalated, guard: escalated}
-  - {from: tierb, to: dtierb}
-  - {from: dtierb, to: verdict, guard: pass}
-  - {from: dtierb, to: e_shortfall, guard: challenge, ext: 4a}
-  - {from: verdict, to: recheck}
-  - {from: recheck, to: e1}
+- from: s
+  to: handin
+- from: handin
+  to: droute
+- from: droute
+  to: tiera
+  guard: 'yes'
+- from: droute
+  to: collision
+  guard: 'no'
+  ext: 2a
+- from: collision
+  to: e_paused
+- from: tiera
+  to: dtiera
+- from: dtiera
+  to: tierb
+  guard: 'yes'
+- from: dtiera
+  to: dmapped
+  guard: 'no'
+  ext: 3a
+- from: dmapped
+  to: ref_doctor
+  guard: 'yes'
+- from: dmapped
+  to: e_shortfall
+  guard: 'no'
+- from: ref_doctor
+  to: tiera
+  guard: resolved
+- from: ref_doctor
+  to: e_shortfall
+  guard: declined
+- from: ref_doctor
+  to: e_escalated
+  guard: escalated
+- from: tierb
+  to: dtierb
+- from: dtierb
+  to: verdict
+  guard: pass
+- from: dtierb
+  to: e_shortfall
+  guard: challenge
+  ext: 4a
+- from: verdict
+  to: recheck
+- from: recheck
+  to: e1
 evidence:
-  - "As-is oracle (audited session): phases.yaml audited; research_grains.py; closure_audit.py."
-  - "docs/terminology.md: Oracle, Verdict; docs/proposals/diagram-workflows.md section 10."
+- 'As-is oracle (audited session): phases.yaml audited; research_grains.py; closure_audit.py.'
+- 'docs/terminology.md: Oracle, Verdict; docs/proposals/diagram-workflows.md section 10.'

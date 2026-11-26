@@ -143,6 +143,7 @@ stateDiagram-v2
   repairing --> checking
   checking --> resolved
   checking --> escalated
+  assigned --> assigned: past its review date: raised to the next owner (the Lead, then tier 0, then the Owner)
   resolved --> [*]
   declined --> [*]
   escalated --> [*]
@@ -159,5 +160,27 @@ stateDiagram-v2
 | repairing | checking | — | Doctor | — |
 | checking | resolved | — | Oracle | — |
 | checking | escalated | — | Oracle | — |
+| assigned | assigned | past its review date: raised to the next owner (the Lead, then tier 0, then the Owner) | Core | — |
 
 Evidence: docs/terminology.md (fault register, fault ticket); to-be doctor
+
+## An accepted Source note and its revisions
+
+A later reading never overwrites an accepted note: it stages a revision, which is accepted into the same note or rejected.
+
+```mermaid
+stateDiagram-v2
+  [*] --> accepted
+  accepted --> revision_staged: a later reading stages a revision; the note is untouched
+  revision_staged --> accepted: the revision is accepted and merged into the same note, never a second note
+  revision_staged --> accepted: the revision is rejected; the note stays as it was
+  accepted --> [*]
+```
+
+| From | To | On | By | Guard |
+|---|---|---|---|---|
+| accepted | revision-staged | a later reading stages a revision; the note is untouched | Core | — |
+| revision-staged | accepted | the revision is accepted and merged into the same note, never a second note | Lead (tier 1) | — |
+| revision-staged | accepted | the revision is rejected; the note stays as it was | Owner | — |
+
+Evidence: staging.py revision_of and merged (as-is accept of a revision, line 1152); 2026-11-21 baseline requirement of accepted-note revisions

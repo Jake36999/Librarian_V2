@@ -1,4 +1,4 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: compose
 use_case: UC8
 status: PROPOSED_UNACCEPTED
@@ -7,7 +7,6 @@ supersedes:
 - reports/2026-11-20-workflow-map/examples/ingestion/compose.spec.yaml
 kind: activity
 title: Compose and start a sprint (proposed)
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/compose.spec.yaml
 problem:
   symptom: The earlier model used the composition layers as swim lanes, and left out who owns each specification, the Oracle's
     scope judgment and the handovers to the person.
@@ -27,8 +26,8 @@ nodes:
 - id: init
   kind: activity
   lane: Owner
-  step: 1
   label: starts work as tier 0's instruction, an external project over MCP, or directly in the Web UI
+  step: 1
 - id: dspec_owner
   kind: decision
   lane: Core
@@ -36,8 +35,8 @@ nodes:
 - id: t0_spec
   kind: activity
   lane: Overseer (tier 0)
-  step: 2
   label: writes the sprint's specification on the Owner's behalf and approves its permission envelope
+  step: 2
 - id: c2_spec
   kind: activity
   lane: Overseer (tier 0)
@@ -49,13 +48,20 @@ nodes:
 - id: compile_manifest
   kind: activity
   lane: Core
+  label: stores the sprint's specification in the Core, checks the order action, workflow, pipeline, sprint (a cycle is refused
+    before anything runs), and compiles the manifest and the permission envelope
   step: 3
-  label: checks the order action, workflow, pipeline, sprint has no cycle, and compiles the manifest and the permission envelope
 - id: lead_subspec
   kind: activity
   lane: Lead (tier 1)
-  step: 4
   label: writes the delegated pipeline and workflow specifications, only within the parent's mandate
+  step: 4
+- id: ref_catalogue
+  kind: ref
+  lane: Lead (tier 1)
+  use_case: catalogue
+  label: reuses an accepted process for each part, or composes one and proposes it
+  step: 5
 - id: dnarrow
   kind: decision
   lane: Core
@@ -75,8 +81,9 @@ nodes:
 - id: worker_roles
   kind: activity
   lane: Clerk (tier 2)
-  step: 5
-  label: carries out the assigned interpretation, review and bounded reading and writing over the Core's scripted actions
+  label: carries out the assigned interpretation, review and bounded reading and writing over the Core's scripted actions,
+    seeing only the repertoire mounted for its role
+  step: 6
 - id: dctx
   kind: decision
   lane: Core
@@ -84,9 +91,9 @@ nodes:
 - id: ctx1
   kind: ref
   lane: Lead (tier 1)
-  step: 6
   use_case: activation-overseer
   label: 'tier 0''s sprint: the Lead runs the ingestion'
+  step: 7
 - id: ctx2
   kind: ref
   lane: Lead (tier 1)
@@ -100,8 +107,8 @@ nodes:
 - id: oracle_rollup
   kind: activity
   lane: Oracle
-  step: 7
   label: verifies the rolled-up obligations of every layer and the allowances made, on a route distinct from the workers'
+  step: 8
 - id: dor_comp
   kind: decision
   lane: Oracle
@@ -109,13 +116,13 @@ nodes:
 - id: rollreceipt
   kind: activity
   lane: Core
-  step: 8
   label: 'stores the run''s receipt: provenance at every layer, spend, coverage, deferrals, tickets and agenda'
+  step: 9
 - id: usernotify
   kind: activity
   lane: Owner
-  step: 9
   label: 'receives the handover: the result''s evidence, spend, coverage and deferred work'
+  step: 10
 - id: outpartial
   kind: activity
   lane: Core
@@ -179,11 +186,11 @@ edges:
 - from: dspec_owner
   to: c2_spec
   guard: tier 0, working for an external project
-  ext: 1a
+  ext: 2a
 - from: dspec_owner
   to: c3_spec
   guard: the person, in the Web UI
-  ext: 1b
+  ext: 2b
 - from: t0_spec
   to: compile_manifest
 - from: c2_spec
@@ -193,14 +200,14 @@ edges:
 - from: compile_manifest
   to: lead_subspec
 - from: lead_subspec
-  to: dnarrow
+  to: ref_catalogue
 - from: dnarrow
   to: worker_roles
   guard: within parent mandate
 - from: dnarrow
   to: oracle_scope
   guard: 'an ungranted call: the Oracle judges its scope'
-  ext: 4a
+  ext: 6a
 - from: oracle_scope
   to: dscope
 - from: dscope
@@ -222,30 +229,30 @@ edges:
 - from: dctx
   to: ctx2
   guard: an external project
-  ext: 6a
+  ext: 7a
 - from: dctx
   to: ctx3
   guard: the Web UI
-  ext: 6b
+  ext: 7b
 - from: ctx1
   to: oracle_rollup
   guard: success
 - from: ctx1
   to: outpartial
   guard: partial
-  ext: 6c
+  ext: 7c
 - from: ctx1
   to: outreused
   guard: reused
-  ext: 6d
+  ext: 7d
 - from: ctx1
   to: outpause
   guard: paused
-  ext: 6e
+  ext: 7e
 - from: ctx1
   to: outesc
   guard: escalated
-  ext: 6f
+  ext: 7f
 - from: ctx2
   to: oracle_rollup
   guard: success
@@ -284,11 +291,11 @@ edges:
 - from: dor_comp
   to: outpause
   guard: no Oracle route distinct from the workers' (never marked as independently reviewed)
-  ext: 7a
+  ext: 9a
 - from: dor_comp
   to: outesc
   guard: a critical integrity finding at any layer
-  ext: 7b
+  ext: 9b
 - from: rollreceipt
   to: usernotify
 - from: usernotify
@@ -309,3 +316,22 @@ edges:
   to: useresc
 - from: useresc
   to: eescalated
+- from: ref_catalogue
+  to: dnarrow
+  guard: success
+- from: ref_catalogue
+  to: dnarrow
+  guard: reused
+  ext: 5a
+- from: ref_catalogue
+  to: dnarrow
+  guard: used once
+  ext: 5b
+- from: ref_catalogue
+  to: outpause
+  guard: paused
+  ext: 5c
+- from: ref_catalogue
+  to: outesc
+  guard: escalated
+  ext: 5d

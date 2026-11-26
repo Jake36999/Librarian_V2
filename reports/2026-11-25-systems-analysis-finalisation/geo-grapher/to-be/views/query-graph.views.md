@@ -116,7 +116,9 @@ One test per path: the main success scenario, then each extension.
 
 ### Boundary values
 
-_None declared._
+| Decision | Values to test | Expected |
+|---|---|---|
+| does the item fit the connection's limit? | one character under the limit; exactly at it; one over; ten times over | at or under: returned whole; over: its outline and the handles of its parts |
 
 ## As-is weaknesses this handles
 
@@ -133,5 +135,4 @@ _None declared._
 
 Errors: none
 
-Warnings: 
-- decision dsize ('does the item fit the connection's limit?') tests a quantity but declares no boundary values
+Warnings: none

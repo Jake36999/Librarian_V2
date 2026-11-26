@@ -6,7 +6,6 @@ supersedes:
 - reports/2026-11-21-enrichment-baseline/source-enrichment-current.spec.yaml
 kind: activity
 title: 'Current source enrichment: scripted stages and legacy model tasks'
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/source-enrichment.spec.yaml
 target:
   kind: use_case
   ref: source-enrichment-current.md#use-case-description

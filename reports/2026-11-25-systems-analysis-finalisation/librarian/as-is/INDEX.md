@@ -10,8 +10,8 @@ How the Librarian works today, drawn from the code at d9435e1 and the runs of 19
 |---|---|---|---|---|---|---|---|---|---|---|
 | UC1.3 | [acceptance](views/acceptance.views.md) | `IMPLEMENTED_VERIFIED` | 10 | 3 | 5 | — | 4 | 0 | 0 | 0 |
 | UC0.2 | [activation-external-project](views/activation-external-project.views.md) | `IMPLEMENTED_VERIFIED` | 14 | 4 | 5 | 2 / 2 | 3 | 0 | 0 | 0 |
-| UC0 | [activation](views/activation.views.md) | `IMPLEMENTED_VERIFIED` | 36 | 8 | 36 | 0 / 2 | 5 | 0 | 0 | 2 |
-| UC1b | [batch-enrichment](views/batch-enrichment.views.md) | `IMPLEMENTED_VERIFIED` | 29 | 5 | 16 | 1 / 1 | 2 | 0 | 0 | 1 |
+| UC0 | [activation](views/activation.views.md) | `IMPLEMENTED_VERIFIED` | 36 | 8 | 36 | 0 / 2 | 5 | 0 | 0 | 0 |
+| UC1b | [batch-enrichment](views/batch-enrichment.views.md) | `IMPLEMENTED_VERIFIED` | 29 | 5 | 16 | 1 / 1 | 2 | 0 | 0 | 0 |
 | UC4 | [cite-graph](views/cite-graph.views.md) | `IMPLEMENTED_OBSERVED` | 14 | 7 | 3 | — | 2 | 0 | 0 | 0 |
 | UC8 | [compose](views/compose.views.md) | `IMPLEMENTED_VERIFIED` | 17 | 6 | 7 | 1 / 1 | 1 | 0 | 0 | 0 |
 | UC-D | [doctor](views/doctor.views.md) | `IMPLEMENTED_OBSERVED` | 15 | 6 | 5 | 1 / 2 | 5 | 0 | 0 | 0 |
@@ -19,13 +19,13 @@ How the Librarian works today, drawn from the code at d9435e1 and the runs of 19
 | UC1 | [ingestion](views/ingestion.views.md) | `IMPLEMENTED_VERIFIED` | 22 | 10 | 17 | 0 / 1 | 5 | 0 | 0 | 0 |
 | UC-O | [oracle](views/oracle.views.md) | `IMPLEMENTED_VERIFIED` | 16 | 8 | 5 | — | 1 | 0 | 0 | 0 |
 | UC1c.3 | [paper-publication](views/paper-publication.views.md) | `IMPLEMENTED_VERIFIED` | 9 | 2 | 6 | — | 2 | 0 | 0 | 0 |
-| UC2 | [research](views/research.views.md) | `IMPLEMENTED_OBSERVED` | 33 | 15 | 13 | — | 6 | 0 | 0 | 1 |
+| UC2 | [research](views/research.views.md) | `IMPLEMENTED_OBSERVED` | 33 | 15 | 13 | — | 6 | 0 | 0 | 0 |
 | UC1c | [source-enrichment](views/source-enrichment.views.md) | `IMPLEMENTED_VERIFIED` | 21 | 7 | 11 | 1 / 1 | 1 | 0 | 0 | 0 |
 | UC1.2 | [source-intake](views/source-intake.views.md) | `IMPLEMENTED_VERIFIED` | 9 | 3 | 3 | — | 2 | 0 | 0 | 0 |
 | UC1c.1 | [source-parse](views/source-parse.views.md) | `IMPLEMENTED_VERIFIED` | 17 | 3 | 12 | — | 1 | 0 | 0 | 0 |
 | UC1c.2 | [source-reading](views/source-reading.views.md) | `IMPLEMENTED_VERIFIED` | 19 | 9 | 8 | — | 2 | 0 | 0 | 0 |
 | UC3 | [verify-claims](views/verify-claims.views.md) | `IMPLEMENTED_OBSERVED` | 20 | 6 | 7 | — | 2 | 0 | 0 | 0 |
-| UC8.1 | [workflow-run](views/workflow-run.views.md) | `IMPLEMENTED_VERIFIED` | 13 | 3 | 6 | — | 3 | 0 | 0 | 1 |
+| UC8.1 | [workflow-run](views/workflow-run.views.md) | `IMPLEMENTED_VERIFIED` | 13 | 3 | 6 | — | 3 | 0 | 0 | 0 |
 
 Not drawn yet: UC5 Trust a relation (deferred: to-be only; there is no as-is (USE-CASES.md UC5)); UC6 Reorganise a folder into groups (deferred: PLAN.md 2.2); UC7 See the data in another model (deferred: PLAN.md 2.2).
 
@@ -36,9 +36,9 @@ Not drawn yet: UC5 Trust a relation (deferred: to-be only; there is no as-is (US
 | **T1 No parent process** | Work is a chain of separate surfaces and stages, and the person or tier 0 is the parent that joins them. | W-ACT-04, W-ING-01, W-ING-02, W-ING-04, W-ING-05, W-FOL-04, W-CMP-01 | 7 of 7 |
 | **T2 Authority does not fit the work** | Tiers and asks are per call, so delegated work stalls on gates it cannot pass or asks it cannot get answered. | W-ACT-01, W-ACT-02, W-ACT-03, W-ING-03, W-EXT-03 | 5 of 5 |
 | **T3 Work is counted, not judged** | A finished call, a full count or the doer's own reading stands in for a check that the result is right. | W-SRC-01, W-REA-01, W-ACC-03, W-VER-01, W-VER-02, W-RES-06, W-ORA-01, W-DOC-04 | 8 of 8 |
-| **T4 Failures have no ticket and no repair loop** | A failure is a code in a result; nobody owns it, nothing records it, and repair is tier 0 by hand. | W-DOC-01, W-DOC-02, W-DOC-03, W-INT-02, W-WFR-02, W-BAT-01 | 5 of 6 |
+| **T4 Failures have no ticket and no repair loop** | A failure is a code in a result; nobody owns it, nothing records it, and repair is tier 0 by hand. | W-DOC-01, W-DOC-02, W-DOC-03, W-INT-02, W-WFR-02, W-BAT-01 | 6 of 6 |
 | **T5 Decisions wait with no owner** | Work that needs a decision is left in a state, with no one assigned and nothing drafted to decide from. | W-BAT-02, W-STI-02, W-INT-01, W-FOL-03 | 4 of 4 |
-| **T6 Results do not reach the person** | What a run did is dropped, unrecorded or wiped before the person sees it. | W-WFR-01, W-WFR-03, W-ACC-01, W-ACC-02 | 3 of 4 |
+| **T6 Results do not reach the person** | What a run did is dropped, unrecorded or wiped before the person sees it. | W-WFR-01, W-WFR-03, W-ACC-01, W-ACC-02 | 4 of 4 |
 | **T7 One decision reaches too far** | A folder decision re-applies, and can be blocked by, every group in the library. | W-FOL-01, W-FOL-02 | 2 of 2 |
 | **T8 Links between records are derived or missing** | Paper, note, folder and application records are joined by titles, timing or nothing at all. | W-CIT-01, W-CIT-02, W-RES-05, W-PUB-02, W-EXT-02, W-PAR-01 | 5 of 6 |
 | **T9 The research session does not fit a brief** | One session, one synthesis, the whole library as its pool and halving budgets: built for one question about the library. | W-RES-01, W-RES-02, W-RES-03, W-RES-04 | 4 of 4 |
@@ -50,7 +50,7 @@ Every weakness found in the as-is, and the to-be element that handles it.
 
 | Id | Kind | In | Weakness | Handled by |
 |---|---|---|---|---|
-| W-ACC-01 | fault | `acceptance` | A stale-revision conflict reloads the form and wipes the person's edits (F-09). | open: No to-be element keeps the person's draft through a stale-revision conflict; a Web UI design is needed. |
+| W-ACC-01 | fault | `acceptance` | A stale-revision conflict reloads the form and wipes the person's edits (F-09). | `activation-web-ui` |
 | W-ACC-02 | gap | `acceptance` | A note written but not findable needs a manual Rewrite indexes; nothing re-checks findability by itself. | `ingestion` |
 | W-ACC-03 | unverified | `acceptance` | The only check of an enriched source is a person reading its summary; nothing compares the note with its evidence first. | `ingestion` |
 | W-ACC-04 | drift | `acceptance` | The 96 notes an agent accepted on 20 November still record a person as the attester; correcting them is an Owner decision. | open: Owner decision: whether to correct the attester on the 96 notes accepted on 20 November. |
@@ -83,7 +83,7 @@ Every weakness found in the as-is, and the to-be element that handles it.
 | W-ING-04 | gap | `ingestion` | A partial item is re-run only by a fresh approval and start; resuming an unfinished run is a different path. | `ingestion` |
 | W-ING-05 | cost | `ingestion` | On 19-20 November control came back to tier 0 eight times on the main path, and ten on the worst (graded bad). | `activation-overseer` |
 | W-INT-01 | gap | `source-intake` | Titles fall back to slugs or file names, and the topic to Unfiled; nothing schedules the fix. | `source-intake` |
-| W-INT-02 | gap | `source-intake` | A quarantined capture waits for someone to retry it, and nobody is told. | open: The to-be capture quarantines a failed sibling and carries on, but opens no ticket for it. |
+| W-INT-02 | gap | `source-intake` | A quarantined capture waits for someone to retry it, and nobody is told. | `source-intake` |
 | W-ORA-01 | gap | `oracle` | Admitted contracts and Tier A checks exist only in audited sessions; ingestion, research and workflows are judged by whoever ran them. | `oracle` |
 | W-PAR-01 | risk | `source-parse` | A provisional paper projection is written before reading; if reading then fails, a catalogue-only projection remains. | `source-parse` |
 | W-PUB-01 | cost | `paper-publication` | Old and failed candidate paper databases are never cleaned up. | open: Handled on Geo-Grapher's side (G-BLD-06, G-GEN-01): geo-grapher/to-be paper-import inserts into one active database, and snapshots are pruned by retention. |
@@ -105,15 +105,10 @@ Every weakness found in the as-is, and the to-be element that handles it.
 | W-WFR-02 | gap | `workflow-run` | A paused run shows a static chip, with no route picker, resume or dismiss. | `activation-web-ui` |
 | W-WFR-03 | fault | `workflow-run` | deep-read-staged reads each staged source but leaves its status unchanged, so nothing records that it was read. | `source-enrichment` |
 
-54 weaknesses: 48 handled by the to-be, 6 open with a reason, 0 not yet answered.
+54 weaknesses: 50 handled by the to-be, 4 open with a reason, 0 not yet answered.
 
 ## Checks
 
 Errors (0):
 
-Warnings (5):
-- activation: decision dcontext ('which present-day activation surface enters Core?') tests a quantity but declares no boundary values
-- activation: decision dqueue_drain ('queued intake refs drained via intake_run / run-queue?') tests a quantity but declares no boundary values
-- batch-enrichment: decision dfoldercontrols ('folder item controls permit continuation?') tests a quantity but declares no boundary values
-- research: decision dextend ('extends the phase's budget?') tests a quantity but declares no boundary values
-- workflow-run: decision dwf_route ('which paperclip workflow & grant check?') tests a quantity but declares no boundary values
+Warnings (0):

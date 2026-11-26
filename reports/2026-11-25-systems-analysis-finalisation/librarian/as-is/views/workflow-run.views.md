@@ -126,6 +126,7 @@ One test per path: the main success scenario, then each extension.
 
 | Decision | Values to test | Expected |
 |---|---|---|
+| which paperclip workflow & grant check? | — | reviewed: no numeric threshold. a routing choice; the item and chunk limits are tested at wf_deep_read |
 | deep-read-staged.yaml: staging_list(source, staged, limit=10) -> each deep_read(max_chunks=12, on_error: continue) via clerk_endpoint; item status unchanged | 0 staged sources; 10; 11; a source of 12 chunks; of 13 | 10 items per run, 12 chunks per item |
 
 ## Weaknesses and gaps
@@ -140,5 +141,4 @@ One test per path: the main success scenario, then each extension.
 
 Errors: none
 
-Warnings: 
-- decision dwf_route ('which paperclip workflow & grant check?') tests a quantity but declares no boundary values
+Warnings: none

@@ -9,7 +9,7 @@ How Geo-Grapher builds, publishes and serves the library's graphs today, and how
 | Id | Use case | Status | Nodes | Steps | Paths | Tier-0 turns (main / worst) | Weaknesses | Handles | Errors | Warnings |
 |---|---|---|---|---|---|---|---|---|---|---|
 | UC-G4 | [federated-search](views/federated-search.views.md) | `IMPLEMENTED_VERIFIED` | 17 | 7 | 4 | — | 2 | 0 | 0 | 0 |
-| UC1d | [graph-building](views/graph-building.views.md) | `IMPLEMENTED_VERIFIED` | 36 | 18 | 11 | — | 12 | 0 | 0 | 1 |
+| UC1d | [graph-building](views/graph-building.views.md) | `IMPLEMENTED_VERIFIED` | 36 | 18 | 11 | — | 12 | 0 | 0 | 0 |
 | UC-G3 | [query-graph](views/query-graph.views.md) | `IMPLEMENTED_VERIFIED` | 15 | 6 | 4 | — | 2 | 0 | 0 | 0 |
 
 Not drawn yet: UC-G5 Compare (deferred: diff-graphs, clone-report, drift-report, merge, copy-graph, delete-graph: not on the Librarian's path); UC-G6 Explore a graph in the 3D workspace (deferred: the person's UI; not on the Librarian's path); UC-G7 Build graphs of the Owner's own projects (deferred: ingest-graphs, ingest-workspace, init-workspace: outside folder review).
@@ -55,5 +55,4 @@ Every weakness found in the as-is, and the to-be element that handles it.
 
 Errors (0):
 
-Warnings (1):
-- graph-building: decision d2 ('strata, store ownership, and disk valid?') tests a quantity but declares no boundary values
+Warnings (0):

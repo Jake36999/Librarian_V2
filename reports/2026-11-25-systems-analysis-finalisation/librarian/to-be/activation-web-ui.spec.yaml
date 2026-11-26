@@ -1,11 +1,10 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_open_gaps.py (2026-11-26).
 diagram: activation-web-ui
 use_case: UC0
 status: PROPOSED_UNACCEPTED
 supersedes:
 - reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-context3-human-platform-ui.spec.yaml
 title: Work directly in the Web UI (proposed)
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/activation-web-ui.spec.yaml
 problem:
   symptom: 'As-is: staging filters hide accepted and processing items, a background reload wipes the person''s edits, a workflow''s
     result is dropped (app.js:8472), and unfindable notes and queued Clerk work are invisible.'
@@ -26,8 +25,8 @@ nodes:
 - id: ui_entry
   kind: activity
   lane: Owner
-  step: 1
   label: 'starts in the Web UI: Add source or Folders in Staging, Chat with an attachment, or Run a workflow'
+  step: 1
 - id: dentry
   kind: decision
   lane: Web UI
@@ -44,24 +43,24 @@ nodes:
 - id: uicapture
   kind: activity
   lane: Core
-  step: 2
   label: captures the evidence and records the staging and folder items, at the person's curate tier
+  step: 2
 - id: leadcoord
   kind: activity
   lane: Lead (tier 1)
-  step: 3
   label: oversees the queued work started from the UI, within the person's authority, and shows queued Clerk work
+  step: 3
 - id: clerkdraft
   kind: activity
   lane: Clerk (tier 2)
-  step: 4
   label: proposes a readable title, a neutral Bottom Line, what the source solves, its fields (Unknown where unsupported),
     topics and sensitivity
+  step: 4
 - id: reviewgate1
   kind: activity
   lane: Owner
-  step: 5
   label: reviews the staged sources with their evidence beside them, and ticks or edits the Gate 1 items
+  step: 5
 - id: dgate1choice
   kind: decision
   lane: Owner
@@ -73,14 +72,14 @@ nodes:
 - id: startbatch
   kind: activity
   lane: Core
-  step: 6
   label: clicks Process approved; the selected batch is frozen
+  step: 6
 - id: batchchild
   kind: ref
   lane: Core
-  step: 7
   use_case: batch-enrichment
   label: runs the mixed batch under the person's start
+  step: 7
 - id: duicrit
   kind: decision
   lane: Core
@@ -97,8 +96,16 @@ nodes:
 - id: reviewgate2
   kind: activity
   lane: Owner
-  step: 8
   label: 'makes the Gate 2 choices: the summary (Bottom Line, redraft, unknowns), then folders, lenses, topics and offerings'
+  step: 8
+- id: dstale
+  kind: decision
+  lane: Web UI
+  label: has the staged revision changed while the person was editing?
+- id: keepdraft
+  kind: activity
+  lane: Web UI
+  label: keeps the person's draft beside the new revision, shows the difference, and lets them carry their edits over
 - id: dgate2choice
   kind: decision
   lane: Owner
@@ -110,13 +117,13 @@ nodes:
 - id: promoteindex
   kind: activity
   lane: Core
-  step: 9
   label: checks the staged revision, writes the Source note through the guarded writer and indexes it
+  step: 9
 - id: oracleverify
   kind: activity
   lane: Oracle
-  step: 10
   label: verifies the summary's integrity and the note's findability, on a route distinct from the workers'
+  step: 10
 - id: dindex
   kind: decision
   lane: Oracle
@@ -124,13 +131,13 @@ nodes:
 - id: uinotify
   kind: activity
   lane: Web UI
-  step: 11
   label: shows the result banner and a drawer with the run's result, spend and coverage, and the agenda
+  step: 11
 - id: userdone
   kind: activity
   lane: Owner
-  step: 12
   label: receives the accepted Source note, the spend, the index confirmation and the deferred decisions, with no tier 0
+  step: 12
 - id: uipartial
   kind: activity
   lane: Web UI
@@ -194,11 +201,11 @@ edges:
 - from: dentry
   to: leaddeleg
   guard: Chat Lead delegates multi-root ingestion
-  ext: 1a
+  ext: 2a
 - from: dentry
   to: wgrant
   guard: paperclip Run a workflow (e.g. deep-read-staged)
-  ext: 1b
+  ext: 2b
 - from: leaddeleg
   to: uinotify
   guard: success
@@ -230,11 +237,11 @@ edges:
 - from: dgate1choice
   to: promoteindex
   guard: Accept as captured (skip batch)
-  ext: 5a
+  ext: 6a
 - from: dgate1choice
   to: uidispose
   guard: Defer or Reject in Staging
-  ext: 5b
+  ext: 6b
 - from: uidispose
   to: uiagenda
 - from: startbatch
@@ -276,18 +283,18 @@ edges:
   to: uiesc
   guard: escalated
 - from: reviewgate2
-  to: dgate2choice
+  to: dstale
 - from: dgate2choice
   to: promoteindex
   guard: accept into the library
 - from: dgate2choice
   to: promotepartial
   guard: accept with partial coverage (what was not examined is recorded)
-  ext: 8a
+  ext: 9a
 - from: dgate2choice
   to: uidispose
   guard: Defer or Reject
-  ext: 8b
+  ext: 9b
 - from: promotepartial
   to: uipartial
 - from: promoteindex
@@ -300,15 +307,15 @@ edges:
 - from: dindex
   to: uidoctor
   guard: not findable, or embedding warnings
-  ext: 10a
+  ext: 11a
 - from: dindex
   to: uiesc
   guard: critical Search-Index or data integrity fault
-  ext: 10b
+  ext: 11b
 - from: dindex
   to: uiagenda
   guard: no Oracle route distinct from the workers' (never marked as independently reviewed)
-  ext: 10c
+  ext: 11c
 - from: uinotify
   to: userdone
 - from: userdone
@@ -329,3 +336,12 @@ edges:
   to: useresc
 - from: useresc
   to: eescalated
+- from: dstale
+  to: dgate2choice
+  guard: unchanged
+- from: dstale
+  to: keepdraft
+  guard: changed
+  ext: 9c
+- from: keepdraft
+  to: reviewgate2

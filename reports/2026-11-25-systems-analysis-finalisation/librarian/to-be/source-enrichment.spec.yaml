@@ -1,4 +1,4 @@
-# Plain-language pass by tools/s4_plain_language.py (S4, 2026-11-25); structure unchanged.
+# Correction round by tools/s5_regression_fixes.py (2026-11-26).
 diagram: source-enrichment
 use_case: UC1c
 status: PROPOSED_UNACCEPTED
@@ -8,7 +8,6 @@ supersedes:
 - reports/2026-11-22-proposed-tobe-enrichment/proposed-tobe-enrichment.spec.yaml
 - reports/2026-11-23-proposed-process-family/proposed-source-enrichment.spec.yaml
 title: Enrich one source (proposed)
-superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/source-enrichment.spec.yaml
 problem:
   symptom: 'As-is: part counts hid failed whole-source passes, budget checks only before each item let inner calls leak, and
     papers with no claims passed silently.'
@@ -26,7 +25,8 @@ nodes:
 - id: bind
   kind: activity
   lane: Core
-  label: binds the source and its workflow's mandate (never wider than the parent), and the receipts of work already done
+  label: 'binds the source and its workflow''s mandate (never wider than the parent), and reuses work already done when its
+    key matches: the source''s hash, the stage, the recipe version and the model route'
   step: 1
 - id: dwork
   kind: decision
@@ -78,7 +78,7 @@ nodes:
 - id: pubgap
   kind: activity
   lane: Core
-  label: records an empty paper graph or a refusal, without closing the requirement
+  label: records an empty paper graph or a refusal without closing the requirement; it never triggers a reread
 - id: oracle
   kind: activity
   lane: Oracle
@@ -105,7 +105,8 @@ nodes:
 - id: retpartial
   kind: activity
   lane: Lead (tier 1)
-  label: returns the non-critical partial source, with its unmet tasks and any quarantine stated
+  label: returns the non-critical partial source, with its unmet tasks and any quarantine stated, each on the agenda with
+    its owner
 - id: retpause
   kind: activity
   lane: Lead (tier 1)
