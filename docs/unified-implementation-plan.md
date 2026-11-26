@@ -7882,3 +7882,10 @@ Drew the seven remaining use cases mapped on the initiators table (`UC10` throug
 - **`scheduled-pipeline.spec.yaml` (`UC16`):** as-is covers `weekly-review` and `clear-enrichment-backlog` (`workflows.py` MF-017/MF-018, `MAX_EACH = 200`); to-be routes unattended high-risk holds/pauses to `agenda` and mapped shortfalls to `doctor`.
 
 Protected files (`stages.table.yaml`, `stages.md`, `builds-on.table.yaml`, `builds-on.md`, `weaknesses.yaml`, `handles.yaml`) were left untouched. Reviewed via DeepInfra (`deepseek-ai/DeepSeek-V4-Pro`, run `20261126T213009-f4d7aedd`, \$0.03774): confirmed zero gate/filename/outcome mismatches. `render_pack.py --all` and `render_pack.py --check --all` pass with `0 errors, 0 warnings` across all 4 packs; `pytest tests/test_packs.py` passes (3 passed); clean-clone full `pytest tests/test_*.py` run before commit.
+
+### M1a Web UI browser verification (2026-11-26)
+
+Verified all four M1a Web UI behaviours against live disposable Core instances (`tests/folder_review_demo.py`, zero model calls, temp dir on `G:\Librarian-work\tmp`, [report](../reports/2026-11-26-m1a-browser-check/README.md)):
+- **`ui/folders-smoke.mjs`:** updated fixture root guard to allow `G:\Librarian-work\tmp` alongside `G:\Libraries\_qa` and wait for async waiting-filter re-renders before expanding `details.lib-inherited-folders` (`PASS`).
+- **`ui/m1a-smoke.mjs`:** added repeatable Playwright verification + 6 screenshots confirming: (1) finished `gather-agenda` chip `Details` button opens the `run_status` modal dialog; (2) stale-revision `409` on `Accept as captured` -> `"Reload item, keeping your edits"` preserves the edited `Bottom Line` (`#lib-bl`); (3) `"Which sources"` exposes `processing` (`Being ingested`) and `accepted` (`Accepted into the library`) and lists newly accepted `m1a-fixture`; (4) folder cards render `"Selected for the description batch; not decided yet"` separately from `"Decided and applied by a person"`.
+- **Clean-clone verification:** both browser smokes pass with zero `pageerror`s and zero unexpected console errors; full `pytest tests/test_*.py` run before commit. No `src/resource_librarian/` files modified.
