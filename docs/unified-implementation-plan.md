@@ -7911,3 +7911,33 @@ A shortfall is recorded on the stage's result (`gate`). No status changes.
   - an unfinished review opens a `held_claim` ticket (M4, first part).
 
 Tests: `test_stages.py` (+2).
+
+### M5, first part: a folder's ingestion as one pipeline, reconciled (2026-11-26)
+
+**`ingest-folder`** is a new standard pipeline (`standard/pipelines/ingest-folder.yaml`). Its steps are actions composed directly, which M1b allowed:
+1. survey the folder;
+2. accept by policy (under promotion mode agent; otherwise refused, and the run continues);
+3. queue the documents of every accepted reference folder;
+4. capture them (`run-queue`);
+5. report the folder's ledger.
+
+It stops at the person's decisions: approving into the batch, and starting it.
+
+**New tools:**
+- **`ingestion_ledger`** (read; `ingestion.py`) reconciles one surveyed root (as-is W-ING-01). From the stores that already hold each step (the folder cards, the folder-to-Source queue, staging), it reports:
+  - folders surveyed, accepted and waiting;
+  - documents in accepted reference folders, and how many are queued;
+  - sources by status;
+  - what was queued but never captured;
+  - what waits next.
+- **`folder_queue_accepted`** (contribute, orchestrating) queues every accepted reference folder under a root in one call, through `folder_queue_sources` (as-is W-FOL-04).
+
+**The agenda** shows references queued for capture that nobody has run: a count, the oldest's age, the Lead as owner and a review date (as-is W-ING-02).
+
+**Not yet:**
+- the batch's own defects: folder descriptions, titles, metadata, the provisional projection, findability, spend reservation;
+- stored links, which wait for G1;
+- the acceptance run on the fixed test folder;
+- the batch start inside the pipeline (high risk; it waits for the commission).
+
+Tests: `test_ingestion.py` (+4); `test_macro_permissions.py` adds `folder_queue_accepted` to the reviewed orchestrators; the new pipeline joins the manifest and load checks; access declarations for the two tools and the changed `agenda`.

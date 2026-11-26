@@ -540,7 +540,7 @@ def task_done(ctx: Context, note: str, text: str) -> dict:
 
 @tool("agenda", tier="consult", effect="read",
       returns=("overdue", "today", "this_week", "later", "undated", "awaiting_acceptance",
-               "decisions", "tickets"),
+               "queued_for_capture", "decisions", "tickets"),
       card=Card("Every open, dated task across the vault - or one pursuit's - bucketed by "
                 "when it falls",
                 "picking up where things left off, or a weekly review",
@@ -559,6 +559,9 @@ def agenda_tool(ctx: Context, project: str = "") -> dict:
         out["awaiting_acceptance"] = waiting
     if project:
         return out
+    queued = StagingStore(ctx.vault).waiting_in_queue()
+    if queued["count"]:
+        out["queued_for_capture"] = queued
     # One agenda (M3, UC9): the decisions waiting on a person and the open tickets join the
     # dated tasks, so there is one place to see what is owed and by whom.
     from ..checkpoints import CheckpointStore

@@ -250,6 +250,20 @@ Still to do:
 
 ### M5. The ingestion parent (T1, T8; UC1; W1b item 6; after M1a, M2, M3, M4, G1 and G3)
 
+**Status, 26 November: first part delivered** (see §19).
+
+Done:
+- `ingest-folder` runs as far as the person's decisions.
+- The ledger (W-ING-01).
+- Queueing the accepted folders (W-FOL-04).
+- The undrained queue on the agenda (W-ING-02).
+
+Still to do:
+- The batch defects (item 3).
+- Stored links, which wait for G1.
+- The acceptance run on the fixed test folder.
+- Starting the batch inside the pipeline, which waits for M2's commission, because starting a batch is high risk.
+
 1. **`ingest-folder` as a pipeline** over M1a's actions: folder review, then source intake, then batch enrichment, then acceptance. One parent starts each child.
 2. **The ledger:** the parent reconciles surveyed, queued, staged, enriched and accepted (W-ING-01).
    - Unmet items are held with their tickets, and the rest go on.

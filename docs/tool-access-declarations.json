@@ -208,7 +208,7 @@
         "symbol": "agenda_tool"
       },
       "fingerprint": {
-        "source_sha256": "4724f4104aa7de7d7672d57a874a3e0c011bf39e38e562d86b9ea6938867b410",
+        "source_sha256": "a1aa950acc81811e8323ddaf65c896eeab0a8c626e1d9a9138f4128c00362484",
         "schema_sha256": "b76e7a0d8e67a8dbe3de9cbc8aee278fd95c3c5a2d6b7069930f7e66f98571e8",
         "effect": "read",
         "open_world": false,
@@ -6169,6 +6169,60 @@
       "fingerprint": {
         "source_sha256": "c8529a370ad73f237ef15dae2d90e8cad6fd1c50310152f6acbcc7e8d128a7fd",
         "schema_sha256": "ccbfb486db1a6e3a6917aa5971e88b27df49c1ab061fe49898bd4b16999a76de",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "folder_queue_accepted",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 125,
+        "symbol": "folder_queue_accepted"
+      },
+      "fingerprint": {
+        "source_sha256": "2d6552dc490f2465cc2111e43df1c558a0851ceeffbf2dca52da014d15b9fba3",
+        "schema_sha256": "5d4e20c4c1eb862e61bda8dff78b72393ebdaf90d0f703cfdbc5c489cf2c3cdf",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "ingestion_ledger",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 158,
+        "symbol": "ingestion_ledger"
+      },
+      "fingerprint": {
+        "source_sha256": "e08d65f24667a65bbed7645979f596e03c34bff83ba19735ee312f5fb96c365d",
+        "schema_sha256": "1c754deb13a40befe281ea08e9fda9be717d3f8a3cfa318f4b6b6ba163d38bd9",
         "effect": "read",
         "open_world": false,
         "external": false,

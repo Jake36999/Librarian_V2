@@ -1,0 +1,34 @@
+pipeline: ingest-folder
+purpose: >-
+  bring a connected folder into the library as far as the person's decisions: survey it, accept the
+  folders the agent policy may accept, queue the documents of the accepted reference folders, capture
+  them into staging, and report the folder's reconciled ledger. Approving sources into the batch and
+  starting it stay with the person (implementation plan M5; as-is W-ING-01, W-FOL-04)
+inputs:
+  path: {type: string}
+  limit: {type: integer, default: 50}
+steps:
+  - id: survey
+    action: folder_survey
+    args: {path: {from: inputs.path}}
+  # Only under promotion.mode = agent; otherwise the person decides each folder and the run goes on
+  # with whatever is already accepted.
+  - id: accept
+    action: folder_accept_policy
+    args: {root: {from: inputs.path}}
+    on_error: continue
+  - id: queue
+    action: folder_queue_accepted
+    args: {root: {from: inputs.path}, limit: {from: inputs.limit}}
+  - id: capture
+    workflow: run-queue
+    args: {limit: {from: inputs.limit}}
+  - id: ledger
+    action: ingestion_ledger
+    args: {root: {from: inputs.path}}
+outputs:
+  folders: {from: steps.ledger.folders}
+  documents: {from: steps.ledger.documents}
+  sources: {from: steps.ledger.sources}
+  unaccounted: {from: steps.ledger.unaccounted}
+  next: {from: steps.ledger.next}

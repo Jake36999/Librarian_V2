@@ -105,7 +105,7 @@ def test_macro_approval_never_overrides_a_denied_step_or_plan_mode(core):
 def test_only_reviewed_first_party_workflows_can_orchestrate_writer_operations():
     assert [name for name in REGISTRY.names() if REGISTRY.get(name).orchestrates] == [
         "batch_cancel", "folder_accept", "folder_accept_policy", "folder_approve_batch", "folder_draft",
-        "folder_queue_sources", "folder_survey", "macro_resolve", "macro_run", "model_catalog_adopt",
+        "folder_queue_accepted", "folder_queue_sources", "folder_survey", "macro_resolve", "macro_run", "model_catalog_adopt",
         "ocr_pdf", "process_approved"]
     # Folder review (M1a, 2026-11-26): a survey's walk and an acceptance's Geo-Grapher build run
     # beside the single writer (2026-11-17: inside it they starved the Core); only their writes

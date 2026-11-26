@@ -252,6 +252,26 @@ class StagingStore:
                 "next": "staging_decide(item_ids=[...], decision='accept'): they are not in the "
                         "library until accepted"}
 
+    def waiting_in_queue(self) -> dict[str, Any]:
+        """References queued for capture that nobody has run yet (M5, as-is W-ING-02): a queue
+        nobody drains used to say nothing. Its owner and review date come from the same rule as
+        read work waiting for acceptance."""
+        waiting = [s for s in self.summaries("source") if s["status"] == "queued"]
+        if not waiting:
+            return {"count": 0}
+        folder = self.folder("source")
+        ages = []
+        for s in waiting:
+            try:
+                ages.append((folder / f"{s['id']}.json").stat().st_mtime)
+            except OSError:
+                pass
+        oldest = (max(0, int((datetime.now(timezone.utc).timestamp() - min(ages)) // 86400))
+                  if ages else None)
+        return {"count": len(waiting), "oldest_days": oldest, "owner": "lead",
+                "next": "intake_run (or the run-queue workflow) captures them; nothing reads them until then",
+                **_acceptance_review(oldest)}
+
     def counts(self) -> dict[str, dict[str, int]]:
         out: dict[str, dict[str, int]] = {}
         for kind in KINDS:

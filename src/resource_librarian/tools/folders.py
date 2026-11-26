@@ -120,3 +120,48 @@ def folder_queue_sources(ctx: Context, folder: str, limit: int = 50, scope: list
         return REGISTRY.call("ingest", {"ref": ref, "defer": True, "note": note}, ctx)
     return _run(lambda: _service(ctx).queue_sources(folder, limit=limit, scope=scope, order=order,
                                                     ingest=ingest))
+
+
+@tool("folder_queue_accepted", tier="contribute", effect="write", scope="library", orchestrates=True,
+      returns=("folders", "queued", "remaining"),
+      card=Card("Queue the documents of every accepted reference folder under a surveyed root",
+                "after a root's folders are accepted, so accepting a folder can lead straight on to "
+                "intake (as-is W-FOL-04)",
+                "The same queueing as folder_queue_sources, folder by folder, up to `limit` documents "
+                "in all; each document is deferred (no model call) with the caller's own authority"))
+def folder_queue_accepted(ctx: Context, root: str, limit: int = 50, scope: list[str] | None = None) -> dict:
+    from pathlib import Path
+    from ..ingestion import _key
+    service = _service(ctx)
+    base = _key(root)
+    folders = [c for c in service.overview().get("cards", [])
+               if c.get("queueable") and c.get("source_root") and _key(c["source_root"]) == base]
+    out, queued, remaining = [], 0, 0
+    for card in folders:
+        folder = str(card["source_root"]) if card.get("path") in (".", "") else str(Path(card["source_root"]) / card["path"])
+        left = max(0, limit - queued)
+        if not left:
+            out.append({"folder": folder, "queued": 0, "skipped": "the limit was reached"})
+            continue
+        result = REGISTRY.call("folder_queue_sources", {"folder": folder, "limit": min(500, left),
+                                                        **({"scope": scope} if scope else {})}, ctx)
+        if "error" in result:
+            out.append({"folder": folder, "error": result.get("refused") or result.get("error"),
+                        "detail": str(result.get("detail") or "")[:300]})
+            continue
+        queued += int(result.get("queued") or 0)
+        remaining += int(result.get("remaining") or 0)
+        out.append({"folder": folder, "queued": result.get("queued"), "remaining": result.get("remaining")})
+    return {"folders": out, "queued": queued, "remaining": remaining}
+
+
+@tool("ingestion_ledger", tier="consult", effect="read",
+      returns=("root", "folders", "documents", "sources", "unaccounted", "next"),
+      card=Card("One surveyed folder's ingestion, reconciled: folders surveyed and accepted, documents "
+                "queued, and sources staged, read and accepted, with what is unaccounted for and what "
+                "waits next",
+                "checking an ingestion's progress without piecing it together call by call",
+                "Reads the folder cards, the folder-to-Source queue and the staging store; changes nothing"))
+def ingestion_ledger(ctx: Context, root: str) -> dict:
+    from ..ingestion import ledger
+    return ledger(ctx.vault, root)
