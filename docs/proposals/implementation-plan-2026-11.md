@@ -156,6 +156,19 @@ Each names the code it extends, the root causes it addresses (T1–T10 for the L
 
 ### M2. Authority granted once (T2; W1b item 5; after M1b)
 
+**Status, 26 November: first part delivered** (see §19).
+
+Done:
+- The permission envelope, built on the Broker's existing per-session grant (item 2).
+- The `Applications/` note pins each source's revision (W-EXT-02).
+- A test that an external project never accepts.
+
+Waiting:
+- High-risk and reserved holds on the agenda (item 3) wait for M3's agenda. Reserved decisions are already refusals, not prompts.
+- The step budget sized from the manifest.
+- The commission record beyond the envelope event.
+- W-EXT-03 (letting a consult-tier external project spend helper budget through `delegate`) would loosen a spending gate. It is the Owner's decision (section 5), so it is unchanged.
+
 1. **The commission:** tier 0's instruction becomes a recorded commission (the authority table).
 2. **The permission envelope:** predicted from the manifest and approved once, by extending `workflow_grant` and the Broker's `allow_session` to agent-run sessions and pipelines, with a step budget from the manifest.
    - A child never exceeds its parent.
@@ -345,6 +358,8 @@ flowchart LR
 | OP7: claim review on by default in every library | M4 | on in Resource-Library and the test vault; re-decided after M4 measures its cost |
 | The qualification rule for the oracle and repair roles, for live libraries | M4 live | test vault only: any qualified assignment whose model differs from the worker's |
 | Delegate any reserved decision to tier 0? This would change policy | M2 | no; tests simulate the Owner's decision instead |
+| W-EXT-03: may an external project (consult tier) spend helper budget through `delegate` and `dispatch_plan`, within its context's cap? | M2 | no, as today: those tools need contribute |
+| Switch the stage tool check or the acceptance entry check from report to refuse | after a clean test-vault run | report |
 | Ticket review dates and retries (proposed): critical at once; reserved on the agenda with no expiry; a mapped repair one attempt, then the Lead; unmapped 7 days, then up | M3 | the proposed values, shown on each ticket |
 | The concurrency cap | M3 | the current effort settings (`tier2_agents`, `tier3_agents`) |
 | Retention for snapshots and paper databases | G5 pruning | keep everything |

@@ -1970,8 +1970,15 @@ def record_application(ctx: Context, title: str, stage: str, outcome: str,
     if path.exists():
         raise TypeError(f"Applications/{name}.md already exists")
     from ..access import application_provenance
+    from ..coordination import fingerprint
+    # Each cited source pinned to the revision that was used (M2, as-is W-EXT-02): a later reader can
+    # tell whether the note it cites still says what the project took from it.
+    located = IndexGateway(ctx).run(lambda engine: [(s, engine.index.note_row(s)["path"]) for s in sources_used])
+    source_refs = [{"note": s, "path": rel, "revision": fingerprint(ctx.vault.root / rel)}
+                   for s, rel in located]
     fm = {**application_provenance(ctx), "type": "application", "project": session.project or session.question,
           "stage": stage, "outcome": outcome, "sources_used": [f"[[{s}]]" for s in sources_used],
+          "source_refs": source_refs,
           "attested_by": "agent", "session": session.id,
           **({"unresolved_sources": unresolved} if unresolved else {})}
     # Research Pipeline §10: an uncatalogued lead is recorded as one, never as a source,

@@ -6,3 +6,4 @@ from . import pace  # noqa: F401,E402  (the lead's own effort, up to the person'
 from . import resolve  # noqa: F401,E402  (argument resolvers, R2)
 from . import source_reading  # noqa: F401,E402  (bounded original/conversion page reads)
 from . import folders  # noqa: F401,E402  (folder review on every surface, M1a)
+from . import envelope  # noqa: F401,E402  (the permission envelope, asked once, M2)

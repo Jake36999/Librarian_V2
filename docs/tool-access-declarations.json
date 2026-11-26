@@ -3582,7 +3582,7 @@
         "symbol": "record_application"
       },
       "fingerprint": {
-        "source_sha256": "18d21c0b40f7a04b9b327c9a105050c9e745b91e8e41beece1d28571e04a69ed",
+        "source_sha256": "b7fb3687801c8dab015b700e6c002a5befea150b7ce059ec1f42f394a7972038",
         "schema_sha256": "4d730928cd9c4efa971b40cc10327d219d5f68673a7df4642e2ff6c0de5f1f55",
         "effect": "vault_write",
         "open_world": false,
@@ -6063,6 +6063,33 @@
       "fingerprint": {
         "source_sha256": "ecf133357e6a76b36f4e678a59caa9be29ab22ed772d21253522fcfc58e1de9e",
         "schema_sha256": "dcc6fe33abe647cce6e2cba074186460c00c2c8d40800244c9f955f29d77a081",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "request_envelope",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/envelope.py",
+        "line": 23,
+        "symbol": "request_envelope"
+      },
+      "fingerprint": {
+        "source_sha256": "1087400a15c9c25d13107c7c9e2f77a0e0973ff9c1b0461179c482d8a3f7c623",
+        "schema_sha256": "54e1fb6fd6d6ea2ae1854a0165c0cef91e42cff1e5a1be46805a3213d0574dd0",
         "effect": "read",
         "open_world": false,
         "external": false,

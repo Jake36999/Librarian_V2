@@ -7807,3 +7807,26 @@ Tests:
 - `test_workflows.py` (+2, one case replaced);
 - the existing agent-acceptance tests are unchanged and pass;
 - the access declaration for `process_manifest`.
+
+### M2, first part: the permission envelope, asked once (2026-11-26)
+
+`request_envelope` (consult tier, a read; `tools/envelope.py`) asks the person once for a run's writes. A process's manifest names every write it can make, and explicit tools can be added.
+
+How it builds on the Broker's existing grant:
+- The new `Broker.envelope` creates one permission request listing the tools.
+- One answer, either "allow once" or "allow for this session", grants each tool for the session, exactly as "allow for this session" grants one.
+- So a granted tool is not asked again in that session, and a call outside the envelope is asked as before.
+- The Broker's existing order still decides first: a tool set to Deny or Ask, Plan mode (which refuses the envelope), and the always-ask tools stay outside it.
+- In Auto mode nothing is asked or granted. A request released by a switch to Auto grants nothing.
+- The wait for an answer is factored out of `Broker.check` into `_wait`, used by both, with unchanged behaviour.
+- The envelope is recorded in the session's log (an `envelope` event).
+
+Also:
+- `record_application` pins each cited source: `source_refs` gives its note, path and revision, so a later reader can tell whether the note still says what was taken (as-is W-EXT-02).
+- A test confirms that an external project at consult tier still never accepts.
+
+Not changed:
+- W-EXT-03, a consult-tier external project using `delegate`, would loosen a spending gate. It is listed for the Owner.
+- High-risk holds on the agenda wait for M3.
+
+Tests: `test_envelope.py` (+7), `test_handoff.py` (strengthened); access declarations for `request_envelope` and `record_application`.

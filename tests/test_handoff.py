@@ -53,6 +53,11 @@ def test_an_application_records_leads_apart_and_queues_the_fetchable(library):
                                                         "recorded: no fetchable reference"]
     note = notes.load(library.root / out["recorded"])
     assert note.frontmatter["sources_used"] == ["[[osquery]]"]           # never the leads
+    # Each cited source pinned to the revision used (M2, as-is W-EXT-02).
+    [ref] = note.frontmatter["source_refs"]
+    assert ref["note"] == "osquery" and ref["path"].endswith(".md") and len(ref["revision"]) >= 16
+    from resource_librarian.coordination import fingerprint
+    assert ref["revision"] == fingerprint(library.root / ref["path"])
     assert note.frontmatter["unresolved_sources"] == ["https://github.com/acme/rowstream",
                                                       "Thunkable"]
     assert "Thunkable (recorded" in note.sections()["Not Yet In The Library"]

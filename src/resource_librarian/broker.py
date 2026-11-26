@@ -52,12 +52,15 @@ class Request:
     outcome: str = ""               # allowed | denied | expired
     reason: str = ""
     publication_sources: tuple[str, ...] = ()
+    # A permission envelope (M2): the tools this one answer grants for the session.
+    grants: tuple[str, ...] = ()
 
     def public(self) -> dict[str, Any]:
         return {"id": self.id, "tool": self.tool, "effect": self.effect,
                 "arguments": self.summary, "session": self.session,
                 "waiting_seconds": round(time.monotonic() - self.created, 1),
                 **({"preview": self.preview} if self.preview else {}),
+                **({"grants": list(self.grants)} if self.grants else {}),
                 **({"always_ask": True} if self.tool in ALWAYS_ASK else {})}
 
 
@@ -202,6 +205,11 @@ class Broker:
             if spec.name == 'project_edit':
                 request.preview['licence_warning'] = ('derived from third-party (unlicensed) material: '
                     'do not copy it into this repository')
+        return self._wait(request, spec.name, ctx)
+
+    def _wait(self, request: Request, tool: str, ctx: Any) -> str:
+        """Show a request and wait for the person's answer: `asked: ...`, or a refusal."""
+        session = request.session
         # An MCP client gives up at about 180 s; waiting longer leaves it hanging and the
         # request open after nobody can use its answer (2026-11-19 workflow review).
         wait = min(self.timeout, float(ctx.extras.get("permission_wait") or self.timeout))
@@ -224,18 +232,52 @@ class Broker:
         if request.outcome == "expired":
             if ctx.extras.get("caller_kind") == "mcp":
                 # The client asks again once the person has answered; the thread is not parked.
-                raise Refusal("PERMISSION_UNANSWERED", f"{spec.name} waited {wait:.0f}s for a "
+                raise Refusal("PERMISSION_UNANSWERED", f"{tool} waited {wait:.0f}s for a "
                               f"person to answer in Librarian; ask again once they have, or "
-                              f"ask them to allow {spec.name} for this session")
+                              f"ask them to allow {tool} for this session")
             if session and getattr(ctx, "vault", None) is not None:
                 from .session import SessionStore
                 SessionStore(ctx.vault).append(session, {
                     "type": "status", "status": "parked",
-                    "note": f"a permission request for {spec.name} went unanswered"})
-            raise Refusal("PERMISSION_UNANSWERED", f"{spec.name} waited "
+                    "note": f"a permission request for {tool} went unanswered"})
+            raise Refusal("PERMISSION_UNANSWERED", f"{tool} waited "
                                                    f"{wait:.0f}s for a person; "
                                                    f"the session is parked")
-        raise Refusal("PERMISSION_DENIED", f"{spec.name}: {request.reason}")
+        raise Refusal("PERMISSION_DENIED", f"{tool}: {request.reason}")
+
+    # -- the permission envelope (M2) -------------------------------------------
+    def envelope(self, session: str, tools: dict[str, str], label: str, ctx: Any,
+                 preview: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Ask once for a run's writes (plan-forward W1b item 5). `tools` maps each write tool to
+        its effect. One answer grants them all for the session, exactly as `allow_session` grants
+        one: a tool set to Deny or Ask, Plan mode and the always-ask tools still apply, because
+        the grant is checked in `_policy` after them. In Auto mode nothing is asked or granted."""
+        if not session:
+            raise TypeError("an envelope is for a session: open_session first")
+        excluded = {t: "asked before every call (always-ask)" for t in tools if t in ALWAYS_ASK}
+        excluded.update({t: f"set to {self.settings[t]}" for t in tools
+                         if self.settings.get(t) in ("deny", "ask") and t not in excluded})
+        wanted = tuple(sorted(t for t in tools if t not in excluded and t not in self.harness))
+        held = sorted(t for t in wanted if (session, t) in self._session_grants)
+        out: dict[str, Any] = {"label": label, "tools": list(wanted), "excluded": excluded}
+        if self._mode == "plan":
+            raise Refusal("PERMISSION_DENIED", "Plan mode proposes and does not write; an envelope "
+                                               "grants writes, so switch to Ask or Auto")
+        if self._mode == "auto":
+            return {**out, "outcome": "not needed", "reason": "Auto mode allows these writes"}
+        missing = tuple(t for t in wanted if t not in held)
+        if not missing:
+            return {**out, "outcome": "granted", "reason": "already granted for this session"}
+        request = Request(secrets.token_hex(4), "permission_envelope", "write",
+                          {"label": clip(label, 200), "tools": clip(", ".join(missing), 2000)},
+                          session, time.monotonic(), False,
+                          {k: clip(v, 20_000) for k, v in (preview or {}).items()} or None,
+                          grants=missing)
+        outcome = self._wait(request, "permission_envelope", ctx)
+        if "released by the switch" in outcome:
+            # A switch to Auto released it: no person approved it, so nothing was granted.
+            return {**out, "outcome": "not needed", "reason": outcome}
+        return {**out, "outcome": "granted", "reason": outcome}
 
     def answer(self, request_id: str, answer: str) -> dict[str, Any]:
         if answer not in ANSWERS:
@@ -247,6 +289,10 @@ class Broker:
             if answer == "allow_session" and not request.publication_sources and request.session and \
                     request.tool not in ALWAYS_ASK:
                 self._session_grants.add((request.session, request.tool))
+            if answer != "deny" and request.grants and request.session:
+                # An envelope's one answer grants each of its tools for the session (M2).
+                self._session_grants.update((request.session, t) for t in request.grants
+                                            if t not in ALWAYS_ASK)
             self._finish(request, "denied" if answer == "deny" else "allowed",
                          "denied by a person" if answer == "deny" else
                          f"allowed by a person ({answer})")
