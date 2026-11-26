@@ -375,6 +375,12 @@ DEFAULT_PROFILES = {
     "research_helper": AgentProfile("research_helper", "research_helper",
                                     allowed_bundles=["read"], permission_ceiling="consult",
                                     concurrency_limit=4),
+    # Review kept apart from the work (policy; M4): the oracle judges and never writes; the repair
+    # role (the to-be Doctor, M6) starts read-only too.
+    "oracle": AgentProfile("oracle", "oracle", allowed_bundles=["read"], permission_ceiling="consult",
+                           concurrency_limit=4, validation_rules=["grounded"]),
+    "repair": AgentProfile("repair", "repair", allowed_bundles=["read"], permission_ceiling="consult",
+                           concurrency_limit=1),
 }
 
 

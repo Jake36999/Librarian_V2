@@ -7860,3 +7860,27 @@ Tickets for things that used to wait silently:
 Waiting: consolidating an overseen run's decisions into one question needs the commission.
 
 Tests: `test_tickets.py` (+11); `test_accept_failures.py` now expects the failed intake's ticket beside its failed queued record; access declarations for the three tools and the changed `agenda`.
+
+### M4, first part: the oracle's own slot, and review apart from the work (2026-11-26)
+
+Owner: the oracle and the repair role get slots of their own.
+- **Role slots.** `oracle` and `repair` are now role slots (`role_routes.ROLES`, `CHAT_ROLES`), each with a default profile in `agent_runtime.DEFAULT_PROFILES`; both are read-only and at consult tier. A person assigns them through the existing `/api/routes/role`, and they are qualified with the same checks as other roles. Unassigned, nothing changes.
+- **Assignments survive a picker change.** A change to the legacy three-position picker used to drop every chat role's binding except the research helper's. The oracle's and repair role's assignments are now kept (`_chat_bindings_for_tiers`).
+- **The Core passes the oracle's endpoint** (`extras["oracle"]`) only when one is assigned.
+- **The separation check** (`oracle.py`, `independence`) compares the models two roles resolve to, so two hosts serving one model count as the same.
+
+How claim review uses it:
+- An offering's claims are reviewed by an assigned oracle whose model differs from the Lead's, through its profile and qualification.
+- Without an oracle, the Clerk's route reviews them, as before.
+- An oracle that resolves to the Lead's own model is not used: the Clerk reviews, and an `oracle_unavailable` ticket says why.
+- The offering records which reviewer it had and how independent it was (`review.reviewer`, `review.independence`).
+- A claim no review completed is still staged, as before, and opens a `held_claim` ticket for the Lead (as-is W-VER-02).
+
+Tests:
+- `test_oracle.py` (+7);
+- `test_app.py`: readiness now lists the two new slots;
+- the golden route-picker snapshot is regenerated, adding only the two unassigned slots;
+- the access declaration for `draft_offering`;
+- `tests/walks.py` masks ticket ids, which are random as session ids are, when it compares two runs' files.
+
+Still to do: typed stage obligations and validity checks, verdicts as rebuttable claims with rechecks, OP9's cause, and scope judgments for the envelope.

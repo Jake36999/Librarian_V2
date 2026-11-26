@@ -18,6 +18,8 @@
    "protocol": "openai",
    "source": "legacy_tier"
   },
+  "oracle": null,
+  "repair": null,
   "research_helper": {
    "adapter_id": "legacy_openai_chat",
    "evidence_kind": "chat_qualification",
@@ -64,6 +66,8 @@
    "qualification_by_role": {
     "clerk": "screened",
     "lead": "experimental",
+    "oracle": "experimental",
+    "repair": "experimental",
     "research_helper": "experimental",
     "scribe": "experimental"
    }
@@ -80,6 +84,8 @@
    "qualification_by_role": {
     "clerk": "experimental",
     "lead": "experimental",
+    "oracle": "experimental",
+    "repair": "experimental",
     "research_helper": "experimental",
     "scribe": "experimental"
    }
@@ -97,6 +103,8 @@
    "qualification_by_role": {
     "clerk": "experimental",
     "lead": "experimental",
+    "oracle": "experimental",
+    "repair": "experimental",
     "research_helper": "experimental",
     "scribe": "experimental"
    }
@@ -113,6 +121,8 @@
    "qualification_by_role": {
     "clerk": "screened",
     "lead": "experimental",
+    "oracle": "experimental",
+    "repair": "experimental",
     "research_helper": "experimental",
     "scribe": "experimental"
    }
@@ -129,6 +139,8 @@
    "qualification_by_role": {
     "clerk": "experimental",
     "lead": "experimental",
+    "oracle": "experimental",
+    "repair": "experimental",
     "research_helper": "experimental",
     "scribe": "experimental"
    }
@@ -146,6 +158,8 @@
    "qualification_by_role": {
     "clerk": "experimental",
     "lead": "experimental",
+    "oracle": "experimental",
+    "repair": "experimental",
     "research_helper": "experimental",
     "scribe": "experimental"
    }

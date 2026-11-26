@@ -1685,9 +1685,24 @@ def draft_offering(ctx: Context, title: str, summary: str, claims: list[dict],
     kept = sum(1 for c in checked if c.get("challenge"))
     if review:
         fm["review"] = {"by": next((v["model"] for v in review if v["model"]), ""),
+                        "reviewer": (review[0].get("reviewer") or {}).get("role", "clerk"),
+                        "independence": (review[0].get("reviewer") or {}).get("status", ""),
                         **{k: sum(v["verdict"] == k for v in review)
                            for k in ("holds", "unchecked", "queued")},
                         "challenged_kept": kept}
+        # A claim no review completed is held as a ticket for the Lead (M4, as-is W-VER-02): it is
+        # still staged, as before, and the ticket says it was not checked.
+        try:
+            from ..tickets import TicketStore
+            for n, v in enumerate(review, 1):
+                if v["verdict"] in ("unchecked", "queued"):
+                    TicketStore(ctx.vault).ensure(
+                        "held_claim", f"offering:{offering_id}/claim:{n}",
+                        summary=f"claim {n} was staged without a completed review ({v['verdict']})",
+                        evidence={"claim": checked[n - 1]["text"][:300], "reason": v.get("reason", "")[:300]},
+                        opened_by="claim-review")
+        except Exception:                                    # noqa: BLE001 - never blocks staging
+            pass
     body = notes.compose(slug, [
         ("Summary", prose.get("summary", summary)), ("Claims", claims_md),
         ("Together", prose.get("together", "")),
@@ -1737,7 +1752,8 @@ def _review_claims(ctx: Context, gateway: IndexGateway, checked: list[dict]) -> 
                                   text[start:(at if at >= 0 else 0) + len(c["quote"])
                                        + REVIEW_WINDOW]))
     out = []
-    for r in clerk.run(tasks, clerk_endpoint(ctx), ctx.vault.work("queue") / "clerk"):
+    endpoint, reviewer = _review_route(ctx)
+    for r in clerk.run(tasks, endpoint, ctx.vault.work("queue") / "clerk"):
         verdict = r.value.get("verdict", "unchecked") if r.ok else (
             "queued" if r.status == "queued" else "unchecked")
         if verdict == "unsupported":        # the quote was found; a silent passage proves nothing
@@ -1747,10 +1763,35 @@ def _review_claims(ctx: Context, gateway: IndexGateway, checked: list[dict]) -> 
         why = str(r.value.get("reason", "")) if r.ok else \
             f"[review not completed: {clip_reason(r)}]"
         out.append({"verdict": verdict, "counter_quote": str(r.value.get("counter_quote", "")),
-                    "reason": why, "model": r.model or "",
+                    "reason": why, "model": r.model or "", "reviewer": reviewer,
                     **({"failing_input": r.value["failing_input"]}
                        if r.ok and r.value.get("failing_input") else {})})
     return out
+
+
+def _review_route(ctx: Context) -> tuple[Any, dict[str, Any]]:
+    """Who reviews the claims (M4; policy: review kept apart from the work).
+
+    An oracle a person assigned, whose model differs from the Lead's (who drafted the claims), reviews
+    them. Without one, the Clerk's route reviews them, as before. An oracle that resolves to the
+    Lead's own model is not used: the review falls back to the Clerk, and a ticket says so."""
+    from ..oracle import independence
+    from .staging import _profile_endpoint
+    oracle = ctx.extras.get("oracle")
+    if oracle is not None and ctx.vault is not None:
+        check = independence(ctx.vault, "lead", "oracle")
+        if check["status"] == "independent":
+            return _profile_endpoint(ctx, "oracle", oracle, 3), {"role": "oracle", **check}
+        try:
+            from ..tickets import TicketStore
+            TicketStore(ctx.vault).ensure("oracle_unavailable", "oracle:same-model-as-lead",
+                                          summary="the assigned oracle resolves to the Lead's own model; "
+                                                  "claims were reviewed on the Clerk's route instead",
+                                          evidence=check, opened_by="claim-review")
+        except Exception:                                    # noqa: BLE001 - never blocks the review
+            pass
+        return clerk_endpoint(ctx), {"role": "clerk", **check}
+    return clerk_endpoint(ctx), {"role": "clerk", "status": "no oracle assigned"}
 
 
 def clip_reason(result: Any) -> str:

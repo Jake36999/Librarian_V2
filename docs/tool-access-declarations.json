@@ -1396,11 +1396,11 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/sessions.py",
-        "line": 1579,
+        "line": 1582,
         "symbol": "draft_offering"
       },
       "fingerprint": {
-        "source_sha256": "3d0be3dfa1b6707f7c778439c873af62c5d08e196eccfcb571d0ba76a59b7108",
+        "source_sha256": "5327c1f15e2ba251e416d3313f04dbfd9f4e43f00cd262d62f6b1539efa01f1b",
         "schema_sha256": "c94c85a38d69e20f5f4e8d7ec0440db4e80e5ec6aa092a98c054d1a8bd3fb0e2",
         "effect": "write",
         "open_world": false,

@@ -22,8 +22,11 @@ from .vault import Vault, now_iso
 
 
 SCHEMA_VERSION = 1
-ROLES = ("lead", "scribe", "clerk", "research_helper", "ocr", "tts", "stt", "embeddings")
-CHAT_ROLES = ("lead", "scribe", "clerk", "research_helper")
+# `oracle` and `repair` (M4, owner 2026-11-26): review kept apart from the work has role slots of its
+# own, assigned and qualified like any other; unassigned, nothing changes (claim review stays the
+# Clerk's, as before).
+ROLES = ("lead", "scribe", "clerk", "research_helper", "oracle", "repair", "ocr", "tts", "stt", "embeddings")
+CHAT_ROLES = ("lead", "scribe", "clerk", "research_helper", "oracle", "repair")
 SOURCES = frozenset({"explicit", "legacy_tier", "legacy_service", "inherited", "unconfigured"})
 _FIELDS = frozenset({"role", "host_id", "model_id", "protocol", "endpoint_fingerprint",
                      "adapter_id", "evidence_kind", "source", "inherits_from", "revision",

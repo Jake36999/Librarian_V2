@@ -211,6 +211,20 @@ The folder ticket classes follow M1a.
 
 ### M4. The oracle (T3; W9; after M1b)
 
+**Status, 26 November: first part delivered** (see §19).
+
+Done:
+- The oracle and repair role slots (item 1). Assign them as any other role, through `/api/routes/role`; they are qualified with the same checks.
+- The separation check, which compares resolved models.
+- Claim review on an independent oracle.
+- Held claims as tickets (W-VER-02, reported, nothing refused).
+
+Still to do:
+- Typed stage obligations and validity checks (items 2 and 3).
+- Verdicts as rebuttable claims with rechecks (item 4).
+- OP9's cause.
+- Scope judgments for the envelope (item 5).
+
 1. **An oracle role slot and a repair role slot,** in `role_routes`, each with its own profile and qualification rule.
    - Development uses any qualified test assignment in the test vault.
    - The Core refuses a run whose oracle and worker resolve to the same model.

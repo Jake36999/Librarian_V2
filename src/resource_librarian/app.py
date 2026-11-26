@@ -1161,6 +1161,11 @@ class App:
         helper = previous.get("research_helper")
         if helper is not None and not helper.inherits_from:
             rows["research_helper"] = helper
+        # Roles the legacy three-position picker never held (the oracle and repair slots, M4)
+        # keep their own assignment when the picker changes.
+        for role in CHAT_ROLES:
+            if role not in ("lead", "scribe", "clerk", "research_helper") and role in previous:
+                rows[role] = previous[role]
         return rows
 
     def _tiers_projection(self, rows: dict[str, RoleRouteBinding],
@@ -2707,6 +2712,16 @@ class App:
         if scribe is not None:
             extras["scribe"] = ProviderEndpoint(scribe, invocation_runtime=self.invocation_runtime,
                                                  role="scribe")
+        # The oracle (M4): present only when a person assigned one, so review can run apart from
+        # the workers; unassigned, claim review stays on the Clerk's route as before.
+        try:
+            oracle = self._provider_for_profile("oracle")
+        except (ApiError, ProviderError, KeyError, ValueError) as exc:
+            oracle = None
+            extras["oracle_unavailable"] = str(exc)[:300]
+        if oracle is not None:
+            extras["oracle"] = ProviderEndpoint(oracle, invocation_runtime=self.invocation_runtime,
+                                                role="oracle")
         lead = self.lead_status()
         if lead["status"] != "none":           # carried into every call's trace (R10)
             extras["lead_status"] = lead["status"] + (f": {lead.get('reason', '')}"
@@ -3713,7 +3728,8 @@ class App:
         so an unscreened choice is recorded but its tasks queue until it is qualified.
         """
         if role not in CHAT_ROLES or role == "lead":
-            raise ApiError(400, "role is scribe, clerk or research_helper; choose the lead with set_lead")
+            raise ApiError(400, "role is scribe, clerk, research_helper, oracle or repair; choose the lead "
+                                "with set_lead")
         if not isinstance(route, dict):
             raise ApiError(400, "route is one {provider|host_id, model}")
         clean = self._clean_tiers([route])[0]

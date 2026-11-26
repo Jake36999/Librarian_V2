@@ -93,5 +93,8 @@ def artefacts(vault, session):
                                                                            "-wal", "-shm")):
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
+        if rel == ".librarian/tickets.json":       # a ticket's id is random, like a session's (M3)
+            import re
+            text = re.sub(r'"id": "[0-9a-f]{12}"', '"id": "TICKET"', text)
         out[rel.replace(session, "SESSION")] = STAMP.sub("T", text.replace(session, "SESSION"))
     return out
