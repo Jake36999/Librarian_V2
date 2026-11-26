@@ -15,7 +15,7 @@ nodes:
 - id: gate2_ui
   kind: activity
   lane: Owner
-  label: reviews enriched Source summary (F-09 conflict reload wipes edits) & clicks Accept; Folder accept & Lenses stay separate
+  label: reviews enriched Source summary (F-09 conflict keeps the form; its explicit reload drops the edits) & clicks Accept; Folder accept & Lenses stay separate
   step: 1
 - id: dgate2_curr
   kind: decision

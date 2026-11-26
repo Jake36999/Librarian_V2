@@ -3,7 +3,7 @@
   "receipts": [
     {
       "spec": "acceptance.spec.yaml",
-      "sha256": "3ca4a546c4e88c2f72358abd90e05f55e97d8630fec8381da79bcf9521df8ce2",
+      "sha256": "64d0818a5a2eebd256b0bcbd3908863183789d512b70bb142cc11f90d7b11c6d",
       "status": "IMPLEMENTED_VERIFIED",
       "nodes": 10,
       "steps": 3,
@@ -241,7 +241,7 @@
     },
     {
       "spec": "workflow-run.spec.yaml",
-      "sha256": "0ab88aa7d431a5ef42d8375f24e21c7f7863d1235d75f2631e99a426752e6ac4",
+      "sha256": "188719dde7d51d4900628a1a6ef51792946a81077a1c53fe1f156484b58fbe33",
       "status": "IMPLEMENTED_VERIFIED",
       "nodes": 13,
       "steps": 3,

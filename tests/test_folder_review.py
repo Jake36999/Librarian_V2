@@ -417,6 +417,20 @@ def test_a_failed_geographer_call_writes_the_promised_diagnostic_log(library, tm
     assert 'apply-folder-review' in log and 'catalog locked' in log and 'exit 1' in log
 
 
+def test_a_failed_geographer_call_names_geographers_own_code_and_nothing_else(library, tmp_path):
+    # 2026-11-26: a full disk read as a bare GEOGRAPHER_CALL_FAILED; the code says why, the rest stays logged.
+    import sys
+    from resource_librarian.folder_review import cli
+    vault, _ = library
+    script = tmp_path / 'full.py'
+    script.write_text("import sys; sys.stderr.write('Traceback (most recent call last):\\n  secret/path.py\\n"
+                      "ValueError: DISK_RESERVE: estimated ingest of secret/path would leave less than 5 GiB\\n'); sys.exit(1)")
+    config = dict(enabled=True, command=[sys.executable, str(script)], wheel_version='0.2.0', log_dir=str(vault.root / 'logs'))
+    with pytest.raises(ValueError, match='GEOGRAPHER_CALL_FAILED: Geo-Grapher refused with DISK_RESERVE;') as caught:
+        cli(config, ['apply-folder-review'], {'x': 1})
+    assert 'secret' not in str(caught.value) and '5 GiB' not in str(caught.value)
+
+
 def test_suggested_graphs_keep_one_stratum_per_graph():
     from resource_librarian.folder_review import suggested_graph
     names = {p: suggested_graph('Lab', 'qm', p) for p in

@@ -243,6 +243,66 @@ _RULES = [
     Rule("ADOPTION_PLAN_STALE", "boundaries",
          "An adoption or attachment applies only to the folder its plan surveyed. The "
          "survey fingerprint changed, so nothing was written: survey it again."),
+    # --- an external project's application record (M1a, as-is W-EXT-01) ---------------------------
+    Rule("APPLICATION_SOURCES_REQUIRED", "sessions",
+         "An application record cites at least one catalogued source it used. If the library held "
+         "nothing used, say so with update_plan(no_application=reason) and queue the leads."),
+    Rule("APPLICATION_SOURCE_UNKNOWN", "sessions",
+         "An application cites only notes the library holds; a source it does not hold goes in "
+         "unresolved_sources, where it is queued for intake."),
+    # --- folder review (M1a, 2026-11-26): the same codes on the Web UI, the API and MCP ---------
+    Rule("FOLDER_REFERENCE", "folders",
+         "Folder review needs a folder: name the folder to survey."),
+    Rule("FOLDER_SURVEY_INCOMPLETE", "folders",
+         "A folder is reviewed only after its survey has no unresolved stops: resolve them "
+         "and survey again."),
+    Rule("FOLDER_STALE", "folders",
+         "A folder decision applies only to the folder as it was surveyed. It, or another "
+         "accepted folder, changed since: survey and review it again. Nothing was applied."),
+    Rule("FOLDER_BATCH", "folders",
+         "A folder batch approves 1-100 distinct waiting cards with unambiguous "
+         "classifications; an ambiguous card is reviewed on its own."),
+    Rule("FOLDER_PURPOSE", "folders",
+         "A folder decision names one of the listed purposes."),
+    Rule("FOLDER_AUTHORSHIP", "folders",
+         "A purpose that fixes authorship keeps it; data and logs or transcripts need an "
+         "explicit authorship."),
+    Rule("FOLDER_GRAPH", "folders",
+         "A folder decision names the graph its group is applied to, from the allowed labels."),
+    Rule("FOLDER_DESCRIPTION", "folders",
+         "A folder's description is at most 400 characters."),
+    Rule("FOLDER_PROVENANCE", "folders",
+         "A folder's description may not contradict its own inventory."),
+    Rule("FOLDER_SENSITIVITY", "folders",
+         "A folder's description is used only once its sensitivity review is complete."),
+    Rule("FOLDER_DRAFT_DISABLED", "folders",
+         "A model drafts a folder's description only after the owner approves a qualified "
+         "Clerk assignment for it."),
+    Rule("FOLDER_DRAFT_FAILED", "folders",
+         "The Clerk's folder draft did not complete; nothing was stored. Retry or describe "
+         "the folder yourself."),
+    Rule("FOLDER_SOURCES", "folders",
+         "Only an accepted third-party, research-docs or own-docs folder's documents become "
+         "Sources, within the chosen file scope, 1-500 per call; other own content is indexed "
+         "whole."),
+    Rule("SHARED_SURVEY_MISMATCH", "folders",
+         "The Librarian and Geo-Grapher must plan from the same survey; survey again."),
+    Rule("SPEND_APPROVAL_REQUIRED", "folders",
+         "A model call that spends needs approved spend for this request (approve_spend)."),
+    Rule("CLERK_UNAVAILABLE", "folders",
+         "No qualified Clerk is assigned for this library, so nothing was drafted."),
+    Rule("PROMOTION_MODE", "folders",
+         "Accepting folders by policy needs the library's promotion mode set to agent, "
+         "which only the owner sets."),
+    Rule("GEOGRAPHER_CONFIGURATION", "folders",
+         "Applying a folder group needs Geo-Grapher enabled at its pinned version."),
+    Rule("GEOGRAPHER_TIMEOUT", "folders",
+         "Geo-Grapher did not finish in time; nothing was recorded as applied."),
+    Rule("GEOGRAPHER_CALL_FAILED", "folders",
+         "Geo-Grapher's call failed; see its local diagnostic log. Nothing was recorded as "
+         "applied."),
+    Rule("GEOGRAPHER_VERSION_MISMATCH", "folders",
+         "Geo-Grapher is not the pinned version; install the pinned wheel."),
 ]
 
 RULES: dict[str, Rule] = {rule.code: rule for rule in _RULES}

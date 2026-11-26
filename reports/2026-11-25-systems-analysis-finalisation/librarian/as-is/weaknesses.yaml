@@ -92,7 +92,7 @@ weaknesses:
      says: "Publication needs an accepted current folder, so a source added without folder review is never published.",
      evidence: "pubgap label: awaiting accepted folder"}
   - {id: W-ACC-01, spec: acceptance, at: gate2_ui, kind: fault,
-     says: "A stale-revision conflict reloads the form and wipes the person's edits (F-09).",
+     says: "After a stale-revision conflict the form is kept, but its explicit reload drops the person's edits (F-09). (Corrected 26 November: the form has been kept since 90b1945, 25 October.)",
      evidence: "gate2_ui label"}
   - {id: W-ACC-02, spec: acceptance, at: dfind_curr, kind: gap,
      says: "A note written but not findable needs a manual Rewrite indexes; nothing re-checks findability by itself.",
@@ -108,11 +108,11 @@ weaknesses:
      says: "The batch's stages and the session's phases are not compositions: stages are code, and phases are declared data that no workflow can call (OP16).",
      evidence: "batch.py stage chain; standard/phases.yaml"}
   - {id: W-WFR-01, spec: workflow-run, at: ui_drop_result, kind: fault,
-     says: "The Web UI discards a run's result (app.js:8472): the person never sees what was read, what failed or why.",
-     evidence: "ui_drop_result label"}
+     says: "A finished run's chip shows a summary and its errors, but the full record cannot be opened from the Web UI, and dismissing the chip loses it. (Corrected 26 November: the summary has shown since 4c10c88, before d9435e1.)",
+     evidence: "ui_drop_result label; Action.public in app.py"}
   - {id: W-WFR-02, spec: workflow-run, at: wf_paused_chip, kind: gap,
-     says: "A paused run shows a static chip, with no route picker, resume or dismiss.",
-     evidence: "wf_paused_chip label"}
+     says: "A run paused for a missing routing model offers Resume and Dismiss but no picker to assign the model. (Corrected 26 November: the options, Resume and Dismiss have shown since 4c10c88.)",
+     evidence: "wf_paused_chip label; paintChips in ui/src/main.ts"}
   - {id: W-WFR-03, spec: workflow-run, at: wf_deep_read, kind: fault,
      says: "deep-read-staged reads each staged source but leaves its status unchanged, so nothing records that it was read.",
      evidence: "wf_deep_read label; standard/workflows/deep-read-staged.yaml"}

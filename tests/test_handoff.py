@@ -68,4 +68,13 @@ def test_a_lead_named_as_a_used_source_is_refused_with_the_remedy(library):
     out = m("record_application", title="Host Inventory", stage="prototype", outcome="worked",
             sources_used=["osquery", "Thunkable"], needed="n", found_and_taken="f",
             replaced="r", should_learn="s")
-    assert out["error"] == "invalid_arguments" and "unresolved_sources" in out["detail"]
+    assert out["refused"] == "APPLICATION_SOURCE_UNKNOWN" and "unresolved_sources" in out["detail"]
+
+
+def test_an_application_with_no_sources_is_refused_by_name(library):
+    # As-is W-EXT-01: this raised a TypeError; the external project now gets a rule and a remedy.
+    m = Model(library, tier="consult")
+    to_check_out(m)
+    out = m("record_application", title="Host Inventory", stage="prototype", outcome="worked",
+            sources_used=[], needed="n", found_and_taken="f", replaced="r", should_learn="s")
+    assert out["refused"] == "APPLICATION_SOURCES_REQUIRED" and "no_application" in out["detail"]

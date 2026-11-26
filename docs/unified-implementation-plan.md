@@ -7738,3 +7738,40 @@ Changed:
 - **Clean clones go to `G:\Librarian-work`** (Owner: use G: or F:). D: has 4.8 GB free; what to free there is the Owner's call, and the report lists the candidates.
 
 Tests: `test_call_log.py` (+5), `test_packs.py` (+3), `test_workflows.py` (strengthened); full suite in a clean clone.
+
+### M1a: folders open to agents, results that reach the person (2026-11-26)
+
+Policy: a connected folder is the person's decision.
+
+Folder review on every surface:
+- `folder_service.py` holds folder review as one service, run beside the single writer as the routes ran it.
+- Seven registered tools use it: `folder_overview`, `folder_survey`, `folder_draft`, `folder_accept`, `folder_accept_policy`, `folder_approve_batch`, `folder_queue_sources` (`tools/folders.py`).
+- The `/api/folders/*` routes now call those same tools as the person, and keep their 409/400 statuses and codes. So MCP, workflows and the Web UI pass the same checks (as-is W-ACT-01).
+- Who decides is unchanged:
+  - accepting one folder and approving a batch are the person's: curate tier, and `PERSON_CONFIRMS` for a declared agent;
+  - an agent accepts by policy only under promotion mode agent (`PROMOTION_MODE`);
+  - queueing runs `ingest` with the caller's own authority.
+
+Named refusals and shared rules:
+- 21 new rules make folder review's error codes named refusals on every surface: the folder rules, `SPEND_APPROVAL_REQUIRED`, `CLERK_UNAVAILABLE`, `PROMOTION_MODE` and the `GEOGRAPHER_*` codes.
+- `GEOGRAPHER_CALL_FAILED` now names Geo-Grapher's own refusal code (for example `DISK_RESERVE`, which a full C: drive caused today). The rest of Geo-Grapher's output still stays in the local log.
+- An application with no sources, or with an uncatalogued one, is now a named refusal, not a TypeError: `APPLICATION_SOURCES_REQUIRED`, `APPLICATION_SOURCE_UNKNOWN` (W-EXT-01).
+- One queue-eligibility rule: the overview marks each card `queueable` from `folder_sources.SOURCE_PURPOSES`, and the Web UI's button follows it. Own-docs was accepted by the queue but hidden in the UI.
+
+Web UI:
+- A finished or failed run's chip opens its full record (`run_status`), so dismissing the chip no longer loses it (W-WFR-01).
+- After a stale-revision conflict, "Reload item, keeping your edits" carries the Bottom Line, "what it solves" and the reason over the reload (W-ACC-01).
+- "Which sources" now lists processing and accepted items.
+- Folder cards say one thing per state (W-FOL-05): "Selected for the description batch; not decided yet" is distinct from "Decided and applied by a person".
+
+The as-is register is corrected where it overstated:
+- W-WFR-01 and W-WFR-02: the run summary, Resume and Dismiss shipped in `4c10c88`, before `d9435e1`;
+- W-ACC-01: the form has been kept since `90b1945`.
+
+Verified:
+- the folders UI smoke against a real Core and the Geo-Grapher wheel, run from `G:\Librarian-work` (C: lacked Geo-Grapher's 5 GiB reserve);
+- the new source filter, in the browser pane.
+
+Not verified: the run-record dialog and the kept draft in a browser.
+
+Tests: `test_folder_tools.py` (+9), `test_folder_review.py` (+1), `test_handoff.py` (+1, one changed); access declarations for the seven tools. The smoke scripts' labels are updated, and `folders-smoke.mjs`'s out-of-date fixture name is corrected.

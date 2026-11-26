@@ -35,8 +35,8 @@ nodes:
 - id: ui_drop_result
   kind: activity
   lane: Web UI
-  label: 'app.js:8472 discards action_done.result (_result: {read, failed, errors}) & hides chip; reloads Staging where items
-    stay staged'
+  label: 'the chip shows the compact outputs {read, failed, errors} and error (Action.public, 4c10c88) but drops the full
+    result (app.js:8472); nothing opens the run record; reloads Staging where items stay staged'
   step: 3
 - id: dwf_followup
   kind: decision
@@ -45,7 +45,7 @@ nodes:
 - id: wf_paused_chip
   kind: activity
   lane: Web UI
-  label: app.js:8472 drops result; renders static paused chip with no UI route-picker, resume, or dismiss control
+  label: paused chip offers the step's options, Resume and Dismiss (4c10c88); no picker to assign a missing routing model
 - id: wf_refused
   kind: activity
   lane: Core

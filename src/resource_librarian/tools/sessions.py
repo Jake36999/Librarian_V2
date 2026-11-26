@@ -1956,12 +1956,14 @@ def record_application(ctx: Context, title: str, stage: str, outcome: str,
     unresolved = [str(u).strip() for u in unresolved_sources or [] if str(u).strip()]
     unknown = IndexGateway(ctx).run(lambda engine: [s for s in sources_used if engine.index.note_row(s) is None])
     if unknown:
-        raise TypeError(f"not catalogued notes: {unknown}; a source the library does not "
-                        f"hold goes in unresolved_sources, never in sources_used")
+        raise Refusal("APPLICATION_SOURCE_UNKNOWN",
+                      f"not catalogued notes: {unknown}; a source the library does not hold goes in "
+                      f"unresolved_sources, never in sources_used")
     if not sources_used:
-        raise TypeError("an application reaches at least one catalogued source; if the "
-                        "library held nothing used, update_plan(no_application=reason) and "
-                        "queue_source the leads")
+        # A named refusal, not a TypeError (as-is W-EXT-01): the external project is told what to do.
+        raise Refusal("APPLICATION_SOURCES_REQUIRED",
+                      "if the library held nothing used, update_plan(no_application=reason) and "
+                      "queue_source the leads")
     name = notes.safe_name(title if title.startswith("Application - ")
                            else f"Application - {title}")
     path = ctx.vault.root / "Applications" / f"{name}.md"

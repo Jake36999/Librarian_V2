@@ -312,9 +312,9 @@ _None declared._
 
 | As-is weakness | Where here | How it is handled |
 |---|---|---|
-| W-WFR-02 (workflow-run): A paused run shows a static chip, with no route picker, resume or dismiss. | uiagenda | A paused run appears on the agenda with its ticket and the exact resume path. |
-| W-WFR-01 (workflow-run): The Web UI discards a run's result (app.js:8472): the person never sees what was read, what failed or why. | uinotify | The run's result, spend and coverage open in a drawer, from the Core's record. |
-| W-ACC-01 (acceptance): A stale-revision conflict reloads the form and wipes the person's edits (F-09). | keepdraft | A stale revision keeps the person's draft beside the new one, shows the difference, and lets them carry their edits over. |
+| W-WFR-02 (workflow-run): A run paused for a missing routing model offers Resume and Dismiss but no picker to assign the model. (Corrected 26 November: the options, Resume and Dismiss have shown since 4c10c88.) | uiagenda | A paused run appears on the agenda with its ticket and the exact resume path. |
+| W-WFR-01 (workflow-run): A finished run's chip shows a summary and its errors, but the full record cannot be opened from the Web UI, and dismissing the chip loses it. (Corrected 26 November: the summary has shown since 4c10c88, before d9435e1.) | uinotify | The run's result, spend and coverage open in a drawer, from the Core's record. |
+| W-ACC-01 (acceptance): After a stale-revision conflict the form is kept, but its explicit reload drops the person's edits (F-09). (Corrected 26 November: the form has been kept since 90b1945, 25 October.) | keepdraft | A stale revision keeps the person's draft beside the new one, shows the difference, and lets them carry their edits over. |
 
 ## Checks
 

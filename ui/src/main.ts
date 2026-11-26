@@ -89,6 +89,9 @@ class App {
   private crumb = h("span", { class: "crumb" });
   private live = h("span", { class: "live", role: "status", title: "Connection to the core" });
   private chips = h("div", { class: "chips", "aria-label": "Queued actions" });
+  // A run's full record, opened from its chip (M1a, W-WFR-01): the chip shows a summary, and dismissing
+  // it no longer loses what the run did, what failed and why.
+  private runDialog = h("dialog", { class: "lib-dialog run-record", "aria-label": "Run record" }) as HTMLDialogElement;
   private input = h("textarea", {
     id: this.ids.id("lib-msg"), class: "composer-text", "aria-label": "Message",
     placeholder: "Ask the librarian. Enter sends, Shift+Enter adds a line.",
@@ -278,7 +281,7 @@ class App {
           this.geoButton, this.paneButton,
           h("div", { class: "anchor" }, this.closeButton, this.closeMenu.el)),
         this.body),
-      this.settings.dialog);
+      this.settings.dialog, this.runDialog);
     this.composer = composer;
 
     document.addEventListener("keydown", this.onDocumentKey);
@@ -677,10 +680,28 @@ class App {
       }
       const summary = a.status === "failed" ? `failed${a.error ? `: ${a.error}` : ""}` : `finished${actionOutputs(a.outputs)}`;
       const errors: string[] = Array.isArray(a.outputs?.errors) ? a.outputs.errors : [];
+      const details = a.run ? h("button", { class: "action-choice", "aria-label": `Details of ${a.name}`,
+        title: "Open this run's full record: each step, what it returned and why it stopped",
+        onclick: () => void this.openRun(a) }, "Details") : null;
       return h("span", { class: `chip action-${a.status}`, role: "status",
           title: [summary, ...errors.map((e) => `• ${e}`)].join("\n") },
-        `${a.name} · ${summary}`, dismiss(a));
+        `${a.name} · ${summary}`, details, dismiss(a));
     }));
+  }
+
+  /** The run's record as the Core keeps it (run_status), bounded for the page. */
+  private async openRun(a: any): Promise<void> {
+    let record: unknown;
+    try { record = await this.api.tool("run_status", { run_id: a.run }); } catch (e) {
+      this.warn(`${a.name}: the run record could not be read: ${(e as Error).message}`);
+      return;
+    }
+    const text = JSON.stringify(record, null, 2);
+    clear(this.runDialog,
+      h("h3", {}, `${a.name} · ${a.status}`),
+      h("pre", { class: "run-record-body" }, text.length > 20000 ? `${text.slice(0, 20000)}\n…` : text),
+      h("button", { type: "button", onclick: () => this.runDialog.close() }, "Close"));
+    if (!this.runDialog.open) this.runDialog.showModal();
   }
 
   private setSession(session: Session): void {

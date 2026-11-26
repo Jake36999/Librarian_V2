@@ -33,9 +33,9 @@ export async function folderReview(api: Api, container: HTMLElement, notice = ''
     if (!selected.size) { status.textContent='Select folder cards first.'; return; }
     try {
       await api.post('/api/folders/approve-batch', {items:[...selected]});
-      status.textContent='Exact set approved. Start the approved processing batch in Staging. Acceptance remains separate.';
+      status.textContent='Selected for the description batch: start it in Staging. Nothing is decided yet; each folder is still accepted on its own.';
     } catch(e) { status.textContent=(e as Error).message; }
-  }}, 'Approve selected for processing');
+  }}, 'Select for the description batch');
   // Agent-mode orchestration: accept every unambiguous, sensitivity-checked card as suggested.
   const acceptPolicy = h('button', {type:'button', title:'Library promotion mode must be agent. Sensitive, unchecked, data and log folders stay for you.',
     onclick: async () => {
@@ -66,7 +66,7 @@ export async function folderReview(api: Api, container: HTMLElement, notice = ''
   for (const card of shown) {
     const accepted = card.status === 'accepted';
     const article = h('article', {class:'folder-card', 'aria-label':card.path});
-    const include = h('input', {type:'checkbox', 'aria-label':`Include ${card.path} in processing batch`,
+    const include = h('input', {type:'checkbox', 'aria-label':`Select ${card.path} for the description batch`,
       disabled:accepted || card.sensitivity?.sensitivity==='review_required',
       onchange:(event:Event)=>{if((event.target as HTMLInputElement).checked)selected.add(card.id);else selected.delete(card.id);}});
     const purpose = h('select', {'aria-label':'Purpose'}, purposes.map(p => h('option', {value:p}, p))) as HTMLSelectElement;
@@ -87,7 +87,8 @@ export async function folderReview(api: Api, container: HTMLElement, notice = ''
     graph.value = card.decision?.graph ?? card.suggested_graph;
     const description = h('textarea', {'aria-label':'Brief description', rows:2, maxlength:400}) as HTMLTextAreaElement;
     description.value = card.decision?.description ?? card.description.text;
-    const outcome = h('p', {role:'status'}, accepted ? 'Accepted by person' : card.status === 'failed' ? 'Application failed — review and retry' : 'Waiting for a person');
+    // One meaning per state, from the Core (W-FOL-05): selected for the batch is not decided.
+    const outcome = h('p', {role:'status'}, card.state_label ?? (accepted ? 'Decided and applied' : 'Waiting for a decision'));
     const accept = h('button', {type:'button', class:'primary', disabled:accepted, onclick: async () => {
       (accept as HTMLButtonElement).disabled = true; outcome.textContent = 'Applying the reviewed decision…';
       try {
@@ -111,14 +112,16 @@ export async function folderReview(api: Api, container: HTMLElement, notice = ''
       } catch (e) { outcome.textContent = (e as Error).message; }
       finally { (draft as HTMLButtonElement).disabled = accepted || !out.drafting_available; }
     }}, 'Draft from inventory metadata');
-    article.append(h('h3', {}, card.path), h('label', {}, include, ' Include in processing batch'),
+    article.append(h('h3', {}, card.path), h('label', {}, include, ' Select for the description batch'),
       h('p', {class:'dim'}, card.source_root),
       h('p', {class:'note'}, 'Inventory metadata observed; content not examined.'),
       h('p', {}, `${card.bytes.toLocaleString()} bytes · ` + Object.entries(card.file_counts).map(([kind, n]) => `${kind}: ${n}`).join(' · ')),
       h('p', {class:'note'}, (card.reasons as string[]).join('; ')),
       h('label', {}, 'Purpose ', purpose), h('label', {}, 'Authorship ', authorship),
       h('label', {}, 'Graph ', graph), draftStatus,
-    ...(accepted && ['third-party', 'research-docs'].includes(card.decision?.purpose) ? [h('button', {type:'button',
+    // The Core decides which folders can be queued (folder_overview's `queueable`), so the button and
+    // the queue tool agree on every surface: own-docs was accepted by the tool but hidden here (M1a).
+    ...(card.queueable === true ? [h('button', {type:'button',
       title:'Queue the documents of this reference folder for intake as Sources (no model call until processing)',
       onclick: async () => {
         try {

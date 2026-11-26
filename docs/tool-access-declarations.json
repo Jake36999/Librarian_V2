@@ -3578,11 +3578,11 @@
       "fixes": [],
       "evidence": {
         "path": "src/resource_librarian/tools/sessions.py",
-        "line": 1823,
+        "line": 1942,
         "symbol": "record_application"
       },
       "fingerprint": {
-        "source_sha256": "33e767561433dc4d04cc6d4b51aa98949d0de2822f9e0861ad90ec4580336e72",
+        "source_sha256": "18d21c0b40f7a04b9b327c9a105050c9e745b91e8e41beece1d28571e04a69ed",
         "schema_sha256": "4d730928cd9c4efa971b40cc10327d219d5f68673a7df4642e2ff6c0de5f1f55",
         "effect": "vault_write",
         "open_world": false,
@@ -5856,6 +5856,191 @@
         "sessionless": false
       },
       "reason": "Control/receipt: returns the canvas path, revision, proposal hash and change counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "folder_accept",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 72,
+        "symbol": "folder_accept"
+      },
+      "fingerprint": {
+        "source_sha256": "b0c2b994e7966e38e087ed8fef9d4c9165cf57851ae466941095d8c17798377c",
+        "schema_sha256": "a3c8d631cbbb1a0ea2aa2b4b71b001bc8b533fb9eb7499056d9209f8a6b305b1",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "folder_accept_policy",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 87,
+        "symbol": "folder_accept_policy"
+      },
+      "fingerprint": {
+        "source_sha256": "02b58ead00e858c57cc8f3474e79e186cc9ffa52cd55f2989a072980e0bb7da7",
+        "schema_sha256": "1c754deb13a40befe281ea08e9fda9be717d3f8a3cfa318f4b6b6ba163d38bd9",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "folder_approve_batch",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 98,
+        "symbol": "folder_approve_batch"
+      },
+      "fingerprint": {
+        "source_sha256": "f6c0e396b1b071610ae9cf63bb1680327b9e4ebd68fcdc9d3011530540284a99",
+        "schema_sha256": "05f62551923077d9c48f07d8777df3ad07e0eb25c2961f6906aad03bd2e4ecbc",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "folder_draft",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 60,
+        "symbol": "folder_draft"
+      },
+      "fingerprint": {
+        "source_sha256": "714516418f25b8709b79175433310347faef8166b807f4bf1be7e2be0d9cf8d3",
+        "schema_sha256": "cf0154e1ef915a8a24e71675ac4d151b675ed9c6c45c989d114a5fb8d8df340c",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "folder_overview",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 39,
+        "symbol": "folder_overview"
+      },
+      "fingerprint": {
+        "source_sha256": "f49162f88102e1a370e8a366df00fc265f5b91e65a0cdbf517cb15040b6905c5",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "folder_queue_sources",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 108,
+        "symbol": "folder_queue_sources"
+      },
+      "fingerprint": {
+        "source_sha256": "3491ff0208c55d475e5b9fff44bd9c1f3eb2f18f45b9035aa88317142faf1b80",
+        "schema_sha256": "7f132f5dce8ca690a4b216bdf5668bb2e8d7318cc5991de33784422f0293513c",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "folder_survey",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 49,
+        "symbol": "folder_survey"
+      },
+      "fingerprint": {
+        "source_sha256": "e635a7aca3558758c3a4b61982f0c835e5227934e477db743eb0fff5629d279b",
+        "schema_sha256": "39b714704935190561ed407980480b9a4a0b346b97346e0bff71fb9ace820194",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
     }
   ]
 }

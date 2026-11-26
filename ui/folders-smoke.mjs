@@ -20,7 +20,7 @@ try {
   const card = page.getByRole('article', {name:'third_party_alpha'});
   await card.getByText('Draft — not accepted', {exact:true}).waitFor();
   assert.equal(await card.getByLabel('Purpose').inputValue(), 'third-party');
-  assert.equal(await card.getByLabel('Graph').inputValue(), 'Wave L Fixture-third-party');
+  assert.equal(await card.getByLabel('Graph').inputValue(), 'Test Vault-third-party');
   await page.screenshot({path: `${artifacts}/folders-staged.png`, fullPage:true});
   await card.getByRole('button', {name:'Accept folder decision', exact:true}).click();
   // A decided card leaves the waiting list, as a decided source does, and moves to Accepted.
@@ -30,7 +30,7 @@ try {
   await page.getByRole('tab', {name:'Staging',exact:true}).click();
   await page.getByRole('button', {name:/^Folders/}).click();
   await page.getByLabel('Which folders').selectOption('accepted');
-  await page.getByRole('article', {name:'third_party_alpha'}).getByText('Accepted by person', {exact:true}).waitFor();
+  await page.getByRole('article', {name:'third_party_alpha'}).getByText('Decided and applied by a person', {exact:true}).waitFor();
   await page.screenshot({path:`${artifacts}/folders-accepted.png`, fullPage:true});
   await page.getByLabel('Which folders').selectOption('waiting');
   if (source) {
@@ -44,9 +44,9 @@ try {
     await page.getByLabel('Folder to survey').fill(source);
     await page.getByRole('button', {name:'Survey folders', exact:true}).click();
     await page.getByLabel('Which folders').selectOption('accepted');
-    await page.getByRole('article', {name:'third_party_alpha'}).getByText('Accepted by person', {exact:true}).waitFor();
+    await page.getByRole('article', {name:'third_party_alpha'}).getByText('Decided and applied by a person', {exact:true}).waitFor();
     await page.getByLabel('Which folders').selectOption('waiting');
-    await page.getByRole('article', {name:'src', exact:true}).getByText('Waiting for a person', {exact:true}).waitFor();
+    await page.getByRole('article', {name:'src', exact:true}).getByText('Waiting for a decision', {exact:true}).waitFor();
   }
   assert.deepEqual(errors, []);
   console.log('PASS: visible draft, metadata, suggested group, person acceptance, persistence, stale refusal and re-survey; zero models');

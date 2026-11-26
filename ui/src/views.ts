@@ -8,6 +8,9 @@ import { clear, h, cls, sel } from "./dom";
 import { render } from "./markdown";
 import { folderReview } from './folders';
 
+/** A person's Source draft, carried over an explicit reload after a stale-revision refusal. */
+type KeptDraft = { bottom_line: string; what_it_solves: string; reason: string };
+
 // A model's `best_for`/`suggested_tier` are a clerk's first guess, not a
 // measurement (see Note Content Model.md) - a person edits them here the
 // same way they edit a drafted Bottom Line.
@@ -38,6 +41,8 @@ export class Staging {
   // opens something else or explicitly refreshes: an automatic reload (the
   // SSE echo of this same decision, or someone else's) must not wipe it.
   private detailLocked = false;
+  // A person's Source draft, kept across an explicit reload after a stale-revision refusal.
+  private keptDrafts = new Map<string, KeptDraft>();
   private restoredLibrary = "";
   private statuses: HTMLSelectElement;
   private resumeScroll: number | null = null;
@@ -118,9 +123,12 @@ export class Staging {
     const statuses = h("select", { "aria-label": "Which sources", onchange: () => {
       this.status = statuses.value; this.selected = ""; this.listLimit = 50; this.savePosition(); void this.load(true);
     } }, [["staged", "Captured, to review"], ["approved", "Approved, awaiting ingestion"],
+          // Every status staging_list accepts is reachable (M1a): processing and accepted items
+          // were in the library's counts but could not be listed here.
+          ["processing", "Being ingested"],
           ["enriched", "Ingested, ready to accept"], ["partial", "Ingested with gaps"],
           ["queued", "Queued for capture"],
-          ["failed", "Failed"], ["deferred", "Deferred"]]
+          ["failed", "Failed"], ["deferred", "Deferred"], ["accepted", "Accepted into the library"]]
       .map(([v, label]) => h("option", { value: v }, label))) as HTMLSelectElement;
     this.statuses = statuses;
     this.el.addEventListener("scroll", () => this.savePosition(), {passive:true});
@@ -578,12 +586,17 @@ export class Staging {
     this.wasRunning = running;
   }
 
-  private decisionError(status: HTMLElement, id: string, error: unknown): void {
-    // Keep the current form intact. Only an explicit reload discards its edits;
-    // do not silently refresh tokens and re-submit an approval for changed text.
+  private decisionError(status: HTMLElement, id: string, error: unknown,
+                        keep?: () => KeptDraft): void {
+    // Keep the current form intact. Only an explicit reload refreshes it; do not
+    // silently refresh tokens and re-submit an approval for changed text. A Source's
+    // draft is carried over the reload (M1a, as-is W-ACC-01), so a stale revision
+    // costs the person a check, not their edits.
     clear(status, h("p", { class: "error" }, (error as Error).message),
-      h("button", { class: "ghost", onclick: () => this.show(id) },
-        "Reload item (discards form edits)"));
+      h("button", { class: "ghost", onclick: () => {
+        if (keep) this.keptDrafts.set(id, keep());
+        void this.show(id);
+      } }, keep ? "Reload item, keeping your edits" : "Reload item (discards form edits)"));
   }
 
   private async show(id: string): Promise<void> {
@@ -619,6 +632,14 @@ export class Staging {
     solves.value = draft.what_it_solves ?? "";
     const reason = h("input", { type: "text", placeholder: "Reason (for a rejection or deferral)", "aria-label": "Reason" }) as HTMLInputElement;
     const status = h("div", { role: "status" });
+    const kept = this.keptDrafts.get(id);
+    if (kept) {
+      this.keptDrafts.delete(id);
+      bottom.value = kept.bottom_line; solves.value = kept.what_it_solves; reason.value = kept.reason;
+      status.append(h("p", { class: "note" },
+        "Your edits were kept over the reloaded item. Check them against what changed, then decide again."));
+    }
+    const keep = (): KeptDraft => ({ bottom_line: bottom.value, what_it_solves: solves.value, reason: reason.value });
     const isModel = item.source_kind === "model";
     const bestFor = new Set<string>((item.fields?.best_for ?? []) as string[]);
     let suggestedTier = (item.fields?.suggested_tier ?? "") as string;
@@ -664,7 +685,7 @@ export class Staging {
           (r.embedding_warnings ?? []).map((w: {stage:string; error:string; next:string}) =>
             h("p", {class:"warn"}, `Derived embeddings · ${w.stage}: ${w.error}. ${w.next}`)));
       } catch (e) {
-        this.decisionError(status, id, e);
+        this.decisionError(status, id, e, keep);
       }
     };
     const draftIt = async () => {

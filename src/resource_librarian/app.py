@@ -2679,6 +2679,7 @@ class App:
                                   "helper_profile_guard": self._helper_profile_guard,
                                    "background_profile_endpoint": self._background_profile_endpoint,
                                   "invocation_runtime": self.invocation_runtime,
+                                  "folder_service": self._folder_service(),
                                   "use_tool_bundles": True}
         try:
             extras["ocr_context_tokens"] = int(self._route_catalogue_entry(self._role_choice("ocr")).get("context_length") or 0)
@@ -4194,92 +4195,68 @@ class App:
 
     # -- project access (Research Pipeline §6): a person's controls, never the model's --
     def folders(self) -> dict[str, Any]:
-        from .folder_review import FolderReview
-        return FolderReview(self.vault).overview()
+        return self._folder_tool("folder_overview", {})
+
+    def _folder_service(self) -> Any:
+        """Folder review as one service for every surface (M1a): the routes below and the folder_*
+        tools use the same operations, run the same way beside the single writer."""
+        from .folder_service import FolderService
+        return FolderService(self.vault, writer=self.writer, lock=self._folder_operation,
+                             serialized=self._serialized, counted=self._counted_mutation)
+
+    def _folder_tool(self, name: str, arguments: dict[str, Any], conflict: tuple[str, ...] = ()) -> dict[str, Any]:
+        """A /api/folders/* route is the person's call of the same folder_* tool an agent uses; a
+        refusal keeps its route's status (409 for a conflict, 400 otherwise) and its code."""
+        result = self.person_call(name, arguments)
+        if result.get("error"):
+            code, detail = str(result.get("refused") or ""), str(result.get("detail") or "")
+            message = f"{code}: {detail}" if code and detail else (code or detail or str(result["error"]))
+            raise ApiError(409 if any(word in message for word in conflict) else 400, message)
+        return result
 
     @mutation_entry('the folder survey')
     def survey_folders(self, path: str) -> dict[str, Any]:
-        from . import deploy_survey
-        from .folder_review import FolderReview
-        try:
-            with self._folder_operation:
-                # The walk reads only; it runs before the writer is asked for anything
-                # (2026-11-17: an 8-minute walk inside the writer starved the whole Core).
-                found = deploy_survey.survey(path, geographer={'enabled': False}) if self.writer is not None else None
-                return self._serialized('folder-survey', lambda: FolderReview(self.vault).survey(path, surveyed=found))
-        except ValueError as exc:
-            raise ApiError(400, str(exc)) from exc
-
-    def _folder_review_beside_writer(self, caller: str, fn: Callable[[Any], Any]) -> Any:
-        """Run a folder acceptance beside the single writer: its project walk and Geo-Grapher
-        graph build take minutes to hours, so only its writes go to the writer, one at a time.
-        Folder operations still run one after another (2026-11-17: a policy pass held the
-        writer for its whole walk and build, and every other request timed out)."""
-        from .folder_review import FolderReview
-        if self.writer is None:
-            return self._serialized(caller, lambda: fn(FolderReview(self.vault)))
-        with self._folder_operation, self._counted_mutation(f"the {caller} mutation"):
-            review = FolderReview(self.vault, commit=lambda write: self.writer.submit(write, caller=caller))
-            return fn(review)
+        return self._folder_tool("folder_survey", {"path": path})
 
     @mutation_entry('the person folder decision')
     def accept_folder(self, body: dict) -> dict[str, Any]:
-        try:
-            return self._folder_review_beside_writer('folder-accept', lambda review: review.accept(
-                str(body.get('id') or ''), str(body.get('folder_fingerprint') or ''),
-                purpose=body.get('purpose'), graph=body.get('graph'), person=True,
-                description=body.get('description'), authorship=body.get('authorship')))
-        except (ValueError, TypeError) as exc:
-            raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
+        arguments = {"id": str(body.get('id') or ''), "folder_fingerprint": str(body.get('folder_fingerprint') or ''),
+                     "purpose": str(body.get('purpose') or '')}
+        for key in ("graph", "description", "authorship"):
+            if body.get(key) is not None:
+                arguments[key] = body[key]
+        return self._folder_tool("folder_accept", arguments, conflict=("STALE",))
 
     def queue_folder_sources(self, body: dict) -> dict[str, Any]:
         """Defer an accepted reference folder's documents into intake (no model call here)."""
-        from .folder_sources import queue
-        folder = str(body.get('folder') or '')
         try:
             limit = int(body.get('limit') or 50)
         except (TypeError, ValueError):
             raise ApiError(400, 'limit is a whole number of documents') from None
-        try:
-            with self._folder_operation:          # one ledger writer at a time (2026-11-17)
-                return queue(self.vault, folder, limit=limit, scope=body.get('scope'), order=str(body.get('order') or 'name'), ingest=lambda ref, note: self.person_call(
-                    'ingest', {'ref': ref, 'defer': True, 'note': note}))
-        except ValueError as exc:
-            raise ApiError(400, str(exc)) from exc
+        arguments: dict[str, Any] = {"folder": str(body.get('folder') or ''), "limit": limit,
+                                     "order": str(body.get('order') or 'name')}
+        if body.get('scope') is not None:
+            arguments["scope"] = body['scope']
+        return self._folder_tool("folder_queue_sources", arguments)
 
     @mutation_entry('the agent-policy folder decisions')
     def accept_folders_by_policy(self, body: dict) -> dict[str, Any]:
         """Agent-mode orchestration: accept a root's unambiguous, non-sensitive cards as suggested."""
-        from .folder_review import FolderReview
         root = str(body.get('root') or '')
         if not root:
             raise ApiError(400, 'name the surveyed source root')
-        try:
-            return self._folder_review_beside_writer('folder-accept', lambda review: review.accept_by_policy(root))
-        except (ValueError, TypeError) as exc:
-            raise ApiError(409 if 'STALE' in str(exc) or 'PROMOTION_MODE' in str(exc) else 400, str(exc)) from exc
+        return self._folder_tool("folder_accept_policy", {"root": root}, conflict=("STALE", "PROMOTION_MODE"))
 
     @mutation_entry('the person approved folder batch')
     def approve_folder_batch(self, body: dict) -> dict:
-        from .folder_review import FolderReview
-        try:
-            return self._serialized('folder-batch-approve', lambda: FolderReview(self.vault).approve_batch(
-                body.get('items'), person=True))
-        except (ValueError, TypeError) as exc:
-            raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
+        items = body.get('items')
+        return self._folder_tool("folder_approve_batch", {"items": items if isinstance(items, list) else []},
+                                 conflict=("STALE",))
 
     @mutation_entry('the approved folder draft')
     def draft_folder(self, body: dict) -> dict[str, Any]:
-        from .folder_review import FolderReview
-        from .tools.staging import clerk_endpoint
-        try:
-            ctx = Context(tier='contribute', vault=self.vault, extras=self._extras())
-            commit = (lambda write: self.writer.submit(write, caller='folder-draft')) if self.writer is not None else None
-            with self._folder_operation:
-                return FolderReview(self.vault, commit=commit).draft(str(body.get('id') or ''), clerk_endpoint(ctx),
-                    approved=body.get('approve_spend') is True)
-        except ValueError as exc:
-            raise ApiError(400, str(exc)) from exc
+        return self._folder_tool("folder_draft", {"id": str(body.get('id') or ''),
+                                                  "approve_spend": body.get('approve_spend') is True})
 
     def projects(self) -> dict[str, Any]:
         from . import projects

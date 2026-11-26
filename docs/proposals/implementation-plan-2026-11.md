@@ -99,6 +99,14 @@ Each names the code it extends, the root causes it addresses (T1–T10 for the L
 
 ### M1a. Folders open to agents, results that reach the person (T1, T6, T10)
 
+**Status, 26 November: delivered** (see §19).
+- Three as-is weaknesses were already partly fixed before `d9435e1`, and the register now says so:
+  - W-WFR-01, the run's summary on its chip (`4c10c88`);
+  - W-WFR-02, Resume and Dismiss on a paused run (`4c10c88`);
+  - W-ACC-01, the form kept after a stale-revision conflict (`90b1945`).
+- What M1a added on top: the run record opens from the chip, and the person's draft survives the reload.
+- Not changed: the Web UI still skips the Broker (W-ACT-05 is the Owner's decision). A paused run still has no picker for assigning a missing routing model.
+
 1. **Folder review as registered actions** (policy: a connected folder is the person's decision):
    - survey, draft, decide, apply and queue-as-Sources become registry tools over the existing `folder_review.FolderReview` and `folder_sources`;
    - they work on every connected folder, or a folder a person routed an agent to;

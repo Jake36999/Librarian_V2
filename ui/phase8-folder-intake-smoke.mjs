@@ -23,8 +23,8 @@ try {
  await page.getByText('Optional model draft',{exact:true}).click();
  assert(await page.getByRole('button',{name:'Draft from inventory metadata',exact:true}).isDisabled(),'Production drafting disabled');
  assert((await page.locator('main').innerText()).includes('content not examined'),'No inferred reading coverage');
- await page.getByLabel('Include src in processing batch').check();
- await page.getByRole('button',{name:'Approve selected for processing',exact:true}).click();
+ await page.getByLabel('Select src for the description batch').check();
+ await page.getByRole('button',{name:'Select for the description batch',exact:true}).click();
  const calls=await page.evaluate(()=>window.calls);
  assert(calls.length===1&&calls[0].url==='/api/folders/approve-batch','One native batch approval');
  assert(calls[0].body.items.join(',')==='folder-test','Exact selected set');

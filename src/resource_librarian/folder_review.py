@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import os
 import subprocess
 from pathlib import Path
@@ -288,7 +289,13 @@ def cli(config, operation, payload):
                           f"{done.stderr.decode('utf-8', 'replace')[-8000:]}{chr(10)}")
         except OSError:
             pass
-        raise ValueError('GEOGRAPHER_CALL_FAILED: inspect the local diagnostic log '
+        # Geo-Grapher's own refusal code (an identifier such as DISK_RESERVE) is safe to show and
+        # says why; the text around it stays in the log (2026-11-26: a full disk read as a bare
+        # GEOGRAPHER_CALL_FAILED).
+        lines = [line for line in done.stderr.decode('utf-8', 'replace').splitlines() if line.strip()]
+        code = re.match(r'^\w*(?:Error|Exception): ([A-Z][A-Z0-9_]{2,})(?::|$)', lines[-1].strip()) if lines else None
+        said = f'Geo-Grapher refused with {code.group(1)}; ' if code else ''
+        raise ValueError(f'GEOGRAPHER_CALL_FAILED: {said}inspect the local diagnostic log '
                          '(.config/resource-librarian/logs/geographer-cli.log)')
     result = json.loads(done.stdout)
     if result.get('geographer_version') != config['wheel_version']:

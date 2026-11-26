@@ -6059,11 +6059,11 @@ Result: ${info.result}` : info.does : "";
       }
       try {
         await api.post("/api/folders/approve-batch", { items: [...selected] });
-        status.textContent = "Exact set approved. Start the approved processing batch in Staging. Acceptance remains separate.";
+        status.textContent = "Selected for the description batch: start it in Staging. Nothing is decided yet; each folder is still accepted on its own.";
       } catch (e) {
         status.textContent = e.message;
       }
-    } }, "Approve selected for processing");
+    } }, "Select for the description batch");
     const acceptPolicy = h("button", {
       type: "button",
       title: "Library promotion mode must be agent. Sensitive, unchecked, data and log folders stay for you.",
@@ -6114,7 +6114,7 @@ Result: ${info.result}` : info.does : "";
       const article = h("article", { class: "folder-card", "aria-label": card.path });
       const include = h("input", {
         type: "checkbox",
-        "aria-label": `Include ${card.path} in processing batch`,
+        "aria-label": `Select ${card.path} for the description batch`,
         disabled: accepted || card.sensitivity?.sensitivity === "review_required",
         onchange: (event) => {
           if (event.target.checked) selected.add(card.id);
@@ -6147,7 +6147,7 @@ Result: ${info.result}` : info.does : "";
       graph.value = card.decision?.graph ?? card.suggested_graph;
       const description = h("textarea", { "aria-label": "Brief description", rows: 2, maxlength: 400 });
       description.value = card.decision?.description ?? card.description.text;
-      const outcome = h("p", { role: "status" }, accepted ? "Accepted by person" : card.status === "failed" ? "Application failed \u2014 review and retry" : "Waiting for a person");
+      const outcome = h("p", { role: "status" }, card.state_label ?? (accepted ? "Decided and applied" : "Waiting for a decision"));
       const accept = h("button", { type: "button", class: "primary", disabled: accepted, onclick: async () => {
         accept.disabled = true;
         outcome.textContent = "Applying the reviewed decision\u2026";
@@ -6189,7 +6189,7 @@ Result: ${info.result}` : info.does : "";
       } }, "Draft from inventory metadata");
       article.append(
         h("h3", {}, card.path),
-        h("label", {}, include, " Include in processing batch"),
+        h("label", {}, include, " Select for the description batch"),
         h("p", { class: "dim" }, card.source_root),
         h("p", { class: "note" }, "Inventory metadata observed; content not examined."),
         h("p", {}, `${card.bytes.toLocaleString()} bytes \xB7 ` + Object.entries(card.file_counts).map(([kind, n]) => `${kind}: ${n}`).join(" \xB7 ")),
@@ -6198,7 +6198,7 @@ Result: ${info.result}` : info.does : "";
         h("label", {}, "Authorship ", authorship),
         h("label", {}, "Graph ", graph),
         draftStatus,
-        ...accepted && ["third-party", "research-docs"].includes(card.decision?.purpose) ? [h("button", {
+        ...card.queueable === true ? [h("button", {
           type: "button",
           title: "Queue the documents of this reference folder for intake as Sources (no model call until processing)",
           onclick: async () => {
@@ -6271,6 +6271,8 @@ Result: ${info.result}` : info.does : "";
       // opens something else or explicitly refreshes: an automatic reload (the
       // SSE echo of this same decision, or someone else's) must not wipe it.
       this.detailLocked = false;
+      // A person's Source draft, kept across an explicit reload after a stale-revision refusal.
+      this.keptDrafts = /* @__PURE__ */ new Map();
       this.restoredLibrary = "";
       this.resumeScroll = null;
       // Several sources decided at once: the person ticks the ones they mean, never an
@@ -6324,11 +6326,15 @@ Result: ${info.result}` : info.does : "";
       } }, [
         ["staged", "Captured, to review"],
         ["approved", "Approved, awaiting ingestion"],
+        // Every status staging_list accepts is reachable (M1a): processing and accepted items
+        // were in the library's counts but could not be listed here.
+        ["processing", "Being ingested"],
         ["enriched", "Ingested, ready to accept"],
         ["partial", "Ingested with gaps"],
         ["queued", "Queued for capture"],
         ["failed", "Failed"],
-        ["deferred", "Deferred"]
+        ["deferred", "Deferred"],
+        ["accepted", "Accepted into the library"]
       ].map(([v, label]) => h("option", { value: v }, label)));
       this.statuses = statuses;
       this.el.addEventListener("scroll", () => this.savePosition(), { passive: true });
@@ -6937,15 +6943,14 @@ Result: ${info.result}` : info.does : "";
       else if (this.wasRunning && this.kind === "source") void this.load();
       this.wasRunning = running;
     }
-    decisionError(status, id, error) {
+    decisionError(status, id, error, keep) {
       clear(
         status,
         h("p", { class: "error" }, error.message),
-        h(
-          "button",
-          { class: "ghost", onclick: () => this.show(id) },
-          "Reload item (discards form edits)"
-        )
+        h("button", { class: "ghost", onclick: () => {
+          if (keep) this.keptDrafts.set(id, keep());
+          void this.show(id);
+        } }, keep ? "Reload item, keeping your edits" : "Reload item (discards form edits)")
       );
     }
     async show(id) {
@@ -6981,6 +6986,19 @@ Result: ${info.result}` : info.does : "";
       solves.value = draft.what_it_solves ?? "";
       const reason = h("input", { type: "text", placeholder: "Reason (for a rejection or deferral)", "aria-label": "Reason" });
       const status = h("div", { role: "status" });
+      const kept = this.keptDrafts.get(id);
+      if (kept) {
+        this.keptDrafts.delete(id);
+        bottom.value = kept.bottom_line;
+        solves.value = kept.what_it_solves;
+        reason.value = kept.reason;
+        status.append(h(
+          "p",
+          { class: "note" },
+          "Your edits were kept over the reloaded item. Check them against what changed, then decide again."
+        ));
+      }
+      const keep = () => ({ bottom_line: bottom.value, what_it_solves: solves.value, reason: reason.value });
       const isModel = item.source_kind === "model";
       const bestFor = new Set(item.fields?.best_for ?? []);
       let suggestedTier = item.fields?.suggested_tier ?? "";
@@ -7032,7 +7050,7 @@ Result: ${info.result}` : info.does : "";
             (r.embedding_warnings ?? []).map((w) => h("p", { class: "warn" }, `Derived embeddings \xB7 ${w.stage}: ${w.error}. ${w.next}`))
           );
         } catch (e) {
-          this.decisionError(status, id, e);
+          this.decisionError(status, id, e, keep);
         }
       };
       const draftIt = async () => {
@@ -7944,6 +7962,9 @@ Result: ${info.result}` : info.does : "";
       this.crumb = h("span", { class: "crumb" });
       this.live = h("span", { class: "live", role: "status", title: "Connection to the core" });
       this.chips = h("div", { class: "chips", "aria-label": "Queued actions" });
+      // A run's full record, opened from its chip (M1a, W-WFR-01): the chip shows a summary, and dismissing
+      // it no longer loses what the run did, what failed and why.
+      this.runDialog = h("dialog", { class: "lib-dialog run-record", "aria-label": "Run record" });
       this.input = h("textarea", {
         id: this.ids.id("lib-msg"),
         class: "composer-text",
@@ -8287,7 +8308,8 @@ Result: ${info.result}` : info.does : "";
           ),
           this.body
         ),
-        this.settings.dialog
+        this.settings.dialog,
+        this.runDialog
       );
       this.composer = composer;
       document.addEventListener("keydown", this.onDocumentKey);
@@ -8664,6 +8686,12 @@ Result: ${info.result}` : info.does : "";
         }
         const summary = a.status === "failed" ? `failed${a.error ? `: ${a.error}` : ""}` : `finished${actionOutputs(a.outputs)}`;
         const errors = Array.isArray(a.outputs?.errors) ? a.outputs.errors : [];
+        const details = a.run ? h("button", {
+          class: "action-choice",
+          "aria-label": `Details of ${a.name}`,
+          title: "Open this run's full record: each step, what it returned and why it stopped",
+          onclick: () => void this.openRun(a)
+        }, "Details") : null;
         return h(
           "span",
           {
@@ -8672,9 +8700,29 @@ Result: ${info.result}` : info.does : "";
             title: [summary, ...errors.map((e) => `\u2022 ${e}`)].join("\n")
           },
           `${a.name} \xB7 ${summary}`,
+          details,
           dismiss(a)
         );
       }));
+    }
+    /** The run's record as the Core keeps it (run_status), bounded for the page. */
+    async openRun(a) {
+      let record;
+      try {
+        record = await this.api.tool("run_status", { run_id: a.run });
+      } catch (e) {
+        this.warn(`${a.name}: the run record could not be read: ${e.message}`);
+        return;
+      }
+      const text = JSON.stringify(record, null, 2);
+      clear(
+        this.runDialog,
+        h("h3", {}, `${a.name} \xB7 ${a.status}`),
+        h("pre", { class: "run-record-body" }, text.length > 2e4 ? `${text.slice(0, 2e4)}
+\u2026` : text),
+        h("button", { type: "button", onclick: () => this.runDialog.close() }, "Close")
+      );
+      if (!this.runDialog.open) this.runDialog.showModal();
     }
     setSession(session) {
       if (session && this.session && session.session === this.session.session)
