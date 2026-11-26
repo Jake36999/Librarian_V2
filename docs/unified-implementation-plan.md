@@ -7723,3 +7723,18 @@ Changed:
   - an appendix maps all 54 as-is weaknesses to milestones.
 
 Tests: docs and reports only; no code changed.
+
+### M0: baselines and room to work (2026-11-26)
+
+The Owner accepted the [implementation plan](proposals/implementation-plan-2026-11.md) and its order, and started M0. [The baselines](../reports/2026-11-26-m0-baselines/README.md) record what tier 0 and the in-app models cost on the 19–20 November ingestion.
+- 4,147 in-app model calls on 19 November, $0.62, 92% of them by the Clerk.
+- 246 and 36 tier-0 writes through MCP, on 18 and 19 November.
+- 8 and 10 tier-0 turns, on the main and worst paths: still a model figure. The run's transcript is not local, and its scripts hid many calls behind one turn.
+
+Changed:
+- **The Core records every outside call into it** (`call_log.py`; `.librarian/runtime/calls-YYYYMMDD.jsonl`). Each line holds the surface (MCP, person or declared agent), tool, session, outcome or refusal code, time and result size, and never arguments or content. It is written from `App.mcp_call` and `App.person_call`, and a logging failure never breaks a call. From now on it counts tier-0 cost from the Core's side.
+- **The pack check is a suite test** (`tests/test_packs.py`; CI pathway 1, with no workflow-file change). A planted stale view fails it, and a spec's hash ignores line endings.
+- **Every shipped workflow and pipeline loads and validates** (`tests/test_workflows.py`; CI pathway 8): all 21 files.
+- **Clean clones go to `G:\Librarian-work`** (Owner: use G: or F:). D: has 4.8 GB free; what to free there is the Owner's call, and the report lists the candidates.
+
+Tests: `test_call_log.py` (+5), `test_packs.py` (+3), `test_workflows.py` (strengthened); full suite in a clean clone.

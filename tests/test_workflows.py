@@ -44,6 +44,12 @@ def test_standard_set_is_valid(vault):
     assert {"sync-vault", "ingest-cited", "review-staged", "deep-read-staged",
             "clear-enrichment-backlog"} <= set(names)
     assert all(d["valid"] and d["accepted"] for d in names.values())
+    # Every shipped definition, pipelines included, is listed and valid (CI pathway 8): a file in
+    # standard/ that fails to load would otherwise only show at its first run.
+    standard = Path(__file__).resolve().parents[1] / "src" / "resource_librarian" / "standard"
+    shipped = {p.stem for kind in ("workflows", "pipelines") for p in (standard / kind).glob("*.yaml")}
+    assert len(shipped) >= 21
+    assert shipped <= set(names), sorted(shipped - set(names))
 
 
 @pytest.mark.parametrize("bad, expected", [

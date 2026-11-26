@@ -524,7 +524,9 @@ class App:
         # a vault artefact. The one persisted derivative is the spend audit (usage_log): role, model,
         # outcome and token counts per call, so a large ingestion can be audited and capped.
         from .usage_log import UsageLog
+        from .call_log import CallLog
         self.usage_log = UsageLog(vault)
+        self.call_log = CallLog(vault)       # every outside call into the Core (plan M0)
         self.invocation_runtime = InvocationRuntime(trace_sink=self.usage_log.record)
         self.broker = Broker(mode=self.settings.data.get("mode", "ask"),
                              timeout=broker_timeout)
@@ -3036,7 +3038,12 @@ class App:
     def person_call(self, name: str, arguments: dict[str, Any], session: str = "",
                     actor: dict[str, Any] | None = None) -> dict[str, Any]:
         with self._counted_call("person", f"the call {name!r}"):
-            return self._person_call(name, arguments, session, actor)
+            started = time.monotonic()
+            result = self._person_call(name, arguments, session, actor)
+            agent = str((actor or {}).get("name") or "") if actor else ""
+            self.call_log.record(surface="agent-api" if actor else "person", tool=name,
+                                 started=started, result=result, session=session, agent=agent)
+            return result
 
     def _person_call(self, name: str, arguments: dict[str, Any], session: str,
                      actor: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -3110,8 +3117,11 @@ class App:
             # person answers in Librarian and the client calls again.
             extras.pop("waiters", None)
             ctx = Context(tier=granted, vault=self.vault, session=session or None, extras=extras)
+            started = time.monotonic()
             result = self._surface_checkpoint(REGISTRY.call(name, arguments, ctx), name, arguments,
                                               requester="mcp")
+            self.call_log.record(surface="mcp", tool=name, started=started, result=result,
+                                 session=ctx.session or "")
         return {"result": result, "session": ctx.session or "", "tier": granted}
 
     @mutation_entry("the offering decision")

@@ -1,6 +1,6 @@
 # Implementation plan: hardening the Librarian and Geo-Grapher
 
-**Status:** proposal (rank 5 in `docs/policy/README.md`), 26 November 2026, revised the same day after the Owner's direction and three independent reviews. It turns [the systems-analysis packs](../../reports/2026-11-25-systems-analysis-finalisation/README.md) into ordered, testable work. It replaces the order in section 2 of [the plan forward](plan-forward-2026-11.md), whose open workstreams it carries (section 1.4). A milestone becomes plan work in `docs/unified-implementation-plan.md` only once the Owner accepts it.
+**Status:** proposal (rank 5 in `docs/policy/README.md`), 26 November 2026, revised the same day after the Owner's direction and three independent reviews. **Accepted by the Owner on 26 November 2026, with this order; M0 is delivered ([baselines](../../reports/2026-11-26-m0-baselines/README.md)).** It turns [the systems-analysis packs](../../reports/2026-11-25-systems-analysis-finalisation/README.md) into ordered, testable work. It replaces the order in section 2 of [the plan forward](plan-forward-2026-11.md), whose open workstreams it carries (section 1.4). A milestone becomes plan work in `docs/unified-implementation-plan.md` only once the Owner accepts it.
 
 ## 0. What this is
 
