@@ -1,0 +1,42 @@
+diagram: add-capability
+use_case: UC15
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Add a capability (an MCP server), as it runs today
+lanes:
+  - Owner
+  - Overseer (tier 0)
+  - Core
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: cand, kind: activity, lane: Overseer (tier 0), step: 1, label: "opens add_capability session and names candidate from capability_candidates or user URL (candidate phase)"}
+  - {id: ingest, kind: ref, lane: Core, step: 2, use_case: source-intake, label: "ingests candidate repository so it is read as a source (assess phase)"}
+  - {id: assess, kind: activity, lane: Overseer (tier 0), step: 3, label: "records licence, maintenance, claims and caveats in plan.assessment (mandatory ingest before exit)"}
+  - {id: propose, kind: activity, lane: Core, step: 4, label: "records exact pinned command, args and ${ENV} secret names via capability_propose (propose phase)"}
+  - {id: ask, kind: activity, lane: Owner, step: 5, label: "answers capability_install prompt (yes/no) — only person decision installs or declines"}
+  - {id: dinstall, kind: decision, lane: Owner, label: "did the person confirm install ('yes')?"}
+  - {id: enable, kind: activity, lane: Core, step: 6, label: "enables server in McpManager for this library only and returns connected/tools status"}
+  - {id: decline, kind: activity, lane: Core, label: "marks capability status='declined' (finished outcome)"}
+  - {id: hold, kind: activity, lane: Core, label: "returns waiting_for person answer; install gate stays open"}
+  - {id: close, kind: activity, lane: Overseer (tier 0), step: 7, label: "closes add_capability session (check_out)"}
+  - {id: e1, kind: end, outcome: success, label: "MCP capability enabled for this library, or cleanly declined by person"}
+  - {id: e_paused, kind: end, outcome: paused, label: "waiting on source capture, person install decision, or [mcp] extra"}
+edges:
+  - {from: s, to: cand}
+  - {from: cand, to: ingest}
+  - {from: ingest, to: assess, guard: "success"}
+  - {from: ingest, to: assess, guard: "reused", ext: 2a}
+  - {from: ingest, to: hold, guard: "paused", ext: 2b}
+  - {from: assess, to: propose}
+  - {from: propose, to: ask}
+  - {from: ask, to: dinstall}
+  - {from: dinstall, to: enable, guard: "yes: installed"}
+  - {from: dinstall, to: decline, guard: "no: declined", ext: 5a}
+  - {from: dinstall, to: hold, guard: "unanswered / awaiting yes-no", ext: 5b}
+  - {from: decline, to: close}
+  - {from: enable, to: close}
+  - {from: hold, to: e_paused}
+  - {from: close, to: e1}
+evidence:
+  - "src/resource_librarian/standard/phases.yaml:58,251-283 (add_capability = candidate, assess, propose, install, check_out)."
+  - "src/resource_librarian/session.py:1224-1260; src/resource_librarian/tools/capabilities.py:110-152."

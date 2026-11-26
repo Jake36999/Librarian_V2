@@ -1,0 +1,43 @@
+diagram: search-and-read
+use_case: UC10
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Search and read the library, as it runs today
+lanes:
+  - Owner
+  - Web UI
+  - Core
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: ask, kind: activity, lane: Owner, step: 1, label: "enters a query or work-search term in Web UI Search, or invokes consult-tier search / get_note / read_source_section / search_work"}
+  - {id: dsurface, kind: decision, lane: Core, label: "is this a note/index search, work search, or raw third-party file read?"}
+  - {id: query, kind: activity, lane: Core, step: 2, label: "runs Search engine (filters eliminate first, then SQLite FTS + optional RRF vectors, one entry per note; zero generative calls)"}
+  - {id: work, kind: activity, lane: Core, label: "runs search_work across staging/sessions/activity (requires >= 2/3 of query words)"}
+  - {id: dthird, kind: decision, lane: Core, label: "is third-party raw source access permitted (route configured or person_call)?"}
+  - {id: refused, kind: activity, lane: Core, label: "refuses with THIRD_PARTY_ROUTE_REQUIRED or CONSTRAINTS_ELIMINATE error"}
+  - {id: dhit, kind: decision, lane: Core, label: "did any candidate match filters and score above zero?"}
+  - {id: empty, kind: activity, lane: Core, label: "returns empty results with coverage='uncovered' and removed_by_filters names (no guess filled in)"}
+  - {id: read, kind: activity, lane: Core, step: 3, label: "returns ranked hits with why-matched explanations; caller opens note (get_note) or verified section"}
+  - {id: show, kind: activity, lane: Web UI, step: 4, label: "displays results, verdict, facets and note text to the person"}
+  - {id: e1, kind: end, outcome: success, label: "findable notes or sources read read-only with zero generative calls on search"}
+  - {id: e_empty, kind: end, outcome: partial, label: "no matching notes; honest uncovered verdict returned"}
+  - {id: e_refused, kind: end, outcome: refused, label: "invalid filter or unconfigured third-party raw access refused"}
+edges:
+  - {from: s, to: ask}
+  - {from: ask, to: dsurface}
+  - {from: dsurface, to: query, guard: "library index search or get_note"}
+  - {from: dsurface, to: work, guard: "search_work in staging, sessions or activity", ext: 2a}
+  - {from: dsurface, to: dthird, guard: "raw third-party file or section read", ext: 2b}
+  - {from: work, to: dhit}
+  - {from: dthird, to: read, guard: "yes: permitted"}
+  - {from: dthird, to: refused, guard: "no: unconfigured"}
+  - {from: refused, to: e_refused}
+  - {from: query, to: dhit}
+  - {from: dhit, to: read, guard: "at least 1 match"}
+  - {from: dhit, to: empty, guard: "0 matches", ext: 3a}
+  - {from: empty, to: e_empty}
+  - {from: read, to: show}
+  - {from: show, to: e1}
+evidence:
+  - "src/resource_librarian/search.py:11-28 (CONSTRAINTS_ELIMINATE, READS_NEVER_CALL_A_GENERATIVE_MODEL, EVERY_RESULT_SAYS_WHY)."
+  - "src/resource_librarian/tools/work_search.py:23-27 (_matched 2/3-word floor); src/resource_librarian/read_access.py (THIRD_PARTY_ROUTE_REQUIRED)."

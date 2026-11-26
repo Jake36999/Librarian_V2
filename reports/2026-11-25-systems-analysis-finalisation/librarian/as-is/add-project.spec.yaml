@@ -1,0 +1,47 @@
+diagram: add-project
+use_case: UC11
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Add a project and map what the library holds for it, as it runs today
+lanes:
+  - Owner
+  - Overseer (tier 0)
+  - Core
+  - Model worker
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: open, kind: activity, lane: Overseer (tier 0), step: 1, label: "opens an add_project session and creates the Project note (frame, budget 24)"}
+  - {id: ingest, kind: activity, lane: Core, step: 2, label: "records what the person already has and queues or ingests it (ingest, budget 20; wait 150s if Broker asks)"}
+  - {id: map, kind: activity, lane: Overseer (tier 0), step: 3, label: "orients in the library via search(intent='orient') and updates plan.map (map, budget 20)"}
+  - {id: need, kind: activity, lane: Overseer (tier 0), step: 4, label: "opens one brief per asked topic with disqualifiers (need, budget 18)"}
+  - {id: search, kind: activity, lane: Overseer (tier 0), step: 5, label: "runs research_round + checkpoint until stopping rule fires (search, budget 40)"}
+  - {id: judge, kind: activity, lane: Overseer (tier 0), step: 6, label: "decides every undecided candidate (judge, budget 40; pool spans whole library)"}
+  - {id: dbudget, kind: decision, lane: Core, label: "do phase budgets suffice before hitting 0 (request_budget halves on return)?"}
+  - {id: park, kind: activity, lane: Core, label: "blocks transition with PHASE_GATE or parks via park_session until Owner extends"}
+  - {id: synth, kind: activity, lane: Core, step: 7, label: "records cross-source synthesis and drafts an Offering with quote verification (synthesise, budget 16)"}
+  - {id: promote, kind: activity, lane: Owner, step: 8, label: "confirms promote_offering at curate/PERSON_CONFIRMS (unless declined)"}
+  - {id: dprom, kind: decision, lane: Core, label: "is the staged Offering promoted by the person?"}
+  - {id: hold, kind: activity, lane: Core, label: "keeps Offering staged or waits on PERSON_CONFIRMS"}
+  - {id: close, kind: activity, lane: Overseer (tier 0), step: 9, label: "closes open briefs and closes the session (check_out, budget 14)"}
+  - {id: e1, kind: end, outcome: success, label: "Project note created and mapped offering promoted"}
+  - {id: e_paused, kind: end, outcome: paused, label: "parked on budget, PHASE_GATE, 150s Ask timeout, or pending promotion"}
+edges:
+  - {from: s, to: open}
+  - {from: open, to: ingest}
+  - {from: ingest, to: map}
+  - {from: map, to: need}
+  - {from: need, to: search}
+  - {from: search, to: judge}
+  - {from: judge, to: dbudget}
+  - {from: dbudget, to: synth, guard: "budget remains"}
+  - {from: dbudget, to: park, guard: "budget spent or PHASE_GATE open", ext: 6a}
+  - {from: park, to: e_paused}
+  - {from: synth, to: promote}
+  - {from: promote, to: dprom}
+  - {from: dprom, to: close, guard: "promoted"}
+  - {from: dprom, to: hold, guard: "declined or PERSON_CONFIRMS open", ext: 8a}
+  - {from: hold, to: e_paused}
+  - {from: close, to: e1}
+evidence:
+  - "src/resource_librarian/standard/phases.yaml:47 (add_project = frame, ingest, map, need, search, judge, synthesise, check_out)."
+  - "src/resource_librarian/session.py:998-1129 (_gate_frame, _gate_ingest, _gate_map, _gate_need, _gate_search, _gate_judge, _gate_synthesise, _gate_check_out)."

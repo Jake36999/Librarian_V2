@@ -1,0 +1,54 @@
+diagram: scheduled-pipeline
+use_case: UC16
+status: PROPOSED_UNACCEPTED
+supersedes: [reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/scheduled-pipeline.spec.yaml]
+kind: activity
+title: Run a scheduled pipeline (proposed)
+problem:
+  symptom: "As-is: unattended schedules lack a pre-compiled mandate, Oracle verification, and agenda routing for high-risk holds or paused steps."
+  root: "Compile manifest and bounded reserve before start; run within MAX_EACH = 200 with no tier 0; route high-risk choices, missing routers or outcome_unknown cleanly onto the Owner's agenda at exact resume points; repair mapped shortfalls via Doctor; verify via Oracle."
+lanes:
+  - Owner
+  - Core
+  - Oracle
+  - Doctor
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: trigger, kind: activity, lane: Core, step: 1, label: "schedule fires unattended pipeline; Core validates accepted closure (MF-017), compiles manifest and reserves budget"}
+  - {id: dmandate, kind: decision, lane: Core, label: "are closure valid, accepted and within unattended schedule bounds (MAX_EACH = 200)?"}
+  - {id: run, kind: activity, lane: Core, step: 2, label: "executes pinned steps with durable dispatch/done checkpoints (MF-018) and non-interactive mandate"}
+  - {id: dhold, kind: decision, lane: Core, label: "did a high-risk decision, missing router, or outcome_unknown pause the run?"}
+  - {id: holditem, kind: activity, lane: Core, label: "writes structured hold to Owner's agenda with exact resume point and evidence (never bypassed unattended)"}
+  - {id: ref_agenda, kind: ref, lane: Owner, use_case: agenda, label: "Owner resolves held item or resume choice once on the agenda"}
+  - {id: dstep, kind: decision, lane: Core, label: "did all steps meet acceptance_criteria without mapped failure?"}
+  - {id: ref_doctor, kind: ref, lane: Doctor, use_case: doctor, label: "repairs mapped pipeline failure or stale state through a bounded ticket"}
+  - {id: ref_oracle, kind: ref, lane: Oracle, step: 3, use_case: oracle, label: "verifies pipeline outputs and spend against specification on a distinct route"}
+  - {id: receipt, kind: activity, lane: Core, step: 4, label: "records finished run receipt, spend and overdue counts for Owner handover"}
+  - {id: e1, kind: end, outcome: success, label: "scheduled pipeline finished, verified and receipt recorded"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused on Owner agenda at exact resume point (nothing redone)"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "unaccepted definition or unresolved failure escalated with compensation shown"}
+edges:
+  - {from: s, to: trigger}
+  - {from: trigger, to: dmandate}
+  - {from: dmandate, to: run, guard: "valid, accepted and within bounds"}
+  - {from: dmandate, to: e_escalated, guard: "unaccepted, TIER_REFUSED, or over bounds", ext: 2a}
+  - {from: run, to: dhold}
+  - {from: dhold, to: dstep, guard: "completed step sequence"}
+  - {from: dhold, to: holditem, guard: "high-risk hold, missing router, or outcome_unknown", ext: 2b}
+  - {from: holditem, to: ref_agenda}
+  - {from: ref_agenda, to: receipt, guard: "success"}
+  - {from: ref_agenda, to: receipt, guard: "nothing held"}
+  - {from: ref_agenda, to: e_paused, guard: "paused"}
+  - {from: ref_agenda, to: e_escalated, guard: "escalated"}
+  - {from: dstep, to: ref_oracle, guard: "all steps accepted"}
+  - {from: dstep, to: ref_doctor, guard: "mapped step or acceptance failure", ext: 2c}
+  - {from: ref_doctor, to: ref_oracle, guard: "resolved"}
+  - {from: ref_doctor, to: holditem, guard: "declined"}
+  - {from: ref_doctor, to: e_escalated, guard: "escalated"}
+  - {from: ref_oracle, to: receipt, guard: "success"}
+  - {from: ref_oracle, to: ref_doctor, guard: "shortfall", ext: 3a}
+  - {from: ref_oracle, to: holditem, guard: "paused", ext: 3b}
+  - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 3c}
+  - {from: receipt, to: e1}
+evidence:
+  - "builds-on.md (agenda, tickets, Doctor, Oracle); workflows.py; initiators.table.yaml UC16."

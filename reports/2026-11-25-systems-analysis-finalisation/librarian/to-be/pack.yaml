@@ -216,11 +216,107 @@ use_cases:
   - {id: UC5, name: Trust a relation, actors: [owner], deferred: "USE-CASES.md UC5; not yet drawn"}
   - {id: UC6, name: Reorganise a folder into groups, actors: [owner], deferred: "PLAN.md 2.2"}
   - {id: UC7, name: See the data in another model, actors: [owner], deferred: "PLAN.md 2.2"}
-  # Mapped on 26 November (the initiators table): use cases that run today with no to-be flow yet.
-  - {id: UC10, name: Search and read the library, actors: [owner], deferred: "the Web UI's Search and note view, and the search and get_note tools; it only reads"}
-  - {id: UC11, name: Add a project and map what the library holds for it, actors: [overseer], deferred: "the add_project session purpose; its sources go through UC1"}
-  - {id: UC12, name: Suggest work for the vault, actors: [overseer], deferred: "the suggest session purpose"}
-  - {id: UC13, name: "Start a pursuit (a course, a role or a project)", actors: [overseer, owner], deferred: "the start_pursuit session purpose"}
-  - {id: UC14, name: Study a topic with the library, actors: [overseer, owner], deferred: "the learn session purpose (tutoring); not UC-L, which learns a remedy"}
-  - {id: UC15, name: Add a capability (an MCP server), actors: [overseer, owner], deferred: "the add_capability session purpose; the person decides the install"}
-  - {id: UC16, name: Run a scheduled pipeline, actors: [owner], deferred: "weekly-review and clear-enrichment-backlog; not overseen, so a high-risk decision holds for the Owner"}
+  # Mapped on 26 November (the initiators table): now drawn in both packs.
+  - id: UC10
+    name: Search and read the library
+    spec: search-and-read
+    actors: [owner, geo, doctor]
+    fields:
+      brief: "Read-only search and retrieval under Core with zero generative calls, exact source_refs and locators, optional Geo-Grapher lookup (UC-G3), and Doctor repair on corrupt index or unreadable local sources."
+      primary_actor: Owner
+      supporting_actors: "Web UI, Core, Geo-Grapher, Doctor"
+      preconditions: "Core running with healthy index (or repairable via ticket)"
+      trigger: "The Owner queries Search or reads a note, source passage or graph entity"
+      success_guarantee: "Findable note, source passage or graph handle returned read-only with pinned source_refs"
+      minimal_guarantee: "Invalid constraints or unpermitted third-party reads refuse cleanly; zero hits return honest uncovered status"
+      open_questions: "—"
+    boundaries:
+      - {at: dhit, values: ["0 hits", "1 hit", "multiple hits"], expect: "0 hits return partial/uncovered with removed_by_filters; >= 1 returns ranked results with source_refs"}
+  - id: UC11
+    name: Add a project and map what the library holds for it
+    spec: add-project
+    actors: [overseer, owner, lead, oracle]
+    includes: [UC1, UC-O, UC9]
+    fields:
+      brief: "Tier 0 frames the new project under one approved permission envelope; Core delegates supplied sources to UC1 ingestion, Lead maps existing corpus holdings, Oracle checks completeness and citations, and promotion lands on the Owner's agenda."
+      primary_actor: "Overseer (tier 0)"
+      supporting_actors: "Lead (tier 1), Core, Oracle, Owner"
+      preconditions: "Project name, disqualifiers and optional source roots stated"
+      trigger: "The Owner asks to add and map a new project"
+      success_guarantee: "Project note created, sources ingested under UC1, and Oracle-verified map Offering promoted via agenda"
+      minimal_guarantee: "Every partial source, open ticket or unpromoted draft stays visible on the agenda with nothing silently lost"
+      open_questions: "—"
+  - id: UC12
+    name: Suggest work for the vault
+    spec: suggest
+    actors: [overseer, owner, lead, oracle]
+    includes: [UC-O, UC9]
+    fields:
+      brief: "Tier 0 opens a single-envelope suggest run; Core reads project files strictly read-only (logging an explicit gap if access is off), Lead searches the scoped corpus and drafts suggestions, Oracle verifies grounding, and promotion goes to the Owner's agenda."
+      primary_actor: "Overseer (tier 0)"
+      supporting_actors: "Lead (tier 1), Core, Oracle, Owner"
+      preconditions: "Project note exists in the vault"
+      trigger: "The Owner asks for suggested next work for a project"
+      success_guarantee: "Oracle-verified suggestion Offering decided on agenda and delivered with explicit gaps and spend"
+      minimal_guarantee: "Disabled workspace access is recorded as an explicit gap; no unverified suggestion is promoted"
+      open_questions: "—"
+  - id: UC13
+    name: "Start a pursuit (a course, a role or a project)"
+    spec: start-pursuit
+    actors: [overseer, owner, lead, oracle]
+    includes: [UC1, UC-O, UC9]
+    fields:
+      brief: "Tier 0 captures pursuit kind, inventory and single setup envelope; Core records dated milestones into the unified agenda, routes initial seed sources through UC1 ingestion, and has Oracle verify plan and milestone completeness."
+      primary_actor: "Overseer (tier 0)"
+      supporting_actors: "Owner, Lead (tier 1), Core, Oracle"
+      preconditions: "Pursuit kind and timeframe named"
+      trigger: "The Owner starts a course, role or project pursuit"
+      success_guarantee: "Pursuit Project note, inventory, unified agenda milestones and indexed seeds verified by Oracle"
+      minimal_guarantee: "Held or partial seed sources stay on the Owner's agenda without blocking pursuit creation"
+      open_questions: "—"
+  - id: UC14
+    name: Study a topic with the library
+    spec: study-topic
+    actors: [overseer, owner, oracle]
+    includes: [UC-O]
+    fields:
+      brief: "Tier 0 tutors the person through goal, diagnostic baseline, bounded focus concepts, source-anchored practice and consolidation, with Oracle verifying passage citations on a distinct route and Core scheduling spaced review tasks on the agenda."
+      primary_actor: "Overseer (tier 0)"
+      supporting_actors: "Owner, Oracle, Core"
+      preconditions: "Library notes exist for the topic"
+      trigger: "The Owner starts a study-topic (learn) session"
+      success_guarantee: "Focus concepts practised, consolidated, citation-checked by Oracle and review dates added to the agenda"
+      minimal_guarantee: "Paused practice preserves completed understanding_records and remaining focus concepts cleanly"
+      open_questions: "—"
+    boundaries:
+      - {at: ddone, values: ["all focus concepts recorded within budget", "remaining concepts when budget ceiling reached"], expect: "session pauses cleanly preserving completed records and remaining focus concepts"}
+  - id: UC15
+    name: Add a capability (an MCP server)
+    spec: add-capability
+    actors: [overseer, owner, lead, oracle]
+    includes: [UC1, UC-O, UC9]
+    fields:
+      brief: "Candidate repository is ingested read-only via UC1, compiled as a secret-free (${ENV}-only) manifest, reviewed by Oracle for security/licence risks, and held on the Owner's agenda — never installed without the Owner's explicit yes."
+      primary_actor: "Overseer (tier 0)"
+      supporting_actors: "Lead (tier 1), Oracle, Owner, Core"
+      preconditions: "Curated candidate or user-supplied repository URL"
+      trigger: "The Owner asks to add a new MCP capability"
+      success_guarantee: "Approved MCP capability pinned and enabled for this library, or cleanly declined by the Owner"
+      minimal_guarantee: "High-risk capability installation is always reserved to the Owner on the agenda; never auto-installed"
+      open_questions: "—"
+  - id: UC16
+    name: Run a scheduled pipeline
+    spec: scheduled-pipeline
+    actors: [owner, oracle, doctor]
+    includes: [UC-O, UC-D, UC9]
+    fields:
+      brief: "Unattended scheduled pipelines run with pre-compiled manifests, reserved budgets, MF-017/MF-018 pinning and checkpoints within MAX_EACH = 200; high-risk holds, missing routers or outcome_unknown pause onto the Owner's agenda at exact resume points; mapped failures route to Doctor; Oracle verifies outputs."
+      primary_actor: Core
+      supporting_actors: "Owner, Oracle, Doctor"
+      preconditions: "Accepted pipeline closure pinned and budget reserved for unattended schedule"
+      trigger: "Schedule triggers weekly-review or clear-enrichment-backlog"
+      success_guarantee: "Pipeline completes, passes Oracle verification and records spend/receipt for Owner handover"
+      minimal_guarantee: "No high-risk decision proceeds without the Owner; held runs resume from their recorded point with nothing redone"
+      open_questions: "—"
+    boundaries:
+      - {at: dmandate, values: ["<= 200 items within mandate", "201 items or unaccepted closure"], expect: "loops cap at MAX_EACH = 200; invalid/unaccepted definitions refuse before mutation"}

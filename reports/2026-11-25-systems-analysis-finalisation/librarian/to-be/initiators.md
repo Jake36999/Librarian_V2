@@ -11,7 +11,7 @@ Every use case grouped by who starts it, with the tier-0 turns the to-be model g
 | UC9 Decide the agenda and resume held work (new, 26 November) | the Web UI, or chat with tier 0 | 0 in the Web UI; 1 through chat (tier 0 shows the agenda and passes back the Owner's words) | the Owner; tier 0 decides nothing reserved | `agenda:decide`, `agenda:t0show` |
 | UC2 Research a brief across a corpus | the Owner states the brief, in the Web UI or through tier 0 | none on the flow itself | the Owner (one consolidated question on the agenda) | `research:rounds` |
 | UC-L Learn a remedy | the Lead puts the Doctor's draft to the Owner | none | the Owner accepts or declines | `learn:a2` |
-| UC10 Search and read the library | the Web UI's Search and note view, or the search and get_note tools | none | nothing high-risk: it only reads | not drawn |
+| UC10 Search and read the library | the Web UI's Search and note view, or the search and get_note tools | none | nothing high-risk: it only reads | `search-and-read:indexsearch` |
 | UC5 Trust a relation; UC6 Reorganise a folder; UC7 See the data in another model | the Owner | — | — | not drawn (PLAN.md 2.2, USE-CASES.md UC5) |
 | UC-G6 Explore a graph in the 3D workspace (Geo-Grapher) | the person's Geo-Grapher UI | none | nothing high-risk: it only reads | not drawn |
 
@@ -32,22 +32,22 @@ Every use case grouped by who starts it, with the tier-0 turns the to-be model g
 | explore | frame, map, need, search, judge, synthesise, check_out | tier 0, for the vault's own work | UC2 research: the to-be brief and rounds replace the phase loop (`research:rounds`) |
 | audited | manage, preflight, execute, audit, reduce | tier 0 | UC8 compose and UC-O, by this pack's mapping (not drawn from the audited session itself): the admitted contract is the manifest, and Tier A is the Oracle's |
 | apply | check_in, find, check_out | tier 0 of an external project, at consult tier | UC0.2 Work for an external project |
-| add_project | frame, ingest, map, need, search, judge, synthesise, check_out | tier 0 | UC11, not drawn: its sources go through UC1 |
-| suggest | frame, map, search, judge, synthesise, check_out | tier 0 | UC12, not drawn |
-| start_pursuit | frame, inventory, plan, seed, check_out | tier 0, for the person's course, role or project | UC13, not drawn |
-| learn | goal, baseline, focus, practice, consolidate, next | tier 0, tutoring the person | UC14, not drawn; not the same as UC-L, which learns a remedy |
-| add_capability | candidate, assess, propose, install, check_out | tier 0; the person decides the install | UC15, not drawn: installing is high risk, so the person decides it (capability_install asks them) |
+| add_project | frame, ingest, map, need, search, judge, synthesise, check_out | tier 0 | UC11 `add-project:frame` (sources through UC1 ingestion) |
+| suggest | frame, map, search, judge, synthesise, check_out | tier 0 | UC12 `suggest:research` |
+| start_pursuit | frame, inventory, plan, seed, check_out | tier 0, for the person's course, role or project | UC13 `start-pursuit:frame` |
+| learn | goal, baseline, focus, practice, consolidate, next | tier 0, tutoring the person | UC14 `study-topic:practice` (not UC-L, which learns a remedy) |
+| add_capability | candidate, assess, propose, install, check_out | tier 0; the person decides the install | UC15 `add-capability:hold` (installing is high risk, so `agenda` holds it for the person) |
 
 ## Started by tier 0 for an external project (Context 2), by a schedule, or inside a run
 
 | Use case | Started from | Tier-0 turns | High-risk decisions held by | Drawn |
 |---|---|---|---|---|
 | UC0.2 Work for an external project through MCP | the external project's tier 0 | 2 | the Owner: an external project stages only, never accepts | drawn (activation-external-project) |
-| UC16 Run a scheduled pipeline (weekly-review, clear-enrichment-backlog) | a schedule | none: not overseen | the Owner's agenda: the ingestion and acceptance flows already treat a scheduled run as having no person present | not drawn |
+| UC16 Run a scheduled pipeline (weekly-review, clear-enrichment-backlog) | a schedule | none: not overseen | the Owner's agenda: unattended high-risk decisions and pauses hold cleanly (`scheduled-pipeline:holditem`) | `scheduled-pipeline:trigger` |
 | UC1.1 to UC1c.3, UC1.3, UC3, UC4, UC-O, UC-D | the parent process that calls them | none of their own | as the parent's | drawn |
 
 ## What this shows
 
 - Two use cases that the 26 November risk rule depends on were missing and are now drawn: the Owner's agenda (UC9), where every held decision lands, and tier 0's own delegation (UC0.4).
-- Five session purposes run today with no to-be flow: add_project, suggest, start_pursuit, learn (tutoring) and add_capability. Each is listed as UC11 to UC15 so the gap shows; drawing them is the next step.
+- All eight MCP session purposes plus search-and-read (UC10) and scheduled pipelines (UC16) are now drawn in both as-is and to-be packs (`UC10` through `UC16`, including `add_project`, `suggest`, `start_pursuit`, `learn`/`study-topic`, and `add_capability`).
 - Two names collide: the learn session purpose (tutoring the person) and UC-L Learn a remedy (the Doctor's catalogue). The packs keep UC-L; the purpose is UC14, Study a topic with the library.

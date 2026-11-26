@@ -1,0 +1,37 @@
+diagram: study-topic
+use_case: UC14
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Study a topic with the library, as it runs today
+lanes:
+  - Owner
+  - Overseer (tier 0)
+  - Core
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: goal, kind: activity, lane: Overseer (tier 0), step: 1, label: "opens learn session and records goal + deadline (goal, budget 12)"}
+  - {id: baseline, kind: activity, lane: Owner, step: 2, label: "answers 2-3 diagnostic questions via ask_user before teaching; saved to plan.baseline (baseline, budget 14)"}
+  - {id: focus, kind: activity, lane: Overseer (tier 0), step: 3, label: "reads library notes and chooses focus concepts list in plan.focus (focus, budget 18)"}
+  - {id: practice, kind: activity, lane: Owner, step: 4, label: "answers source-anchored questions; tier 0 cites passages and calls understanding_record per concept (practice, budget 30)"}
+  - {id: dpracticed, kind: decision, lane: Core, label: "has every focus concept an understanding_record (or practice_stopped) within budget?"}
+  - {id: stopprac, kind: activity, lane: Core, label: "keeps practice phase open even on budget=0 until covered or practice_stopped explained"}
+  - {id: consolidate, kind: activity, lane: Owner, step: 5, label: "explains topic in own words; tier 0 critiques against sources and records consolidate understanding_record (consolidate, budget 16)"}
+  - {id: nextphase, kind: activity, lane: Core, step: 6, label: "schedules review dates as tasks under Understanding heading and sets plan.scheduled (next, budget 14)"}
+  - {id: close, kind: activity, lane: Overseer (tier 0), step: 7, label: "closes the tutoring session via close_session"}
+  - {id: e1, kind: end, outcome: success, label: "understanding records written and review tasks scheduled"}
+  - {id: e_paused, kind: end, outcome: paused, label: "session parked waiting for learner reply, practice completion, or budget extension"}
+edges:
+  - {from: s, to: goal}
+  - {from: goal, to: baseline}
+  - {from: baseline, to: focus}
+  - {from: focus, to: practice}
+  - {from: practice, to: dpracticed}
+  - {from: dpracticed, to: consolidate, guard: "yes: all focus concepts covered"}
+  - {from: dpracticed, to: stopprac, guard: "no: remaining focus concepts or spent budget", ext: 4a}
+  - {from: stopprac, to: e_paused}
+  - {from: consolidate, to: nextphase}
+  - {from: nextphase, to: close}
+  - {from: close, to: e1}
+evidence:
+  - "src/resource_librarian/standard/phases.yaml:56,196-250 (learn = goal, baseline, focus, practice, consolidate, next)."
+  - "src/resource_librarian/session.py:1166-1270 (_gate_goal, _gate_baseline, _gate_focus, _gate_practice, _gate_consolidate, _gate_next)."

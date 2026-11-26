@@ -1,0 +1,47 @@
+diagram: suggest
+use_case: UC12
+status: PROPOSED_UNACCEPTED
+supersedes: [reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/suggest.spec.yaml]
+kind: activity
+title: Suggest work for the vault (proposed)
+problem:
+  symptom: "As-is: silent fallback if read_project fails, halving phase budgets, and blocking on Owner promotion."
+  root: "Compile a single envelope, read project files strictly read-only with explicit gap if unavailable, research and verify suggestions through the Oracle, and land promotion on the Owner's agenda."
+lanes:
+  - Owner
+  - Overseer (tier 0)
+  - Lead (tier 1)
+  - Oracle
+  - Core
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: ask, kind: activity, lane: Overseer (tier 0), step: 1, label: "frames project goal and grants read-only suggest envelope once"}
+  - {id: dread, kind: decision, lane: Core, label: "is read-only project workspace access enabled?"}
+  - {id: readproj, kind: activity, lane: Core, step: 2, label: "reads project state read-only alongside library catalogue (read_project)"}
+  - {id: noteonly, kind: activity, lane: Core, label: "records explicit workspace_access gap and reads Project note only (no silent drop)"}
+  - {id: research, kind: activity, lane: Lead (tier 1), step: 3, label: "searches corpus within manifest budget, judges candidates with reasons, and drafts suggestion Offering"}
+  - {id: ref_oracle, kind: ref, lane: Oracle, step: 4, use_case: oracle, label: "verifies quotes, source_refs and grounding of suggested work on a distinct route"}
+  - {id: ref_agenda, kind: ref, lane: Owner, step: 5, use_case: agenda, label: "presents staged suggestion Offering on Owner's agenda for promotion decision"}
+  - {id: deliver, kind: activity, lane: Overseer (tier 0), step: 6, label: "delivers verified suggestions, explicit gaps and spend"}
+  - {id: e1, kind: end, outcome: success, label: "Oracle-checked work suggestions delivered and decided on agenda"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused on agenda decision or missing Oracle route"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "critical fault escalated with ticket"}
+edges:
+  - {from: s, to: ask}
+  - {from: ask, to: dread}
+  - {from: dread, to: readproj, guard: "yes: read_project permitted"}
+  - {from: dread, to: noteonly, guard: "no: explicit access gap logged", ext: 2a}
+  - {from: noteonly, to: research}
+  - {from: readproj, to: research}
+  - {from: research, to: ref_oracle}
+  - {from: ref_oracle, to: ref_agenda, guard: "success"}
+  - {from: ref_oracle, to: research, guard: "shortfall", ext: 4a}
+  - {from: ref_oracle, to: ref_agenda, guard: "paused", ext: 4b}
+  - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 4c}
+  - {from: ref_agenda, to: deliver, guard: "success"}
+  - {from: ref_agenda, to: deliver, guard: "nothing held"}
+  - {from: ref_agenda, to: e_paused, guard: "paused"}
+  - {from: ref_agenda, to: e_escalated, guard: "escalated"}
+  - {from: deliver, to: e1}
+evidence:
+  - "builds-on.md; phases.yaml suggest; initiators.table.yaml UC12; oracle & agenda specs."

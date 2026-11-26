@@ -1,6 +1,6 @@
 # Process composition: librarian/to-be
 
-Which process calls which (`kind: ref`). Roots: `agenda`, `compose`, `delegate`, `learn`, `research`.
+Which process calls which (`kind: ref`). Roots: `add-capability`, `add-project`, `compose`, `delegate`, `learn`, `research`, `scheduled-pipeline`, `search-and-read`, `start-pursuit`, `study-topic`, `suggest`.
 
 ```mermaid
 flowchart TD
@@ -8,6 +8,8 @@ flowchart TD
   activation_external_project["activation-external-project<br/>UC0"]
   activation_overseer["activation-overseer<br/>UC0"]
   activation_web_ui["activation-web-ui<br/>UC0"]
+  add_capability["add-capability<br/>UC15"]
+  add_project["add-project<br/>UC11"]
   agenda["agenda<br/>UC9"]
   batch_enrichment["batch-enrichment<br/>UC1b"]
   catalogue["catalogue<br/>UC8.2"]
@@ -21,10 +23,15 @@ flowchart TD
   oracle["oracle<br/>UC-O"]
   paper_publication["paper-publication<br/>UC1c.3"]
   research["research<br/>UC2"]
+  scheduled_pipeline["scheduled-pipeline<br/>UC16"]
+  search_and_read["search-and-read<br/>UC10"]
   source_enrichment["source-enrichment<br/>UC1c"]
   source_intake["source-intake<br/>UC1.2"]
   source_parse["source-parse<br/>UC1c.1"]
   source_reading["source-reading<br/>UC1c.2"]
+  start_pursuit["start-pursuit<br/>UC13"]
+  study_topic["study-topic<br/>UC14"]
+  suggest["suggest<br/>UC12"]
   verify_claims["verify-claims<br/>UC3"]
   activation_external_project --> doctor
   activation_external_project --> ingestion
@@ -33,6 +40,12 @@ flowchart TD
   activation_web_ui --> batch_enrichment
   activation_web_ui --> doctor
   activation_web_ui --> ingestion
+  add_capability --> agenda
+  add_capability --> ingestion
+  add_capability --> oracle
+  add_project --> agenda
+  add_project --> ingestion
+  add_project --> oracle
   agenda --> doctor
   batch_enrichment --> doctor
   batch_enrichment --> source_enrichment
@@ -62,8 +75,19 @@ flowchart TD
   research --> geo_grapher_to_be_query_graph
   research --> oracle
   research --> verify_claims
+  scheduled_pipeline --> agenda
+  scheduled_pipeline --> doctor
+  scheduled_pipeline --> oracle
+  search_and_read --> doctor
+  search_and_read --> geo_grapher_to_be_query_graph
   source_enrichment --> doctor
   source_enrichment --> paper_publication
   source_enrichment --> source_parse
   source_enrichment --> source_reading
+  start_pursuit --> agenda
+  start_pursuit --> ingestion
+  start_pursuit --> oracle
+  study_topic --> oracle
+  suggest --> agenda
+  suggest --> oracle
 ```

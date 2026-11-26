@@ -1,0 +1,52 @@
+diagram: start-pursuit
+use_case: UC13
+status: PROPOSED_UNACCEPTED
+supersedes: [reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/start-pursuit.spec.yaml]
+kind: activity
+title: Start a pursuit (a course, a role or a project) (proposed)
+problem:
+  symptom: "As-is: five rigid phase gates where seed ingestion can stall on 150s Broker asks or uncurated source additions."
+  root: "Approve the setup envelope once, capture inventory and dated milestones into the unified agenda, delegate seeded sources through UC1 ingestion, verify completeness via Oracle, and hold unresolved items on the agenda."
+lanes:
+  - Owner
+  - Overseer (tier 0)
+  - Lead (tier 1)
+  - Oracle
+  - Core
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: commission, kind: activity, lane: Owner, step: 1, label: "states pursuit kind (course, role or project), timeframe, milestones and initial materials"}
+  - {id: frame, kind: activity, lane: Overseer (tier 0), step: 2, label: "opens pursuit, creates Project note, records kind-specific inventory and approves single setup envelope"}
+  - {id: milestones, kind: activity, lane: Core, step: 3, label: "records dated milestones via task_add into the unified agenda (or explicit no_dates reason)"}
+  - {id: dseed, kind: decision, lane: Core, label: "are initial seed sources provided?"}
+  - {id: ref_ingest, kind: ref, lane: Lead (tier 1), step: 4, use_case: ingestion, label: "ingests and indexes seeded materials cleanly under UC1"}
+  - {id: ref_oracle, kind: ref, lane: Oracle, step: 5, use_case: oracle, label: "checks pursuit note, inventory links, dated milestones and seeded leads"}
+  - {id: ref_agenda, kind: ref, lane: Owner, use_case: agenda, label: "resolves any held ingestion/scope choices on the Owner's agenda"}
+  - {id: deliver, kind: activity, lane: Overseer (tier 0), step: 6, label: "hands over active pursuit workspace, agenda schedule and open tickets"}
+  - {id: e1, kind: end, outcome: success, label: "pursuit initialized with verified plan, milestones and seeded sources"}
+  - {id: e_partial, kind: end, outcome: partial, label: "pursuit started with queued or partial seeds on the agenda"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused awaiting Owner agenda decision or Oracle route"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "critical failure escalated"}
+edges:
+  - {from: s, to: commission}
+  - {from: commission, to: frame}
+  - {from: frame, to: milestones}
+  - {from: milestones, to: dseed}
+  - {from: dseed, to: ref_ingest, guard: "yes: seed materials provided"}
+  - {from: dseed, to: ref_oracle, guard: "no: ingested='none'", ext: 4a}
+  - {from: ref_ingest, to: ref_oracle, guard: "success"}
+  - {from: ref_ingest, to: ref_oracle, guard: "reused"}
+  - {from: ref_ingest, to: ref_oracle, guard: "partial", ext: 4b}
+  - {from: ref_ingest, to: ref_agenda, guard: "paused", ext: 4c}
+  - {from: ref_ingest, to: e_escalated, guard: "escalated", ext: 4d}
+  - {from: ref_oracle, to: deliver, guard: "success"}
+  - {from: ref_oracle, to: frame, guard: "shortfall", ext: 5a}
+  - {from: ref_oracle, to: ref_agenda, guard: "paused", ext: 5b}
+  - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 5c}
+  - {from: ref_agenda, to: deliver, guard: "success"}
+  - {from: ref_agenda, to: e_partial, guard: "nothing held"}
+  - {from: ref_agenda, to: e_paused, guard: "paused"}
+  - {from: ref_agenda, to: e_escalated, guard: "escalated"}
+  - {from: deliver, to: e1}
+evidence:
+  - "builds-on.md (agenda, ingestion, oracle); phases.yaml start_pursuit; initiators.table.yaml UC13."
