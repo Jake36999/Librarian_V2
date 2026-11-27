@@ -51,6 +51,29 @@ def test_the_ingest_folder_pipeline_runs_to_the_persons_decisions(library):
     assert "wait for a decision" in out["outputs"]["next"]
 
 
+
+def test_a_folders_ingestion_captures_only_its_own_documents(library):
+    # The Resource-Library supervised run (27 November): `run-queue` drained the whole shared queue,
+    # oldest first, other folders' and briefs' references included. Now the pipeline captures only the
+    # folder's own documents, and every other queued reference is left byte for byte as it was.
+    from resource_librarian import intake
+    from resource_librarian.staging import StagingStore
+    vault, source, service, _ = library
+    surveyed_and_docs_accepted(vault, source, service)
+    elsewhere = intake.enqueue(vault, "https://example.invalid/a-brief-reference")
+    path = StagingStore(vault).path(elsewhere["id"])
+    before = path.read_bytes()
+    out = REGISTRY.call("run_pipeline", {"name": "ingest-folder", "inputs": {"path": str(source)}},
+                        person(vault, service))
+    assert out["status"] == "finished", out
+    capture = out["steps"]["capture"]
+    assert capture["processed"] == 1 and capture["still_waiting_here"] == 0
+    assert [i["id"] for i in intake.pending(vault)] == [elsewhere["id"]]
+    assert path.read_bytes() == before
+    # Without a folder, intake_run drains the queue as before.
+    plain = REGISTRY.call("intake_run", {"limit": 5}, person(vault, service))
+    assert "still_waiting_here" not in plain
+
 def test_an_undrained_capture_queue_shows_on_the_agenda(library):
     vault, source, service, _ = library
     surveyed_and_docs_accepted(vault, source, service)

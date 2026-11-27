@@ -157,3 +157,19 @@ def test_a_stages_key_leaves_out_only_what_it_or_a_later_stage_writes(vault, mon
     monkeypatch.setattr(batch, "_unmapped_cleanup", lambda vault, path: True)
     assert batch._keyed_identity(vault, after, "parse", batch.STAGES) != \
         batch._keyed_identity(vault, before, "parse", batch.STAGES)
+
+
+def test_a_published_paper_with_no_stored_link_opens_a_ticket_and_a_linked_one_closes_it(vault):
+    # Delegated review (27 November): `unlinked_paper` was declared in tickets.yaml and never raised.
+    from resource_librarian import batch
+    from resource_librarian.registry import Context
+    ctx = Context(tier="curate", vault=vault, extras={})
+    item = {"id": "p-9", "name": "A Paper"}
+    batch._paper_link_ticket(ctx, item, {"published": True, "graph_id": "g", "documents": 1})  # older wheel
+    [ticket] = TicketStore(vault).all(open_only=True)
+    assert ticket["class"] == "unlinked_paper" and ticket["scope"] == "paper:p-9" and ticket["owner"] == "doctor"
+    assert "no stored link" in ticket["summary"]
+    batch._paper_link_ticket(ctx, item, {"published": True, "cite_as": "Lib-papers/doc:2", "status": "partial"})
+    assert len(TicketStore(vault).all(open_only=True)) == 1            # still open: content incomplete
+    batch._paper_link_ticket(ctx, item, {"published": True, "cite_as": "Lib-papers/doc:2", "status": "complete"})
+    assert TicketStore(vault).all(open_only=True) == []              # closed by the Core's recheck

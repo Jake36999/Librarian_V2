@@ -37,9 +37,11 @@ steps:
   - id: queue
     action: folder_queue_accepted
     args: {root: {from: inputs.path}, limit: {from: inputs.limit}}
+  # Only this folder's queued documents are captured; every other queued reference is left as it was
+  # (the Resource-Library supervised run, 27 November: `run-queue` drained the whole shared queue).
   - id: capture
-    workflow: run-queue
-    args: {limit: {from: inputs.limit}}
+    action: intake_run
+    args: {limit: {from: inputs.limit}, root: {from: inputs.path}}
   - id: begin
     action: ingestion_begin
     args: {root: {from: inputs.path}}

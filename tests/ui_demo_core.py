@@ -277,12 +277,14 @@ _deep_read_ctx = Context(tier="contribute", vault=vault,
 _person_call = app.person_call
 
 
-def person_call(name, arguments, session=""):
+def person_call(name, arguments, session="", actor=None):
+    # `actor` as the Core's own person_call takes it (the UI smoke's Desk and Lenses calls pass it;
+    # without it they failed with a TypeError: delegated UI review, 27 November).
     if name == "ingest" and str(arguments.get("ref", "")).startswith("model:"):
         return REGISTRY.call(name, arguments, _profile_ctx)
     if name == "deep_read":
         return REGISTRY.call(name, arguments, _deep_read_ctx)
-    return _person_call(name, arguments, session)
+    return _person_call(name, arguments, session, actor)
 
 
 # A tiny fixed MCP Registry, for the settings smoke steps' Browse box - not

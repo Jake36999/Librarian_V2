@@ -683,6 +683,36 @@ def _records_listing(record: dict[str, Any]) -> tuple[str, list[dict[str, str]]]
     return "\n".join(line["text"] for line in lines), lines
 
 
+def _paper_link_ticket(ctx: Context, item: dict[str, Any], publication: dict[str, Any]) -> None:
+    """A published paper the note cannot be linked to is a ticket for the Doctor (`unlinked_paper`;
+    to-be `paper-publication:pubreceipt`): its receipt names no `cite_as` (an older wheel), or says the
+    paper's content was not complete. Before, the class was declared and never raised (delegated
+    review, 27 November). A later publish with a complete, linked receipt closes it (the Core's own
+    recheck). A ticket never fails the stage."""
+    try:
+        from .tickets import TicketStore
+        tickets, scope = TicketStore(ctx.vault), f"paper:{item['id']}"
+        status = publication.get("status")
+        unlinked = not publication.get("cite_as") or (status not in (None, "complete"))
+
+        def write() -> None:
+            if unlinked:
+                tickets.ensure("unlinked_paper", scope, opened_by="batch",
+                               summary=f"{item.get('name')} was published "
+                                       + ("with no stored link (cite_as): its note cannot name its paper"
+                                          if not publication.get("cite_as")
+                                          else f"with content {status}: its paper is incomplete"),
+                               evidence={k: publication.get(k) for k in ("graph_id", "document_id", "cite_as",
+                                                                         "status") if publication.get(k)})
+                return
+            for ticket in tickets.all(open_only=True):
+                if ticket["scope"] == scope and ticket["class"] == "unlinked_paper":
+                    tickets.close(ticket["id"], "core-recheck", "published again with a complete, linked receipt")
+        _commit(ctx, write, targets=(tickets.path,))
+    except Exception:                                    # noqa: BLE001 - a ticket never fails the stage
+        pass
+
+
 def _publish(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     """A read PDF's paper graph, into the Geo graph of its accepted folder (free).
 
@@ -710,6 +740,7 @@ def _publish(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     if not publication.get('published'):
         return {"status": "partial", "paper_graph": artifact, "publication": publication,
                 "reason": f"not published: {publication.get('status', 'refused')}"}
+    _paper_link_ticket(ctx, item, publication)
     return {"status": "complete", "paper_graph": artifact,
             # The stored link to the published paper (M5, as-is W-CIT-01): Geo-Grapher's v1.2 receipt
             # names the paper (document_id, cite_as) and what was read; an older wheel names neither.

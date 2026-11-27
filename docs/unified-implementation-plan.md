@@ -8338,3 +8338,17 @@ The four delegated briefs were reviewed against their own claims, not taken on t
 - **Public `master`:** decide later.
 
 The plan's M5 still-to-do list now carries the review's findings: `unlinked_paper`, W-PUB-02, folder-scoped capture, and the UI harness's `actor`.
+
+### M5 gaps from the delegated review: three fixed, two open (2026-11-27)
+
+**Fixed:**
+- **`unlinked_paper`** (`batch._paper_link_ticket`): the publish stage opens the ticket for the Doctor when a published paper's receipt names no `cite_as` (an older wheel), or says its content was not complete. A later complete, linked publish closes it, by the Core's recheck.
+- **Folder-scoped capture:** `intake_run` takes an optional `root` and then captures only queued documents under it, reporting `still_waiting_here`. `ingest-folder`'s capture step calls it with the folder in place of the whole-queue `run-queue`, which is unchanged. The Resource-Library run found that a folder's ingestion drained the whole shared queue.
+  - The agent's `process_queue` bypass, uncommitted in the checkout, is replaced as the Owner approved. Its patch is kept at `G:\Librarian-workackups6-11-27-delegate-process-queue-bypass.patch`, and its byte-for-byte queue check is carried into `test_ingestion.py`.
+- **The UI harness:** `tests/ui_demo_core.py`'s `person_call` takes `actor`. `ui/smoke.mjs` waits for the visible "Accepted" result (Staging's status filter, M1a, added a hidden "Accepted into the library" option) and clicks "Reload item, keeping your edits" (M1a, W-ACC-01), asserting that the edit survives.
+
+**Open:**
+- **The UI smoke's audited inspector steps** time out. The smoke passes in full (56 steps) at `04acfe4`, M2, M4.1, `3ac06bb`, and once at `3d89b94`. It fails at `b17a6ff`, `75d9e3c` and `3f61202` (twice), at different steps, always as 30 s timeouts. The listing tools are not slower. Not yet diagnosed.
+- **W-PUB-02** waits on G4. Geo-Grapher's paper import publishes only into an existing reviewed folder group whose stratum matches the paper's authorship, so a library papers group is a Geo-Grapher change, on top of G4's `library_papers.py`.
+
+The access-review row for `intake_run` was refreshed. Tests: `test_m5_batch.py` (+1), `test_ingestion.py` (+1).

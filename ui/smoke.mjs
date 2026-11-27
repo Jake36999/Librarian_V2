@@ -596,7 +596,9 @@ await page.waitForSelector(".lib-staging .lib-evidence");
 await page.fill("#lib-bl", "A change-data-capture tool that streams row changes from Postgres.");
 await page.fill("#lib-solves", "Getting row changes out of Postgres as a stream.");
 await page.click(".lib-staging button:has-text('Accept')");
-await page.waitForSelector(".lib-staging >> text=Accepted");
+// The visible result, not any text: Staging's status filter also lists "Accepted into the library"
+// (M1a), a hidden <option> the bare text locator found first.
+await page.waitForSelector(".lib-staging >> text=Accepted >> visible=true");
 step("search finds; staging accepts with the person's Bottom Line");
 
 // The two approvals (Research Pipeline §4.2): approving only queues a source; a person
@@ -699,7 +701,9 @@ await page.waitForSelector(".lib-staging .lib-evidence");
 await page.fill("#lib-bl", "OpenAI's own open-weight 21B-parameter model.");
 await page.fill("#lib-solves", "A cheap default for high-volume sub-agent work.");
 await page.click(".lib-staging button:has-text('Accept')");
-await page.waitForSelector(".lib-staging >> text=Accepted");
+// The visible result, not any text: Staging's status filter also lists "Accepted into the library"
+// (M1a), a hidden <option> the bare text locator found first.
+await page.waitForSelector(".lib-staging >> text=Accepted >> visible=true");
 await page.click(".lib-app nav button:has-text('Chat')");
 await page.click("button[aria-controls='lib-models']");
 await page.waitForSelector("#lib-models section:has-text('DeepInfra') .lib-model-card:has-text('openai/gpt-oss-20b') >> text=Tier 3");
@@ -728,8 +732,11 @@ await page.click(".lib-staging .lib-detail button:has-text('Accept')");
 await page.waitForSelector(".lib-staging .lib-detail >> text=changed after it was read");
 await expect(page.inputValue("#lib-bl").then((v) => v === "My in-progress review wording"),
   "a stale review keeps the person's form edits and does not retry acceptance");
-await page.click(".lib-staging .lib-detail button:has-text('Reload item (discards form edits)')");
+// The reload keeps the person's edits (M1a, as-is W-ACC-01: before, it discarded them).
+await page.click(".lib-staging .lib-detail button:has-text('Reload item, keeping your edits')");
 await page.waitForSelector(".lib-staging .lib-detail >> text=A revision of an accepted note");
+await expect(page.inputValue("#lib-bl").then((v) => v === "My in-progress review wording"),
+  "reloading after a stale review keeps the person's form edits");
 await page.click(".lib-staging .lib-detail button:has-text('Accept')");
 await page.waitForSelector(".lib-staging >> text=/Merged Claims into Sources\\/repository\\/osquery.md/");
 await expect(page.evaluate(async () => {

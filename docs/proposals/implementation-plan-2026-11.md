@@ -323,11 +323,12 @@ The batch from the pipeline, 27 November: `ingest-folder` with `start_batch` end
 
 Papers from their own PDFs, 27 November: a captured PDF that names its own arXiv id or DOI is looked up with the existing arXiv and Crossref fetchers. When the record's title is the PDF's own, it is captured as that paper, with its identifier, authors and year, as proposals the person confirms at acceptance. On the fixed folder, 6 of 8 PDFs became papers, all correctly; the 2 journal PDFs without an identifier stayed documents.
 
-Found by the delegated reviews, 27 November, and still to do in M5:
-- A published paper with no stored link never opens its `unlinked_paper` ticket: the class is declared but nothing raises it.
-- A PDF without an accepted folder card is never published (W-PUB-02): it stops at `awaiting_accepted_folder`.
-- `ingest-folder`'s capture step drains the whole shared intake queue, not only the folder's own documents. Capture should be scoped to the folder; the agent's `process_queue` bypass is uncommitted, pending that.
-- `tests/ui_demo_core.py`'s stand-in `person_call` lacks the `actor` parameter, so the main UI smoke fails.
+Found by the delegated reviews, 27 November:
+- Fixed: a published paper with no stored link, or incomplete content, opens an `unlinked_paper` ticket for the Doctor, which a later complete, linked publish closes.
+- Fixed: `ingest-folder` captures only the folder's own queued documents (`intake_run(root=)`), and leaves every other queued reference as it was. This replaces the agent's `process_queue` bypass, which is saved as a patch at `G:\Librarian-workackups6-11-27-delegate-process-queue-bypass.patch`.
+- Fixed: the UI harness's `person_call` takes `actor`. The smoke's two M1a expectations are updated: the visible "Accepted" result, and "Reload item, keeping your edits".
+- Open: the UI smoke still times out in the audited inspector steps. It passes at `04acfe4`, M2, M4.1, `3ac06bb` and once at `3d89b94`, and fails at `b17a6ff`, `75d9e3c` and `3f61202` (twice). Not yet diagnosed; it may be timing-sensitive.
+- Waiting on G4: an unreviewed PDF is never published (W-PUB-02). Geo-Grapher's paper import needs an existing reviewed folder group whose stratum matches the paper's authorship, so a library papers group is a Geo-Grapher change, on top of G4's `library_papers.py`.
 
 Still to do:
 - Tier 0 starting the batch inside the pipeline: this waits for the commission (M2 item 1). Until then, "at most 2 tier-0 turns" is not shown.

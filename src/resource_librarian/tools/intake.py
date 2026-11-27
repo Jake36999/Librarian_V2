@@ -129,11 +129,21 @@ def _framing(ctx: Context, entry: dict) -> tuple[str, str, list[str], dict, str]
                 "Bounded by `limit`. Each reference is screened against the brief it was "
                 "queued for while that brief is open, and joins its session as an undecided "
                 "candidate; each outcome says where the reference went"))
-def intake_run(ctx: Context, limit: int = 10) -> dict:
+def intake_run(ctx: Context, limit: int = 10, root: str = "") -> dict:
+    """With `root`, only the queued documents under that folder are captured, and every other queued
+    reference is left as it was (M5; the Resource-Library supervised run of 27 November: a folder's
+    ingestion drained the whole shared queue, oldest first, other folders' and briefs' items included).
+    Without it, the queue is drained as before."""
     index_gateway = IndexGateway(ctx)
     results = []
     from .. import usage_log
-    for entry in intake.pending(ctx.vault)[:limit]:
+    queued = intake.pending(ctx.vault)
+    if root:
+        from ..ingestion import _key, _under
+        base = _key(root)
+        queued = [e for e in queued if str(e.get("ref") or "")
+                  and not str(e["ref"]).startswith(("http:", "https:")) and _under(str(e["ref"]), base)]
+    for entry in queued[:limit]:
         if usage_log.budget(ctx.vault)["over"]:       # the library's ceiling: stop, the rest stay queued
             return {"processed": len(results), "results": results, "stopped": "budget_ceiling",
                     "detail": "the library's budget ceiling ([budget] ceiling_usd) was reached",
@@ -147,7 +157,8 @@ def intake_run(ctx: Context, limit: int = 10) -> dict:
             _attach(ctx, session_id, found_by.get("brief", ""), result)
         results.append({**result.to_dict(), "framing": framing, "queue": settled})
     return {"processed": len(results), "results": results,
-            "still_waiting": len(intake.pending(ctx.vault))}
+            "still_waiting": len(intake.pending(ctx.vault)),
+            **({"still_waiting_here": max(0, len(queued) - len(results))} if root else {})}
 
 
 @tool("queue_list", tier="consult", effect="read", returns=("queued", "failed"),
