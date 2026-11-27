@@ -43,9 +43,13 @@ The `ingest-folder` pipeline ran on the fixed test folder with its new draft ste
 - Every file sits in `baseline/` or `external/`, which have their own decisions, so no document is labelled owner-created here.
 - In the M5 acceptance run, the person decided the same card as third-party.
 
-Two ways to address it, both changes to the policy or to Geo-Grapher's suggestions, so the Owner's call:
-- policy acceptance could hold a root card whose files all sit in decided subfolders;
-- Geo-Grapher could suggest from the subfolders' purposes.
+**Decided by the Owner, 27 November:** keep it, "as long as no conflicts arise from any changes to the content of the folder".
+
+A check then found that a conflict could arise:
+- a file added directly to the root re-staged the root card, and policy acceptance re-accepted it as `own-current`, so the new file was taken as the owner's own work, silently;
+- the same path replaced a person's decision after its folder's content changed.
+
+Both are now held for the person, with a ticket: a decision that rested on its decided subfolders alone does not extend to new files in the root, and a person's decision is never replaced. A paper added to a policy-decided reference folder is still accepted by policy, as before. The fix is in `folder_review.accept_by_policy` and `tests/test_m5_planted.py`; the rule is in `docs/policy/agent-roles-and-authority.md`.
 
 ## Not covered
 

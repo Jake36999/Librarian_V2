@@ -30,9 +30,10 @@ def _is_person(ctx: Context) -> bool:
 # A held folder card is a ticket with an owner (M5 planted cases; plan M5 item 2: "unmet items are held
 # with their tickets, and the rest go on"). Policy acceptance used to return its held cards once, to
 # whoever called it, and nothing kept them. What holds a card decides who owns it: a sensitivity, link
-# or authorship question is the person's reserved decision; a card not yet checked, stale or invalid
+# or authorship question, or content changed where a decision cannot cover it, is the person's reserved
+# decision; a card not yet checked, stale or invalid
 # is the Lead's to remedy. Deciding the card closes the ticket (the Core's own recheck).
-_PERSONS_HOLDS = ("sensitive", "link", "authorship")
+_PERSONS_HOLDS = ("sensitive", "link", "authorship", "changed")       # "changed": Owner, 27 November
 
 
 def _held_ticket_class(reason: str) -> str:

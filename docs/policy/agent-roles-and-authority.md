@@ -158,3 +158,10 @@ it.
 - **What still holds content, not the folder.** A sensitivity flag stays a reserved decision and
   holds that content's promotion. Originals and attached repositories stay read-only. Drafting
   still needs approved spend. Folder decisions follow who holds each gate.
+- **A decision covers the content it was made on** (Owner, 27 November 2026). Policy acceptance takes a
+  folder card's suggestion as it stands, a root accepted as suggested included, as long as no conflict
+  arises when the folder's content changes. So when files are added or edited after a decision:
+  - a person's decision is never replaced: the card is held for the person;
+  - a decision that rested on its decided subfolders alone (a root with no files of its own) does not
+    extend to files that now sit in it: the card is held for the person;
+  - any other card the policy decided is decided again by the policy, as before.

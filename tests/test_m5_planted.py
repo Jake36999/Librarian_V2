@@ -72,7 +72,8 @@ def planted(vault, tmp_path, monkeypatch):
     # Geo-Grapher, stood in: `init-workspace` plans the folder's partitions and suggests a purpose for
     # each (the planted input), and `apply-folder-review` applies the decided groups.
     (vault.librarian / "geographer.json").write_text(json.dumps({"enabled": True, "wheel_version": "0.2.0"}))
-    purposes = {"baseline": "research-docs", "external": "third-party", "private": "research-docs"}
+    purposes = {".": "own-current", "baseline": "research-docs", "external": "third-party",
+                "private": "research-docs"}  # the root as the real plan suggested it (27 November)
     applied: list = []
 
     def cli(config, operation, payload):
@@ -269,10 +270,10 @@ def test_the_pipeline_describes_every_waiting_folder_when_the_spend_is_approved(
     core, root, _, _ = planted
     run = to_the_persons_decisions(core, root)
     drafted = run["outputs"]["drafted"]
-    assert sorted(drafted["drafted"]) == ["baseline", "external", "private"] and drafted["failed"] == []
+    assert sorted(drafted["drafted"]) == [".", "baseline", "external", "private"] and drafted["failed"] == []
     cards = core.person_call("folder_overview", {})["cards"]
     described = [c for c in cards if (c.get("description") or {}).get("state") == "model_draft"]
-    assert len(described) == len(cards) == 3
+    assert len(described) == len(cards) == 4
     assert all((c.get("sensitivity") or {}).get("sensitivity") == "normal" for c in cards)
     # A second run finds nothing left to draft: drafting is never repeated, so never paid twice.
     again = to_the_persons_decisions(core, root)
@@ -285,7 +286,7 @@ def test_without_the_spend_approved_nothing_is_drafted_and_each_card_is_held_wit
     assert run["outputs"]["drafted"] == {"skipped": True}
     assert run["outputs"]["folders"]["accepted"] == 0
     held = open_tickets(core, "folder:")
-    assert len(held) == 3 and {t["class"] for t in held} == {"partial_or_unmet"}
+    assert len(held) == 4 and {t["class"] for t in held} == {"partial_or_unmet"}
     assert all("folder_draft" in t["summary"] for t in held)
     # The tool itself refuses spend that was not approved, by name.
     out = core.person_call("folder_draft_pending", {"root": str(root)})
@@ -319,3 +320,58 @@ def test_a_draft_refused_for_every_card_is_said_once(planted, vault, monkeypatch
     run = to_the_persons_decisions(core, root)
     failed = run["outputs"]["drafted"]["failed"]
     assert len(failed) == 1 and failed[0]["refused"] == "FOLDER_DRAFT_DISABLED"
+
+
+def _decisions(core):
+    return {c["path"]: c for c in core.person_call("folder_overview", {})["cards"]}
+
+
+def test_files_that_appear_in_a_root_decided_by_its_subfolders_are_held_for_the_person(planted):
+    # Owner, 27 November: the root accepted as Geo-Grapher suggested (own-current) is fine "as long as no
+    # conflicts arise from any changes to the content of the folder". Before, a file added directly to
+    # the root re-staged its card and policy re-accepted it as own-current, so the new file was taken as
+    # the owner's own work, silently.
+    core, root, _, _ = planted
+    to_the_persons_decisions(core, root)
+    assert _decisions(core)["."]["status"] == "accepted"
+    paper(root / "Loose Draft.pdf", "Loose Draft")              # a file directly in the root
+    to_the_persons_decisions(core, root)
+    cards = _decisions(core)
+    assert cards["."]["status"] != "accepted"
+    assert cards["."]["previous_decision"]["purpose"] == "own-current"
+    [held] = open_tickets(core, "folder:")
+    assert held["scope"] == f"folder:{cards['.']['id']}" and held["class"] == "reserved_decision"
+    assert "directly in this folder" in held["summary"]
+    # Its subfolders' decisions stand, and their documents went on.
+    assert {cards[p]["status"] for p in ("baseline", "external", "private")} == {"accepted"}
+
+
+def test_a_paper_added_to_a_decided_reference_folder_is_still_accepted_by_policy(planted):
+    # No conflict: the folder's decision covered files of its own, and the policy decided it, so policy
+    # decides it again as before (adding papers to a reference folder stays automatic).
+    core, root, _, _ = planted
+    to_the_persons_decisions(core, root)
+    paper(root / "external" / "New Survey.pdf", "New Survey")
+    to_the_persons_decisions(core, root)
+    cards = _decisions(core)
+    assert cards["external"]["status"] == "accepted"
+    assert cards["external"]["decision"]["accepted_by"] == "agent-policy"
+    assert open_tickets(core, "folder:") == []
+    assert "New Survey" in {i["name"] for i in StagingStore(core.vault).items("source")}
+
+
+def test_a_persons_decision_is_never_replaced_after_its_content_changes(planted):
+    core, root, sensitive, _ = planted
+    sensitive.append("private")                                  # held by policy: the person decides it
+    to_the_persons_decisions(core, root)
+    card = _decisions(core)["private"]
+    out = core.person_call("folder_accept", {"id": card["id"], "folder_fingerprint": card["folder_fingerprint"],
+                                             "purpose": "third-party", "graph": GRAPH})
+    assert out.get("status") == "accepted", out
+    sensitive.clear()                                            # the content no longer looks sensitive
+    paper(root / "private" / "Another Note.pdf", "Another Note")
+    to_the_persons_decisions(core, root)
+    cards = _decisions(core)
+    assert cards["private"]["status"] != "accepted"             # not re-decided by suggestion
+    [held] = open_tickets(core, "folder:")
+    assert held["class"] == "reserved_decision" and "after a person decided it" in held["summary"]

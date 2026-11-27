@@ -8225,3 +8225,21 @@ Tests: `test_m5_planted.py` (+3), with the planted cases now drafting through th
 The report is `reports/2026-11-27-m5-draft-run/README.md`.
 
 **For the Owner:** the root card `.` was accepted as `own-current`, Geo-Grapher's suggestion, which the policy takes as it stands. Every file sits in the decided subfolders, so no document is mislabelled here. Holding such a root card, or suggesting from the subfolders, would be a policy or Geo-Grapher change.
+
+### Folder decisions cover the content they were made on (2026-11-27)
+
+**The Owner's decision.** The root card the policy accepted as Geo-Grapher suggested (`own-current`) is kept, "as long as no conflicts arise from any changes to the content of the folder".
+
+**The conflict it found.** After a content change (a file added or edited), a re-survey re-staged a decided card, keeping its decision only as `previous_decision`, and policy acceptance re-decided it from the suggestion. So:
+- a file added directly to a root of decided subfolders was silently taken as the owner's own work;
+- a person's decision was replaced after its folder changed, against `accept_by_policy`'s own rule ("a person's decision is never replaced").
+
+**The fix** (`folder_review`):
+- the survey records whether a changed card's decision covered files of its own (`change.had_own_files`; decided subfolders are left out, as `classify_change` already does);
+- policy acceptance holds a changed card whose earlier decision was a person's, or rested on its decided subfolders alone;
+- either hold is a `reserved_decision` ticket on the person's agenda;
+- every other policy-decided card is decided again by the policy, as before, so adding papers to a reference folder stays automatic.
+
+The rule is in `docs/policy/agent-roles-and-authority.md`, under "A connected folder is the person's decision".
+
+Tests: `test_m5_planted.py` (+3). The root and person cases fail on the previous code; the reference-folder case passes on both. The planted plan now gives the root its own card, as the real plan did.

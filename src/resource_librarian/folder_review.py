@@ -79,6 +79,8 @@ def change_record(change, *, flag, previous_fingerprint):
         record[key + '_count'] = len(change.get(key, []))
     if change.get('reason'):
         record['reason'] = change['reason']
+    if 'had_own_files' in change:
+        record['had_own_files'] = change['had_own_files']
     return record
 
 
@@ -419,7 +421,11 @@ class FolderReview:
             if old and old['folder_fingerprint'] != fp:
                 # Decided subfolders track their own changes; they never re-ask the parent.
                 skip = [d for d in decided_paths if d != rel and (rel == '.' or d.startswith(rel + '/'))]
-                change = classify_change(previous_rows(self.vault, old), selected, rel=rel, skip=skip)
+                before_rows = previous_rows(self.vault, old)
+                change = classify_change(before_rows, selected, rel=rel, skip=skip)
+                # Whether the decision covered files of its own, or rested on its decided subfolders
+                # alone (a root of classified folders). Policy acceptance reads it (Owner, 27 November).
+                change['had_own_files'] = bool(_change_files(before_rows, rel, skip)) if before_rows is not None else True
             tracked = old is not None and (change is None or change['kind'] in TRACKED_CHANGES)
             # Keep a decision across a re-survey that changed nothing a review is for: unchanged
             # content, files that moved (same size and time) or files removed. Flag it yellow.
@@ -691,7 +697,22 @@ class FolderReview:
             rows = subtrees.rows(rel)
             reason = None
             sensitivity = (card.get('sensitivity') or {}).get('sensitivity')
-            if linked(rel):
+            # Content that changed after a decision is decided again by policy only where that cannot
+            # conflict with the decision (Owner, 27 November: a root accepted as suggested is fine "as
+            # long as no conflicts arise from any changes to the content of the folder"). A person's
+            # decision is never replaced; and a decision that rested on its decided subfolders alone
+            # (a root holding no files of its own) does not extend to files that now sit in it.
+            earlier = card.get('previous_decision') or {}
+            changed = (card.get('change') or {})
+            if earlier and changed.get('kind') == 'content':
+                if earlier.get('accepted_by') == 'person':
+                    reason = 'changed: its content changed after a person decided it; a person decides it again'
+                elif changed.get('had_own_files') is False:
+                    reason = ('changed: files now sit directly in this folder, whose decision rested on its '
+                              'decided subfolders; a person decides them')
+            if reason:
+                pass                                         # held above, before the other checks
+            elif linked(rel):
                 reason = 'link: a link or junction is never followed; a person decides it'
             elif sensitivity == 'review_required':
                 reason = 'sensitive: a person reviews this folder'
