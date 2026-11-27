@@ -40,8 +40,12 @@ pipelines:
        role: core, gate: [result_status]}
     - {stage: relate, tools: [], after: [data], recipe: "1", model: true, risk: bounded, role: clerk,
        gate: [result_status]}
-    - {stage: metadata, tools: [], after: [], recipe: "1", model: false, risk: routine, role: core,
-       gate: [result_status]}
+    # Recipe 2 (27 November, W-REA-02): after the literal Data facts, the Clerk's closed-choice axis
+    # and topic tasks are asked again for what is still unknown, with the read's Data and Information
+    # records as evidence (Research Pipeline §3.4, §4.3 step 5). So it now depends on those records
+    # and calls a model.
+    - {stage: metadata, tools: [], after: [data, relate], recipe: "2", model: true, risk: bounded,
+       role: clerk, gate: [result_status]}
     - {stage: review, tools: [staging_review], after: [read, data, relate], recipe: "1", model: true,
        risk: bounded, role: clerk, gate: [result_status, draft_present]}
     - {stage: publish, tools: [], after: [parse, read, review], recipe: "1", model: false,

@@ -538,35 +538,126 @@ def _relate(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
 
 def _metadata(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     """Metadata proposals (R16): fields the content model requires that are still unknown,
-    and values the Data can supply - proposals on the item, confirmed at acceptance."""
-    from .intake import readiness
+    and values the Data can supply - proposals on the item, confirmed at acceptance.
+
+    Semantic metadata from the read (Research Pipeline §3.4 and §4.3 step 5, 30 September; as-is
+    W-REA-02). Capture already asks the Clerk each still-unknown axis and the topic, but from what it
+    captured (for a PDF, its opening). After the full read, the same closed-choice tasks
+    (`clerk.axis`, `clerk.topic`) are asked again for what is still unknown, with the Data and
+    Information records as the evidence:
+    - a value is one of the library's own permitted values, so a single source never adds one;
+    - its quote must appear in the records, and is kept with their ids and locators;
+    - an unconfident or unquoted answer leaves the field Unknown;
+    - no project or need reaches the task (`DATA_IS_UNFRAMED`);
+    - with no Clerk answer, the deterministic part is kept and the fields stay Unknown; the waiting
+      tasks are recorded, and the source's coverage is untouched (metadata is not reading).
+    A field the person or capture already set is never replaced."""
+    from . import clerk, dik
+    from .intake import AXIS_QUESTIONS, NOT_ASKED, UNFILED, readiness
     from .tools.library import IndexGateway
+    from .tools.staging import clerk_endpoint
     gateway = IndexGateway(ctx, refresh=False)
     # Refuse a stopped Core before changing proposals. Do not instantiate a
     # second connection if the worker is closed.
     gateway.run(lambda e: None)
     store = StagingStore(ctx.vault)
 
+    # The questions, and the model's answers, outside the writer (a model call is never a commit).
+    first = store.load(item["id"])
+    kind = str(first.get("source_kind") or "")
+    known = dict(first.get("fields") or {})
+    record = dik.load(ctx.vault, first["name"])
+    asks: list[tuple[str, clerk.Task]] = []
+    listing, lines = _records_listing(record)
+    if listing and kind != "model":                  # a model's specs have their own task at capture
+        permitted = gateway.run(lambda e: e.index.model.axes_for("source", kind))
+        for name, values in sorted(permitted.items()):
+            if values and name not in NOT_ASKED and known.get(name) in (None, "", []):
+                asks.append((name, clerk.axis(name, values, listing, AXIS_QUESTIONS.get(name, ""))))
+        topics = ctx.vault.topics()
+        if len(topics) > 1 and known.get("primary_topic") in (None, "", UNFILED):
+            asks.append(("primary_topic", clerk.topic(listing, topics)))
+    results = clerk.run([t for _, t in asks], clerk_endpoint(ctx), ctx.vault.work("queue") / "clerk",
+                        state_write=lambda fn, path: _commit(ctx, fn, targets=(path,))) if asks else []
+    answered: dict[str, Any] = {}
+    evidence: dict[str, dict[str, Any]] = {}
+    for (name, _task), result in zip(asks, results):
+        value = result.value.get("topic" if name == "primary_topic" else "value") if result.ok else None
+        quote = str(result.value.get("evidence") or "").strip() if result.ok else ""
+        cited = [line for line in lines if quote and _squash(quote) in _squash(line["text"])]
+        if not value or value == UNFILED or not cited:
+            continue                                         # Unknown: not supported by the records
+        answered[name] = value
+        evidence[name] = {"quote": quote[:200], "records": [c["id"] for c in cited][:5],
+                          "locators": [c["locator"] for c in cited if c["locator"]][:5],
+                          "task": result.task,
+                          "model": result.model or "", "basis": "the read's Data records"}
+    waiting = [name for (name, _t), r in zip(asks, results) if r.status == "queued"]
+
     def propose():
-        from . import dik
         fresh = store.load(item["id"])
         _assert_active(ctx, fresh)
-        record = dik.load(ctx.vault, fresh["name"])
         languages = [d["name"] for d in record.get("data", []) if d.get("kind") == "language"]
         fields = dict(fresh.get("fields") or {})
         proposed = {"language": languages[0]} if languages and not fields.get("language") else {}
+        # Never over a value set since the questions were asked (by the person or capture).
+        semantic = {k: v for k, v in answered.items() if fields.get(k) in (None, "", [], UNFILED)}
         fields.update(proposed)
+        fields.update(semantic)
         missing = gateway.run(lambda e: readiness(e, fresh.get("source_kind", ""), fields))
-        if proposed:
-            fresh["fields"] = fields
-            fresh["metadata_proposals"] = {**(fresh.get("metadata_proposals") or {}),
-                                          **{k: "from the Data records" for k in proposed}}
+        if waiting and fresh.get("metadata_waiting") != waiting:
+            # Tasks waiting for a model, as capture records its own (`review.queued`): the fields stay
+            # Unknown, and a Clerk that later answers them in the queue is used on the next run.
+            fresh["metadata_waiting"] = waiting
             store.save(fresh)
-        # Unknown metadata is a review prompt, not a claim that less was read.
+        if proposed or semantic:
+            fresh["fields"] = fields
+            fresh["metadata_proposals"] = {
+                **(fresh.get("metadata_proposals") or {}),
+                **{k: "from the Data records" for k in proposed},
+                **{k: f"from the read's Data records, by the clerk ({evidence[k]['model'] or 'model'}): "
+                      f"\"{evidence[k]['quote'][:120]}\" ({', '.join(evidence[k]['locators'][:2]) or 'records'})"
+                   for k in semantic}}
+            if semantic:
+                fresh["metadata_evidence"] = {**(fresh.get("metadata_evidence") or {}),
+                                              **{k: evidence[k] for k in semantic}}
+            if "readiness" in fresh:
+                fresh["readiness"] = missing                 # what Staging lists as still missing
+            store.save(fresh)
+        # Unknown metadata is a review prompt, not a claim that less was read: a task waiting for a
+        # model never marks the source partial, so its coverage still says what was read.
         return {"status": "complete", **({"unknown": missing} if missing else {}),
-                **({"proposed": proposed} if proposed else {})}
+                **({"proposed": {**proposed, **semantic}} if proposed or semantic else {}),
+                **({"asked": [n for n, _t in asks]} if asks else {}),
+                **({"waiting_for_model": waiting} if waiting else {})}
 
     return _commit(ctx, propose, targets=(store.path(item["id"]),))
+
+
+def _squash(text: str) -> str:
+    return " ".join(str(text).casefold().split())
+
+
+def _records_listing(record: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
+    """The Data and Information records as one evidence text, a line per record, each headed by its
+    id, so a quoted answer maps back to the records (and locators) it came from. Chapters bring the
+    claims read from them; a chapter not read brings nothing."""
+    lines: list[dict[str, str]] = []
+    for datum in record.get("data") or []:
+        if datum.get("status") == "not examined":
+            continue
+        claims = "; ".join(str(c) for c in (datum.get("claims") or [])[:3])
+        detail = claims or str(datum.get("evidence") or "")
+        text = f"[{datum.get('id')}] {datum.get('kind')}: {datum.get('name')}" + (f" - {detail}" if detail else "")
+        lines.append({"id": str(datum.get("id") or ""), "locator": str(datum.get("locator") or ""),
+                      "text": " ".join(text.split())[:700]})
+    for edge in (record.get("information") or [])[:40]:
+        if edge.get("basis") == "document order":
+            continue                                      # says nothing about the source itself
+        text = f"[{edge.get('from')} {edge.get('type')} {edge.get('to')}] {edge.get('why') or edge.get('basis') or ''}"
+        lines.append({"id": f"{edge.get('from')}->{edge.get('to')}", "locator": "",
+                      "text": " ".join(text.split())[:300]})
+    return "\n".join(line["text"] for line in lines), lines
 
 
 def _publish(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:

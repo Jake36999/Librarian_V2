@@ -8117,3 +8117,32 @@ Two related changes:
 - **Semantic metadata (W-REA-02)** is recorded as specified since 30 September (Research Pipeline §3.4 and §4.3 step 5, Addendum R16) and as an extension of `batch._metadata`. It is not an Owner decision.
 
 Tests: `test_ingest_service.py` (+1).
+
+### M5, fourth part: semantic metadata from the read (2026-11-27)
+
+As-is W-REA-02, specified since 30 September (Research Pipeline §3.4 and §4.3 step 5, Addendum R16). It extends `batch._metadata` and keeps all it did: the literal Data facts, the unknown required fields from `readiness`, and `metadata_proposals` confirmed at acceptance.
+
+**What already existed.** Capture already asked the Clerk each still-unknown axis, and the topic, as closed choices with verified quotes (`intake.describe`). So the as-is register's "no semantic metadata step" was incomplete. Those tasks saw what capture fetched; for a PDF, that is its opening.
+
+**What is new.** After the full read, the metadata stage asks the same tasks (`clerk.axis`, `clerk.topic`) for what is still unknown, with the Data and Information records as the evidence (`_records_listing`, one line per record, headed by its id; records not examined are left out):
+- a value is one of the library's permitted values, so a single source never adds one;
+- its quote must be found in the records, and is kept in `metadata_evidence` with the records' ids and locators;
+- an unconfident or unsupported answer leaves the field Unknown;
+- a field set by capture or the person is never asked or replaced;
+- no need or project reaches the task;
+- with no Clerk answer, the waiting tasks are recorded (`metadata_waiting`), as capture records its own.
+
+The stage still completes when its tasks wait, because a queued stage would mark a fully read source `partial`, and metadata is not reading. Staging's `readiness` list is updated when a field is filled.
+
+**The contract.** `standard/stages.yaml`'s metadata stage is now recipe 2, a model stage, `after: [data, relate]`, `role: clerk`.
+- It runs on the Clerk's route, as `relate` does: the code's convention, not the pack's Scribe lane.
+- Under MF-020, the recipe bump means a source approved again after this re-runs its metadata stage, and the stages keyed after it (review, publish), once.
+
+**Not yet:** free-text required fields (a paper's identifier, authors, year) after capture. The acceptance run's arXiv files were captured as `document`, which has no such fields.
+
+**A live check** (DeepInfra `google/gemma-4-26B-A4B-it`, 3 calls, under $0.01). Geo-Grapher's own facts were written as Data records in dik's kinds and asked three repository axes. The script is `G:\Librarian-work\md-live\live_axis.py`.
+- `interface_protocol` came back CLI and `data_locality` Local_First. Both were confident, quoted word for word from the right record (`entry_point:geographer`, `setting:GEOGRAPHER_HOME`).
+- `deployment_target` came back unconfident: the model leaned to "Server" from "the MCP server". So it stays Unknown.
+- No library on G: holds a repository Data record today, so the check could not use a real one.
+
+Tests: `test_metadata_stage.py` (7, new); `test_stages.py` (the recipe pin, now 2 for metadata).

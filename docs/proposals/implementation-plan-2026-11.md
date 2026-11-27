@@ -290,16 +290,22 @@ Acceptance run, 27 November (`reports/2026-11-27-m5-acceptance/`):
 - All 8 documents of the fixed test folder went from survey to accepted notes with stored paper links, for $0.154.
 - It found four faults, each fixed with a test: the pipeline runners inside the writer, the ledger's captured sources, a template placeholder title, and graph labels with spaces.
 
-Still to do:
-- Semantic metadata (W-REA-02). Specified since 30 September: Research Pipeline §3.4 and §4.3 step 5, and Addendum R16. The existing stage is `batch._metadata`: literal Data facts, unknown fields from `readiness`, `metadata_proposals` confirmed at acceptance. It extends that stage and replaces none of it. The pack's `metapropose` (a Scribe proposes from evidence, Unknown where unsupported) is built within the specification:
-  - values come from the Data and Information records, citing their ids and locators, never from the summary;
-  - fields are the library's own Note Content Model, which stays authoritative;
-  - a value outside an axis's allowed values is staged as a taxonomy candidate for the person, never written into the schema;
-  - with no model, the deterministic part still runs and the model step queues;
-  - extraction gets no project-need context (§4.4).
+Semantic metadata, 27 November (W-REA-02; Research Pipeline §3.4 and §4.3 step 5, Addendum R16):
+- Capture already asked the Clerk each unknown axis and the topic (`intake.describe`: `clerk.axis` and `clerk.topic`, closed choices with verified quotes), but from what it captured. For a PDF, that is its opening.
+- The batch's metadata stage (`batch._metadata`, recipe 2) now asks the same tasks again after the full read, for what is still unknown, with the Data and Information records as evidence:
+  - each value is one of the library's permitted values;
+  - its quote must be in the records, and is kept with their ids and locators;
+  - an unsupported answer leaves the field Unknown;
+  - nothing already set is replaced;
+  - no need context reaches the task;
+  - a task waiting for a model leaves coverage untouched.
+- It runs on the Clerk's route, as `relate` does. The existing code, not the pack's Scribe lane, decides that.
 
-  The spend is one Scribe call per source; it is not a pending Owner decision.
-- Starting the batch inside the pipeline (it waits for the commission).
+Still to do:
+- Starting the batch inside the pipeline (it waits for the commission). Until then, "at most 2 tier-0 turns" is not shown.
+- Folder descriptions measured against the 90% floor: the acceptance run drafted none.
+- The planted cases: one folder held while its siblings continue, every item held, a partial source, cancel and resume, the link kept through acceptance.
+- Free-text required fields (a paper's identifier, authors, year) have no task after capture. They stay Unknown unless a fetcher supplied them. The acceptance run's arXiv files were captured as `document`, not `paper`, so they carried none of these fields.
 - The supervised run in Resource-Library.
 
 1. **`ingest-folder` as a pipeline** over M1a's actions: folder review, then source intake, then batch enrichment, then acceptance. One parent starts each child.

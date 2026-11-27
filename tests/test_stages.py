@@ -31,12 +31,16 @@ def test_the_batch_grant_is_the_union_of_the_stages_tools_and_nothing_wider():
 
 
 def test_recipes_and_model_stages_come_from_the_declaration():
-    # MF-020's reuse key reads these: the same values the code held before.
-    assert batch.STAGE_RECIPES == {name: "1" for name in (
-        "validate", "parse", "lenses", "data", "relate", "metadata", "review", "publish",
-        "folder_validate", "folder_describe", "folder_data")}
-    assert batch.MODEL_STAGES == {"parse", "read", "relate", "review", "folder_describe"}
+    # MF-020's reuse key reads these: the same values the code held before, except where what a
+    # stage does changed and its recipe was bumped on purpose. The metadata stage (recipe 2, 27
+    # November, W-REA-02) now asks the Clerk's axis and topic tasks from the read's records, so it is
+    # a model stage that depends on the data and relate stages.
+    assert batch.STAGE_RECIPES == {**{name: "1" for name in (
+        "validate", "parse", "lenses", "data", "relate", "review", "publish",
+        "folder_validate", "folder_describe", "folder_data")}, "metadata": "2"}
+    assert batch.MODEL_STAGES == {"parse", "read", "relate", "metadata", "review", "folder_describe"}
     assert stages.load().dependencies()["publish"] == {"parse", "read", "review"}
+    assert stages.load().dependencies()["metadata"] == {"data", "relate"}
 
 
 @pytest.mark.parametrize("row, expected", [
