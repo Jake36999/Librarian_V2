@@ -1,0 +1,232 @@
+{
+ "folder": "E:\\DataManagement\\03-Retrieval-Routing-and-Graph-Query-Systems",
+ "steps": [
+  {
+   "step": "survey",
+   "at": "08:53:30"
+  },
+  {
+   "step": "accept baseline",
+   "at": "08:53:30",
+   "status": "accepted"
+  },
+  {
+   "step": "accept .",
+   "at": "08:53:31",
+   "status": "accepted"
+  },
+  {
+   "step": "accept external",
+   "at": "08:53:31",
+   "status": "accepted"
+  },
+  {
+   "step": "ingest-folder",
+   "at": "08:55:17",
+   "status": "finished",
+   "run": "20261127-085332-ingest-folder-9e5e"
+  },
+  {
+   "step": "approve",
+   "at": "08:55:17",
+   "refused": 0,
+   "accepted": 0,
+   "outcome": "ok"
+  },
+  {
+   "step": "process_approved",
+   "at": "09:09:33",
+   "status": "finished",
+   "started": true,
+   "run": "batch-2026-11-27-f842ab"
+  },
+  {
+   "step": "accept ebsco-fulltext-11-18-2026-1-d67a8c",
+   "at": "09:09:34",
+   "refused": 0,
+   "accepted": 1,
+   "outcome": "ok"
+  },
+  {
+   "step": "accept ext-o3-2307-07697-think-on-graph-b0a022",
+   "at": "09:09:34",
+   "refused": 0,
+   "accepted": 1,
+   "outcome": "ok"
+  },
+  {
+   "step": "accept ext-o3-2403-14403-adaptive-rag-59c0ea",
+   "at": "09:09:34",
+   "refused": 0,
+   "accepted": 1,
+   "outcome": "ok"
+  },
+  {
+   "step": "accept ext-o3-2405-14831-hipporag-9517c3",
+   "at": "09:09:35",
+   "refused": 0,
+   "accepted": 1,
+   "outcome": "ok"
+  },
+  {
+   "step": "accept ext-o3-2406-18665-routellm-c48c8b",
+   "at": "09:09:35",
+   "refused": 0,
+   "accepted": 1,
+   "outcome": "ok"
+  },
+  {
+   "step": "accept ext-o3-2410-05779-lightrag-cae7d1",
+   "at": "09:09:35",
+   "refused": 0,
+   "accepted": 1,
+   "outcome": "ok"
+  },
+  {
+   "step": "accept ijes-v11-21s-2025-34-ed0dd8",
+   "at": "09:09:36",
+   "refused": 0,
+   "accepted": 1,
+   "outcome": "ok"
+  },
+  {
+   "step": "accept mixture-of-experts-knowledge-graph-retrieval-augme-11e2dd",
+   "at": "09:09:36",
+   "refused": 0,
+   "accepted": 1,
+   "outcome": "ok"
+  }
+ ],
+ "cards": [
+  {
+   "path": "baseline",
+   "suggested": "research-docs",
+   "status": "staged",
+   "inherited": false
+  },
+  {
+   "path": ".",
+   "suggested": "own-current",
+   "status": "staged",
+   "inherited": false
+  },
+  {
+   "path": "external",
+   "suggested": "third-party",
+   "status": "staged",
+   "inherited": false
+  }
+ ],
+ "staged": 8,
+ "batch": {
+  "waiting": 0,
+  "running": "",
+  "status": "finished"
+ },
+ "read": 8,
+ "ledger": {
+  "root": "E:\\DataManagement\\03-Retrieval-Routing-and-Graph-Query-Systems",
+  "folders": {
+   "surveyed": 3,
+   "accepted": 3,
+   "waiting": 0
+  },
+  "documents": {
+   "in_accepted_reference_folders": 8,
+   "queued_from_folders": 8,
+   "not_yet_queued": 0
+  },
+  "sources": {},
+  "unaccounted": [
+   "e:\\datamanagement\\03-retrieval-routing-and-graph-query-systems\\baseline\\ebsco-fulltext-11_18_2026 (1).pdf",
+   "e:\\datamanagement\\03-retrieval-routing-and-graph-query-systems\\baseline\\ijes-v11-21s-2025-34.pdf",
+   "e:\\datamanagement\\03-retrieval-routing-and-graph-query-systems\\baseline\\mixture-of-experts knowledge graph retrieval-augmented generation for multi-agent llm-based recommendation.pdf",
+   "e:\\datamanagement\\03-retrieval-routing-and-graph-query-systems\\external\\ext_o3_2307.07697_think_on_graph.pdf",
+   "e:\\datamanagement\\03-retrieval-routing-and-graph-query-systems\\external\\ext_o3_2403.14403_adaptive_rag.pdf",
+   "e:\\datamanagement\\03-retrieval-routing-and-graph-query-systems\\external\\ext_o3_2405.14831_hipporag.pdf",
+   "e:\\datamanagement\\03-retrieval-routing-and-graph-query-systems\\external\\ext_o3_2406.18665_routellm.pdf",
+   "e:\\datamanagement\\03-retrieval-routing-and-graph-query-systems\\external\\ext_o3_2410.05779_lightrag.pdf"
+  ],
+  "unaccounted_count": 8,
+  "next": "nothing waits"
+ },
+ "notes": [
+  {
+   "note": "EBSCO-FullText-11_18_2026 (1)",
+   "graph_paper": "M5 Acceptance-third-party-papers/doc:1"
+  },
+  {
+   "note": "EXT_O3_2307.07697_Think_on_Graph",
+   "graph_paper": "M5 Acceptance-third-party-papers/doc:2"
+  },
+  {
+   "note": "EXT_O3_2403.14403_Adaptive_RAG",
+   "graph_paper": "M5 Acceptance-third-party-papers/doc:3"
+  },
+  {
+   "note": "EXT_O3_2405.14831_HippoRAG",
+   "graph_paper": "M5 Acceptance-third-party-papers/doc:4"
+  },
+  {
+   "note": "EXT_O3_2406.18665_RouteLLM",
+   "graph_paper": "M5 Acceptance-third-party-papers/doc:5"
+  },
+  {
+   "note": "EXT_O3_2410.05779_LightRAG",
+   "graph_paper": "M5 Acceptance-third-party-papers/doc:6"
+  },
+  {
+   "note": "IJES-V11-21s-2025-34",
+   "graph_paper": "M5 Acceptance-third-party-papers/doc:7"
+  },
+  {
+   "note": "Mixture-of-Experts Knowledge Graph Retrieval-Augmented Generation for Multi-Agent LLM-based Recommendation",
+   "graph_paper": "M5 Acceptance-third-party-papers/doc:8"
+  }
+ ],
+ "tickets": [],
+ "seconds": 967,
+ "calls_into_core": {
+  "person": {
+   "calls": 21,
+   "refused": 0,
+   "result_tokens": 24374,
+   "ms": 966645
+  }
+ },
+ "spend_usd": 0.1539,
+ "model_calls": {
+  "clerk|google/gemma-4-26B-A4B-it": {
+   "calls": 780,
+   "in": 1168113,
+   "out": 146174,
+   "unknown": 0
+  },
+  "cleanup|deepseek-ai/DeepSeek-V4-Flash-0731": {
+   "calls": 44,
+   "in": 100211,
+   "out": 91197,
+   "unknown": 0
+  }
+ },
+ "ledger_note": "ledger: as the run read it, before fix 2; ledger_after_fix: re-read on the same library with fix 2",
+ "ledger_after_fix": {
+  "root": "E:\\DataManagement\\03-Retrieval-Routing-and-Graph-Query-Systems",
+  "folders": {
+   "surveyed": 3,
+   "accepted": 3,
+   "waiting": 0
+  },
+  "documents": {
+   "in_accepted_reference_folders": 8,
+   "queued_from_folders": 8,
+   "not_yet_queued": 0
+  },
+  "sources": {
+   "accepted": 8
+  },
+  "unaccounted": [],
+  "unaccounted_count": 0,
+  "next": "nothing waits"
+ }
+}

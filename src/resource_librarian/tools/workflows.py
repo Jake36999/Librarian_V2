@@ -114,6 +114,7 @@ def _run(ctx: Context, name: str, inputs: dict | None, kind: str) -> dict:
 
 
 @tool("run_workflow", tier="consult", effect="write", scope="session", open_world=True,
+      orchestrates=True,
       returns=("run", "status", "outputs", "steps"),
       card=Card("Run a workflow: a standard set of actions, with no model",
                 "a known sequence of actions should happen",
@@ -123,6 +124,7 @@ def run_workflow(ctx: Context, name: str, inputs: dict | None = None) -> dict:
 
 
 @tool("run_pipeline", tier="consult", effect="write", scope="session", open_world=True,
+      orchestrates=True,
       returns=("run", "status", "outputs", "steps"),
       card=Card("Run a pipeline: workflows in sequence, routed by declared conditions or by "
                 "a model choosing among fixed options",
@@ -140,6 +142,7 @@ def run_status(ctx: Context, run_id: str) -> dict:
 
 
 @tool("run_resume", tier="consult", effect="write", scope="session", open_world=True,
+      orchestrates=True,
       card=Card("Continue a paused run, optionally with a person's route choices",
                 "a run paused at a routing step",
                 "`choices` maps a paused step key to an option; only a person may give them"))

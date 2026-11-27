@@ -55,7 +55,9 @@ def ledger(vault: Any, root: str) -> dict[str, Any]:
     statuses: dict[str, int] = {}
     seen: set[str] = set()
     for item in StagingStore(vault).items("source"):
-        ref = str(item.get("ref") or item.get("file_original") or "")
+        # A queued item keeps its document as `ref`; capture moves it to `file` (M5 acceptance,
+        # 2026-11-27: read on the queued shape only, every captured source showed as unaccounted).
+        ref = str(item.get("ref") or item.get("file_original") or item.get("file") or "")
         if not ref or ref.startswith(("http:", "https:")) or not _under(ref, base):
             continue
         seen.add(_key(ref))

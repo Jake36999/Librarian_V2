@@ -106,7 +106,10 @@ def test_only_reviewed_first_party_workflows_can_orchestrate_writer_operations()
     assert [name for name in REGISTRY.names() if REGISTRY.get(name).orchestrates] == [
         "batch_cancel", "folder_accept", "folder_accept_policy", "folder_approve_batch", "folder_draft",
         "folder_queue_accepted", "folder_queue_sources", "folder_survey", "macro_resolve", "macro_run", "model_catalog_adopt",
-        "ocr_pdf", "process_approved"]
+        "ocr_pdf", "process_approved", "run_pipeline", "run_resume", "run_workflow"]
+    # Workflows and pipelines (M5 acceptance, 2026-11-27): their runner sat inside one writer
+    # operation, so a step that orchestrates (folder_survey in ingest-folder) was refused
+    # ORCHESTRATION_CONTEXT in the Core. Each step is still its own registry call and checked write.
     # Folder review (M1a, 2026-11-26): a survey's walk and an acceptance's Geo-Grapher build run
     # beside the single writer (2026-11-17: inside it they starved the Core); only their writes
     # go to the writer. Deciding one folder and approving a batch stay the person's.

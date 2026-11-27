@@ -115,3 +115,17 @@ def test_a_file_source_gets_a_readable_title_and_keeps_its_name(tmp_path, monkey
     assert intake.readable_title(pdf) == "A Real Paper Title About Joins"
     Meta.title = "Microsoft Word - draft3.docx"
     assert intake.readable_title(pdf) == "x y z"
+    # A template's placeholder (M5 acceptance, 2026-11-27: the IEEE template's own title).
+    Meta.title = "Paper Title (use style: paper title)"
+    assert intake.readable_title(pdf) == "x y z"
+
+
+def test_a_handle_whose_label_holds_a_space_is_a_graph_citation():
+    # M5 acceptance (2026-11-27): a label is made from the library's title, so "M5 Acceptance" gave
+    # Geo-Grapher's cite_as "M5 Acceptance-third-party-papers/doc:4", which the handle pattern refused.
+    assert graph_evidence.is_handle("M5 Acceptance-third-party-papers/doc:4")
+    assert graph_evidence.HANDLE.match("M5 Acceptance-third-party-papers/doc:4")["graph"] == \
+        "M5 Acceptance-third-party-papers"
+    assert graph_evidence.is_handle("Lib-papers/doc:3")
+    assert not graph_evidence.is_handle("Lib-papers /doc:3")          # no space at the label's edge
+    assert not graph_evidence.is_handle(" /doc:3") and not graph_evidence.is_handle("doc:3")

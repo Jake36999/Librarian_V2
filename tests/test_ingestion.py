@@ -57,3 +57,37 @@ def test_an_undrained_capture_queue_shows_on_the_agenda(library):
     REGISTRY.call("folder_queue_accepted", {"root": str(source)}, person(vault, service))
     agenda = REGISTRY.call("agenda", {}, Context(tier="consult", vault=vault, extras={"caller_kind": "mcp"}))
     assert agenda["queued_for_capture"]["count"] == 1 and agenda["queued_for_capture"]["owner"] == "lead"
+
+
+def test_the_ingest_folder_pipeline_runs_in_a_core_with_a_vault_writer(library):
+    # M5 acceptance (2026-11-27): in the Core, a pipeline's runner sat inside one writer operation,
+    # so its orchestrating steps (folder_survey first) were refused ORCHESTRATION_CONTEXT. The test
+    # above has no writer, so it passed.
+    from resource_librarian.coordination import VaultWriter
+    vault, source, service, _ = library
+    writer = VaultWriter(vault)
+    try:
+        ctx = Context(tier="curate", vault=vault, extras={"caller_kind": "person", "folder_service": service,
+                                                          "vault_writer": writer})
+        out = REGISTRY.call("run_pipeline", {"name": "ingest-folder", "inputs": {"path": str(source)}}, ctx)
+    finally:
+        writer.close()
+    assert out["status"] == "finished", out
+    assert out["outputs"]["folders"]["surveyed"] == 4
+
+
+def test_a_captured_source_is_accounted_for_by_its_file(library):
+    # M5 acceptance (2026-11-27): capture keeps the document as `file`, not the queued `ref`, so
+    # every accepted source of the run was listed as unaccounted and `sources` was empty.
+    from resource_librarian.staging import StagingStore
+    vault, source, service, _ = library
+    surveyed_and_docs_accepted(vault, source, service)
+    REGISTRY.call("folder_queue_accepted", {"root": str(source)}, person(vault, service))
+    store = StagingStore(vault)
+    [queued] = [i for i in store.items("source") if i.get("status") == "queued"]
+    captured = {k: v for k, v in queued.items() if k != "ref"}
+    captured.update(status="accepted", file=str(source / "docs" / "paper.pdf").replace("\\", "/"))
+    store.save(captured)
+    ledger = REGISTRY.call("ingestion_ledger", {"root": str(source)}, person(vault, service))
+    assert ledger["sources"] == {"accepted": 1}
+    assert ledger["unaccounted_count"] == 0

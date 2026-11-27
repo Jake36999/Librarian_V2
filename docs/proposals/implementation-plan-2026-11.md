@@ -268,10 +268,14 @@ Third part, 27 November:
 - Readable titles (W-INT-01).
 - The library's ceiling checked before each Clerk or Scribe call.
 
+Acceptance run, 27 November (`reports/2026-11-27-m5-acceptance/`):
+- All 8 documents of the fixed test folder went from survey to accepted notes with stored paper links, for $0.154.
+- It found four faults, each fixed with a test: the pipeline runners inside the writer, the ledger's captured sources, a template placeholder title, and graph labels with spaces.
+
 Still to do:
 - Semantic metadata (W-REA-02): a new model step in every batch item, so new spend; its design is the Owner's decision.
-- The acceptance run on the fixed test folder, once the new Geo-Grapher wheel is installed.
 - Starting the batch inside the pipeline (it waits for the commission).
+- The supervised run in Resource-Library.
 
 1. **`ingest-folder` as a pipeline** over M1a's actions: folder review, then source intake, then batch enrichment, then acceptance. One parent starts each child.
 2. **The ledger:** the parent reconciles surveyed, queued, staged, enriched and accepted (W-ING-01).

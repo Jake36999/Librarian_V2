@@ -8062,3 +8062,26 @@ The note's name stays the file's working title, so the duplicate checks by name 
 - the fixed-folder acceptance run, which needs the new Geo-Grapher wheel installed.
 
 Tests: `test_m5_batch.py` (+2).
+
+### M5 acceptance run: the fixed test folder, end to end (2026-11-27)
+
+The 8 PDFs of `E:\DataManagement-Retrieval-Routing-and-Graph-Query-Systems` were brought into a new library at `G:\Librarian-work\m5-acceptance` through an in-process Core with its vault writer live:
+- Geo-Grapher was the 0dcfb9a wheel (v1.2 receipts), in a separate runtime.
+- Clerk and Scribe were DeepInfra Gemma 4.
+- The person's steps were run as the person, in that throwaway library.
+
+All 8 were surveyed, queued, captured, read, reviewed, published and accepted, each note with its `graph_paper` link. The ledger reconciles, with nothing unaccounted. Spend: $0.154 (Clerk 780 calls, cleanup 44). The report is `reports/2026-11-27-m5-acceptance/README.md`.
+
+**Fixed, each with a test that fails on the previous code:**
+- **The runners are orchestrators.** `run_workflow`, `run_pipeline` and `run_resume` ran inside one writer operation, so `ingest-folder`'s `folder_survey` was refused `ORCHESTRATION_CONTEXT` in the Core. Their access-review rows were refreshed: fingerprint and line only.
+- **The ledger reads a captured source's `file`,** not only the queued `ref`. Before, every captured source was listed as unaccounted.
+- **Template placeholders count as filler titles.** "Paper Title (use style: paper title)" was taken as a title.
+- **A graph citation's label may hold inner spaces.** Labels are made from the library's title, and Geo-Grapher's `cite_as` repeats the label as is, so a library with a space in its title had stored links that did not resolve.
+
+**Not covered:**
+- resolving links through the live Geo-Grapher MCP server (the Core was not serving HTTP);
+- the oracle (none was assigned, so the Clerk reviewed);
+- W-REA-02;
+- the supervised Resource-Library run.
+
+Tests: `test_ingestion.py` (+2), `test_m5_batch.py` (+1, and one extended), `test_macro_permissions.py` (allow-list).

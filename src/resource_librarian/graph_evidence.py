@@ -20,7 +20,10 @@ from typing import Any
 
 from .rules import Refusal
 
-HANDLE = re.compile(r"^(?P<graph>[A-Za-z0-9][\w.\-]{0,119})/(?P<doc>doc:\d+)$")
+# A label may hold spaces: it is made from the library's title (suggested_graph), and Geo-Grapher's
+# cite_as repeats it as is (M5 acceptance, 2026-11-27: "M5 Acceptance-third-party-papers/doc:4" was
+# refused, so no stored link of a library with a space in its title resolved). No edge spaces.
+HANDLE = re.compile(r"^(?P<graph>[A-Za-z0-9](?:[\w .\-]{0,118}[\w.\-])?)/(?P<doc>doc:\d+)$")
 GET_DOCUMENT = "mcp__geo-grapher__paper_get_document"
 
 

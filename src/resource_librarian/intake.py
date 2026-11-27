@@ -462,7 +462,10 @@ def file_title(path: Path) -> str:
     return stem
 
 
-_FILLER_TITLES = re.compile(r"^(untitled|title|document|microsoft word\b|slide \d+|presentation\d*)", re.I)
+# Template placeholders count as filler too: the IEEE conference template's own "Paper Title (use
+# style: paper title)" was taken as a paper's title in the M5 acceptance run (2026-11-27).
+_FILLER_TITLES = re.compile(r"^(untitled|title|document|microsoft word\b|slide \d+|presentation\d*"
+                            r"|paper title\b|.*\(use style:)", re.I)
 
 
 def readable_title(path: Path) -> str:
