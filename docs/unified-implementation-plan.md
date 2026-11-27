@@ -8146,3 +8146,42 @@ The stage still completes when its tasks wait, because a queued stage would mark
 - No library on G: holds a repository Data record today, so the check could not use a real one.
 
 Tests: `test_metadata_stage.py` (7, new); `test_stages.py` (the recipe pin, now 2 for metadata).
+
+### M5, fifth part: the planted cases, and three faults they found (2026-11-27)
+
+`tests/test_m5_planted.py` runs M5's five planted cases through `App.person_call`, with the Core's writer live:
+- survey;
+- the Clerk's folder draft, which checks sensitivity;
+- `ingest-folder` (policy acceptance under promotion mode agent, then queueing and capture);
+- approval, the batch, and acceptance.
+
+Only the outside services are stood in for:
+- **the Clerk and the PDF cleanup model** are scripted, so they take the standalone endpoint contract, not the Core's per-route qualification gate. The acceptance run passed that gate with DeepInfra;
+- **Geo-Grapher's** workspace plan, folder application and paper publication return v1.2-shaped results.
+
+All five pass.
+
+1. **One folder held while its siblings continue.** A sensitive folder is held, and its siblings' documents are queued, captured and read.
+   - Fixed: the held card used to be returned once and then forgotten. Each held card is now a ticket (`tools/folders.py`).
+     - A sensitivity, link or authorship hold is a `reserved_decision` on the person's agenda.
+     - A card not yet checked, stale or invalid is `partial_or_unmet` for the Lead, naming its remedy.
+   - Deciding the card closes its ticket, by the Core's recheck.
+2. **Every item held.** The run still finishes with one result, and the ledger says what waits. There is one ticket per card, and running again opens no second one.
+3. **A partial source.** A scanned PDF ends `partial` while the rest are enriched.
+   - Fixed: a run that leaves sources partial now raises one `partial_or_unmet` ticket for the run (`batch._partial_ticket`). It is one per run, not one per source, so the agenda is never flooded.
+   - The next run's recheck closes it once none of those sources is partial.
+4. **Cancel and resume.** Fixed: a run resumed after parse used to re-run validate, parse and the whole read of the stopped source, model calls included. This was a pre-existing fault, from before M0. Two causes:
+   - **`clean_file` was in every stage's completion key**, and parse writes it. Now `batch._keyed_identity` leaves what a stage or a later stage writes out of that stage's key (`KEY_OUTPUTS`, `clean_file` only).
+     - The original `file` stays in every key, so a changed PDF still re-runs parse.
+     - First-run keys are unchanged, because they were taken before parse wrote `clean_file`.
+     - A conversion that lost its page anchors still re-runs parse (2026-11-16), by its marker.
+   - **A `not_applicable` stage was never reused** (for example, `relate` for a single-part source), so the stages after it ran again. With an unchanged key it is now reused like `complete` (`REUSABLE`), and its key is recorded.
+
+   One cost: a source approved again after an earlier re-run may re-run parse once, because its stored parse key was taken with `clean_file`.
+5. **The link kept through acceptance.** Each accepted note's `graph_paper` is its own receipt's `cite_as`, one paper per note. The ledger reconciles, with nothing unaccounted.
+
+**Found, not fixed (a remedy that is plan work):** the `ingest-folder` pipeline has no folder-draft step, so under agent mode every card not drafted is held. It is now held with a ticket naming the draft.
+
+Access-review rows refreshed for `folder_accept` and `folder_accept_policy` (fingerprint and line only).
+
+Tests: `test_m5_planted.py` (5, new), `test_m5_batch.py` (+1, keys). Each fails on the previous code.

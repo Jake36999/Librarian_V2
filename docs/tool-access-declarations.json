@@ -5870,11 +5870,11 @@
       "fixes": [],
       "evidence": {
         "path": "src/resource_librarian/tools/folders.py",
-        "line": 72,
+        "line": 122,
         "symbol": "folder_accept"
       },
       "fingerprint": {
-        "source_sha256": "b0c2b994e7966e38e087ed8fef9d4c9165cf57851ae466941095d8c17798377c",
+        "source_sha256": "f77738d74991e1105019437de6b492b656e1f6f90a669134b8b07f3fdac5e75a",
         "schema_sha256": "a3c8d631cbbb1a0ea2aa2b4b71b001bc8b533fb9eb7499056d9209f8a6b305b1",
         "effect": "write",
         "open_world": false,
@@ -5897,11 +5897,11 @@
       "fixes": [],
       "evidence": {
         "path": "src/resource_librarian/tools/folders.py",
-        "line": 87,
+        "line": 140,
         "symbol": "folder_accept_policy"
       },
       "fingerprint": {
-        "source_sha256": "02b58ead00e858c57cc8f3474e79e186cc9ffa52cd55f2989a072980e0bb7da7",
+        "source_sha256": "958b3e239731a559c75973d5a3258975b22d9e5302bd3ed51f2684370e4b980c",
         "schema_sha256": "1c754deb13a40befe281ea08e9fda9be717d3f8a3cfa318f4b6b6ba163d38bd9",
         "effect": "write",
         "open_world": false,

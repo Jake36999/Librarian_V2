@@ -129,3 +129,31 @@ def test_a_handle_whose_label_holds_a_space_is_a_graph_citation():
     assert graph_evidence.is_handle("Lib-papers/doc:3")
     assert not graph_evidence.is_handle("Lib-papers /doc:3")          # no space at the label's edge
     assert not graph_evidence.is_handle(" /doc:3") and not graph_evidence.is_handle("doc:3")
+
+
+def test_a_stages_key_leaves_out_only_what_it_or_a_later_stage_writes(vault, monkeypatch):
+    # M5 planted cases (27 November): `clean_file`, which parse writes, was in every stage's key, so a
+    # run resumed after parse found validate's and parse's keys changed and read the source again.
+    from resource_librarian import batch
+    (vault.root / "Inbox").mkdir(exist_ok=True)
+    (vault.root / "Inbox" / "a.pdf").write_bytes(b"%PDF-1.4 original")
+    (vault.root / "Inbox" / "a.md").write_text("[page 1]\nconverted", encoding="utf-8")
+    before = {"id": "x", "name": "A", "file": "Inbox/a.pdf", "evidence": []}
+    after = {**before, "clean_file": "Inbox/a.md"}                   # what parse wrote
+    monkeypatch.setattr(batch, "_unmapped_cleanup", lambda vault, path: False)
+    for stage in ("validate", "parse"):
+        assert batch._keyed_identity(vault, after, stage, batch.STAGES) == \
+            batch._keyed_identity(vault, before, stage, batch.STAGES)
+    # The reading's input is the conversion, so its key still changes with it ...
+    assert batch._keyed_identity(vault, after, "read", batch.STAGES) != \
+        batch._keyed_identity(vault, before, "read", batch.STAGES)
+    # ... and the original file stays in every key: a changed PDF still re-runs parse.
+    changed = dict(before)
+    (vault.root / "Inbox" / "b.pdf").write_bytes(b"%PDF-1.4 changed")
+    changed["file"] = "Inbox/b.pdf"
+    assert batch._keyed_identity(vault, changed, "parse", batch.STAGES) != \
+        batch._keyed_identity(vault, before, "parse", batch.STAGES)
+    # A conversion that lost its page anchors still re-runs parse when approved again (2026-11-16).
+    monkeypatch.setattr(batch, "_unmapped_cleanup", lambda vault, path: True)
+    assert batch._keyed_identity(vault, after, "parse", batch.STAGES) != \
+        batch._keyed_identity(vault, before, "parse", batch.STAGES)

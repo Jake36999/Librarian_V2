@@ -26,6 +26,56 @@ def _is_person(ctx: Context) -> bool:
     return ctx.extras.get("caller_kind") == "person" and not ctx.extras.get("actor")
 
 
+
+# A held folder card is a ticket with an owner (M5 planted cases; plan M5 item 2: "unmet items are held
+# with their tickets, and the rest go on"). Policy acceptance used to return its held cards once, to
+# whoever called it, and nothing kept them. What holds a card decides who owns it: a sensitivity, link
+# or authorship question is the person's reserved decision; a card not yet checked, stale or invalid
+# is the Lead's to remedy. Deciding the card closes the ticket (the Core's own recheck).
+_PERSONS_HOLDS = ("sensitive", "link", "authorship")
+
+
+def _held_ticket_class(reason: str) -> str:
+    return "reserved_decision" if any(word in reason for word in _PERSONS_HOLDS) else "partial_or_unmet"
+
+
+def _remedy(reason: str) -> str:
+    if "not yet checked" in reason:
+        return "draft the card (folder_draft) so its sensitivity is checked, then accept by policy again"
+    if reason.startswith("stale"):
+        return "survey the folder again (folder_survey), then accept by policy again"
+    if reason.startswith("validation"):
+        return "review the card in Folders; its inventory did not validate"
+    return "a person decides this folder in Folders"
+
+
+def _write_tickets(ctx: Context, fn) -> None:
+    """Ticket writes go through the Core's writer when there is one (these tools run beside it)."""
+    try:
+        writer = ctx.extras.get("vault_writer") if isinstance(ctx.extras, dict) else None
+        if writer is not None:
+            writer.submit(fn, caller="folder-tickets")
+        else:
+            fn()
+    except Exception:                                    # noqa: BLE001 - a ticket never fails the decision
+        pass
+
+
+def _hold_tickets(ctx: Context, held: list[dict], decided_ids: set[str]) -> None:
+    from ..tickets import TicketStore
+
+    def write():
+        store = TicketStore(ctx.vault)
+        for ticket in store.all(open_only=True):
+            if ticket["scope"].removeprefix("folder:") in decided_ids:
+                store.close(ticket["id"], "core-recheck", "the folder card was decided")
+        for hold in held:
+            reason = str(hold.get("reason") or "held")
+            store.ensure(_held_ticket_class(reason), f"folder:{hold['id']}", opened_by="folder-policy",
+                         summary=f"folder {hold.get('path')} held: {reason}. Next: {_remedy(reason)}",
+                         evidence={"card": hold["id"], "path": hold.get("path"), "reason": reason})
+    _write_tickets(ctx, write)
+
 def _run(fn):
     try:
         return fn()
@@ -80,8 +130,11 @@ def folder_accept(ctx: Context, id: str = "", folder_fingerprint: str = "", purp
     if not _is_person(ctx):
         raise Refusal("PERSON_CONFIRMS", "a person accepts a single folder; an agent uses "
                                          "folder_accept_policy under promotion mode agent")
-    return _run(lambda: _service(ctx).accept(id, folder_fingerprint, purpose=purpose, graph=graph or None,
-                                             description=description, authorship=authorship, person=True))
+    out = _run(lambda: _service(ctx).accept(id, folder_fingerprint, purpose=purpose, graph=graph or None,
+                                            description=description, authorship=authorship, person=True))
+    if isinstance(out, dict) and out.get("status") == "accepted":
+        _hold_tickets(ctx, [], {id})                     # a card the person decided is no longer held
+    return out
 
 
 @tool("folder_accept_policy", tier="contribute", effect="write", scope="library", orchestrates=True,
@@ -92,7 +145,14 @@ def folder_accept(ctx: Context, id: str = "", folder_fingerprint: str = "", purp
                 "Needs promotion.mode = agent, which only the owner sets (PROMOTION_MODE). "
                 "Ambiguous and sensitive cards are held for the person"))
 def folder_accept_policy(ctx: Context, root: str) -> dict:
-    return _run(lambda: _service(ctx).accept_by_policy(root))
+    out = _run(lambda: _service(ctx).accept_by_policy(root))
+    if isinstance(out, dict) and "held" in out:
+        from ..ingestion import _key
+        base = _key(root)
+        decided = {c["id"] for c in _service(ctx).overview().get("cards", [])
+                   if c.get("status") == "accepted" and c.get("source_root") and _key(c["source_root"]) == base}
+        _hold_tickets(ctx, list(out.get("held") or []), decided)
+    return out
 
 
 @tool("folder_approve_batch", tier="curate", effect="write", scope="library", orchestrates=True,

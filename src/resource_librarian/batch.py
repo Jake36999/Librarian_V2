@@ -59,6 +59,12 @@ MODEL_STAGES = CONTRACT.model_stages()
 # What processing itself writes to the item it reads: excluded from the
 # mid-stage change check for the stage that writes it.
 OWN_FILES = {"parse": ("file", "clean_file")}
+# Stage results a later run reuses when its key is unchanged (MF-020).
+REUSABLE = frozenset({"complete", "not_applicable"})
+# What a stage writes that is not an input of that stage or an earlier one, so it stays out of their
+# completion keys (`_keyed_identity`). `file` is parse's input (and only set by it for an open-access
+# PDF a paper was captured without), so it stays in every key, as before.
+KEY_OUTPUTS = {"parse": ("clean_file",)}
 
 _LIVE: dict[str, tuple[str, threading.Thread | None, threading.Event]] = {}
 _GUARD = threading.RLock()
@@ -141,6 +147,23 @@ def _source_identity(vault: Vault, item: dict[str, Any],
     if item.get('kind') == 'folder':
         identity.update({key: item.get(key) for key in ('source_root', 'path',
             'folder_fingerprint', 'inventory_evidence', 'file_counts', 'bytes')})
+    return identity
+
+
+def _keyed_identity(vault: Vault, item: dict[str, Any], stage: str,
+                    stages: list[tuple[str, Any]]) -> dict[str, Any]:
+    """A stage's inputs, for its completion key (MF-020): what a stage, or a stage after it, writes
+    is not that stage's input. Before this, `clean_file`, which parse writes, was in every stage's
+    key, so a run resumed after parse found validate's and parse's keys changed and read the whole
+    source again, model calls included (M5 planted cases, 27 November). Their first-run keys were
+    taken before parse wrote it, so they are unchanged. A conversion that lost its page anchors
+    still re-runs parse when approved again (2026-11-16), by its marker."""
+    names = [name for name, _fn in stages]
+    later = names[names.index(stage):] if stage in names else [stage]
+    written = tuple(sorted({f for name in later for f in KEY_OUTPUTS.get(name, ())}))
+    identity = _source_identity(vault, item, written)
+    if "clean_file" in written and item.get("clean_file") and _unmapped_cleanup(vault, item["clean_file"]):
+        identity["clean_file_anchors"] = "lost"
     return identity
 
 
@@ -879,6 +902,43 @@ def _unfinished(vault: Vault, run_id: str) -> list[str]:
     return [i for i in events[0].get("items", []) if i not in finished]
 
 
+def _partial_ticket(ctx: Context, run_id: str, items: list[str]) -> None:
+    """A run that leaves sources partial raises one ticket for the run (M5 planted cases; plan M5
+    item 2: "unmet items are held with their tickets, and the rest go on"). It is one per run, not one
+    per source, so a large run never floods the agenda; each source is still listed in Staging, and in
+    the agenda's `awaiting_acceptance`. The Core's own recheck closes an earlier run's ticket once none
+    of its sources is partial any more (approved again and finished, accepted, or rejected). A ticket
+    never stops or fails the run."""
+    try:
+        from .tickets import TicketStore
+        store, tickets = StagingStore(ctx.vault), TicketStore(ctx.vault)
+
+        def status(item_id: str) -> str:
+            try:
+                return str(store.load(item_id).get("status") or "")
+            except (OSError, TypeError, ValueError, KeyError):
+                return ""
+
+        def write() -> None:
+            for ticket in tickets.all(open_only=True):
+                if ticket["class"] != "partial_or_unmet" or not ticket["scope"].startswith("batch:") \
+                        or ticket["scope"] == f"batch:{run_id}":
+                    continue
+                listed = (ticket.get("evidence") or {}).get("items") or []
+                if listed and not any(status(i) == "partial" for i in listed):
+                    tickets.close(ticket["id"], "core-recheck", "none of its sources is partial now")
+            partial = [i for i in items if status(i) == "partial"]
+            if partial:
+                tickets.ensure("partial_or_unmet", f"batch:{run_id}", opened_by="batch",
+                               summary=f"{len(partial)} of {len(items)} source(s) in {run_id} were read with "
+                                       f"gaps: approve them again to run only what is unfinished, or accept "
+                                       f"them with partial coverage",
+                               evidence={"run": run_id, "items": partial[:200]})
+        _commit(ctx, write, targets=(tickets.path,))
+    except Exception:                                    # noqa: BLE001 - a ticket never fails the run
+        pass
+
+
 def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -> None:
     runs, store = _Runs(ctx), StagingStore(ctx.vault)
     try:
@@ -904,19 +964,22 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                 own = OWN_FILES.get(stage, ())
                 # Taken before the stage runs: a later read would see later bytes.
                 before = _source_identity(ctx.vault, current, own)
-                key = _stage_key(_source_identity(ctx.vault, current), stage, route)
+                key = _stage_key(_keyed_identity(ctx.vault, current, stage, stages), stage, route)
                 logged = done.get((item_id, stage))
                 # Independent stages keep their receipts across partial retries; a stage runs
                 # again when one it depends on did (standard/stages.yaml `after`).
                 dependencies = CONTRACT.dependencies()
                 changed_input = bool(reran.intersection(dependencies.get(stage, ())))
+                # `not_applicable` is decided by the stage's inputs, which the key holds, so it is
+                # reused like `complete` (M5 planted cases: a resume re-ran `relate` for a source with
+                # nothing to relate, and so the review that depends on it).
                 if (not changed_input and logged and logged.get("key") == key
-                        and logged.get("status") == "complete"):
+                        and logged.get("status") in REUSABLE):
                     results[stage] = logged
                     continue
-                if not changed_input and (prior.get("stages") or {}).get(stage) == "complete" and \
+                if not changed_input and (prior.get("stages") or {}).get(stage) in REUSABLE and \
                         (prior.get("keys") or {}).get(stage) == key:  # an earlier run's, same input
-                    results[stage] = {"status": "complete", "carried": prior.get("run", ""),
+                    results[stage] = {"status": prior["stages"][stage], "carried": prior.get("run", ""),
                                       "key": key,
                                       **({"coverage": prior["read_coverage"]}
                                          if stage == "read" and prior.get("read_coverage")
@@ -976,6 +1039,7 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
             _commit(ctx, lambda: _finish_item(store, runs, run_id, item_id, results),
                     targets=(store.path(item_id), runs.path(run_id)))
         runs.append(run_id, {"type": "finished"})
+        _partial_ticket(ctx, run_id, items)
     except Exception as exc:
         # A closed writer must not trigger a direct append after the Core has
         # released its vault. The already committed run remains interrupted
@@ -1005,7 +1069,7 @@ def _finish_item(store: StagingStore, runs: RunStore, run_id: str, item_id: str,
                           "stages": {s: r.get("status") for s, r in results.items()},
                           # MF-020: what each completion was for, so only the same input reuses it.
                           "keys": {s: r["key"] for s, r in results.items()
-                                   if r.get("status") == "complete" and r.get("key")},
+                                   if r.get("status") in REUSABLE and r.get("key")},
                           "coverage": "full" if not incomplete and not failed else
                           (f"partial {coverage}" if coverage else "partial"),
                           **({"read_coverage": coverage} if coverage else {}),

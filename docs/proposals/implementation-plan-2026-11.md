@@ -301,10 +301,21 @@ Semantic metadata, 27 November (W-REA-02; Research Pipeline §3.4 and §4.3 step
   - a task waiting for a model leaves coverage untouched.
 - It runs on the Clerk's route, as `relate` does. The existing code, not the pack's Scribe lane, decides that.
 
+Planted cases, 27 November (`tests/test_m5_planted.py`): all five pass through a real Core, with its writer live.
+- One folder held while its siblings continue.
+- Every item held.
+- A partial source.
+- Cancel and resume.
+- The link kept through acceptance.
+
+They found three faults, fixed:
+- a held folder had no ticket;
+- a run that left sources partial raised none;
+- a resume after parse re-read the stopped source from the start.
+
 Still to do:
 - Starting the batch inside the pipeline (it waits for the commission). Until then, "at most 2 tier-0 turns" is not shown.
-- Folder descriptions measured against the 90% floor: the acceptance run drafted none.
-- The planted cases: one folder held while its siblings continue, every item held, a partial source, cancel and resume, the link kept through acceptance.
+- Folder descriptions measured against the 90% floor: the acceptance run drafted none. The `ingest-folder` pipeline has no draft step. Under promotion mode agent, every card not yet drafted is held ("sensitivity not yet checked"), now with a ticket naming the draft as the remedy.
 - Free-text required fields (a paper's identifier, authors, year) have no task after capture. They stay Unknown unless a fetcher supplied them. The acceptance run's arXiv files were captured as `document`, not `paper`, so they carried none of these fields.
 - The supervised run in Resource-Library.
 
