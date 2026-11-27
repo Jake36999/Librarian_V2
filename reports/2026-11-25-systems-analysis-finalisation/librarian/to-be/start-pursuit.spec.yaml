@@ -1,0 +1,61 @@
+diagram: start-pursuit
+use_case: UC13
+status: PROPOSED_UNACCEPTED
+supersedes: [reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/start-pursuit.spec.yaml]
+kind: activity
+title: Start a pursuit (a course, a role or a project) (proposed)
+problem:
+  symptom: "As-is: five rigid phase gates where seed ingestion can stall on 150s Broker asks or uncurated source additions."
+  root: "Approve the setup envelope once, capture inventory and dated milestones into the unified agenda, delegate seeded sources through UC1 ingestion, resume any held seed decision back through ingestion and the Oracle (never bypassing Oracle verification), and deliver verified or explicitly partial results."
+lanes:
+  - Owner
+  - Overseer (tier 0)
+  - Oracle
+  - Core
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: commission, kind: activity, lane: Owner, step: 1, label: "states pursuit kind (course, role or project), timeframe, milestones and initial materials"}
+  - {id: frame, kind: activity, lane: Overseer (tier 0), step: 2, label: "opens pursuit, creates Project note, records kind-specific inventory and approves single setup envelope"}
+  - {id: milestones, kind: activity, lane: Core, step: 3, label: "records dated milestones via task_add into the unified agenda (or explicit no_dates reason)"}
+  - {id: dseed, kind: decision, lane: Core, label: "are initial seed sources provided?"}
+  - {id: ref_ingest, kind: ref, lane: Core, step: 4, use_case: ingestion, label: "ingests and indexes seeded materials cleanly under UC1"}
+  - {id: hold_seed, kind: activity, lane: Core, label: "records held seed-ingestion operation and resume point on Owner's agenda"}
+  - {id: ref_agenda, kind: ref, lane: Owner, use_case: agenda, label: "Owner resolves held seed-ingestion scope or choice once on the agenda"}
+  - {id: resume_seed, kind: activity, lane: Core, label: "reads held seed operation and resume point, reconciles decision, and resumes seed ingestion"}
+  - {id: devidence, kind: decision, lane: Core, label: "does Core hold verified completion evidence for the seeded sources?"}
+  - {id: ref_oracle, kind: ref, lane: Oracle, step: 5, use_case: oracle, label: "checks pursuit note, inventory links, dated milestones and seeded leads on a distinct route"}
+  - {id: dfinal, kind: decision, lane: Core, label: "are all seeded sources complete, or were permitted partial seeds kept with tickets?"}
+  - {id: deliver, kind: activity, lane: Overseer (tier 0), step: 6, label: "hands over active pursuit workspace, agenda schedule and open tickets"}
+  - {id: e1, kind: end, outcome: success, label: "pursuit initialized with Oracle-verified plan, milestones and seeded sources"}
+  - {id: e_partial, kind: end, outcome: partial, label: "pursuit initialized and Oracle-checked with permitted partial seeds kept on agenda"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused awaiting Owner agenda decision, completion evidence, or distinct Oracle route"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "critical failure escalated"}
+edges:
+  - {from: s, to: commission}
+  - {from: commission, to: frame}
+  - {from: frame, to: milestones}
+  - {from: milestones, to: dseed}
+  - {from: dseed, to: ref_ingest, guard: "yes: seed materials provided"}
+  - {from: dseed, to: ref_oracle, guard: "no: ingested='none'", ext: 4a}
+  - {from: ref_ingest, to: ref_oracle, guard: "success"}
+  - {from: ref_ingest, to: ref_oracle, guard: "reused"}
+  - {from: ref_ingest, to: ref_oracle, guard: "partial", ext: 4b}
+  - {from: ref_ingest, to: hold_seed, guard: "paused", ext: 4c}
+  - {from: hold_seed, to: ref_agenda}
+  - {from: ref_agenda, to: resume_seed, guard: "success"}
+  - {from: resume_seed, to: ref_ingest}
+  - {from: ref_agenda, to: devidence, guard: "nothing held"}
+  - {from: devidence, to: ref_oracle, guard: "yes: verified seed completion evidence"}
+  - {from: devidence, to: e_paused, guard: "no: unverified or seeds still pending"}
+  - {from: ref_agenda, to: e_paused, guard: "paused"}
+  - {from: ref_agenda, to: e_escalated, guard: "escalated"}
+  - {from: ref_ingest, to: e_escalated, guard: "escalated", ext: 4d}
+  - {from: ref_oracle, to: dfinal, guard: "success"}
+  - {from: ref_oracle, to: frame, guard: "shortfall", ext: 5a}
+  - {from: ref_oracle, to: e_paused, guard: "paused", ext: 5b}
+  - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 5c}
+  - {from: dfinal, to: deliver, guard: "all obligations complete"}
+  - {from: dfinal, to: e_partial, guard: "permitted partial seeds with open tickets", ext: 6a}
+  - {from: deliver, to: e1}
+evidence:
+  - "builds-on.md (agenda, ingestion, oracle); phases.yaml start_pursuit; initiators.table.yaml UC13."

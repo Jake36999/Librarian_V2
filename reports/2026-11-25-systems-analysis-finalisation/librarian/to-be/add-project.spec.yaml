@@ -1,0 +1,62 @@
+diagram: add-project
+use_case: UC11
+status: PROPOSED_UNACCEPTED
+supersedes: [reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/add-project.spec.yaml]
+kind: activity
+title: Add a project and map what the library holds for it (proposed)
+problem:
+  symptom: "As-is: tier 0 walks eight serial phase gates with 150s asks, halving budgets, whole-library judge pools, and manual promotion prompts."
+  root: "Compile the project setup as a commissioned sprint under one permission envelope, route supplied sources through UC1 ingestion, keep candidate pools scoped, verify via Oracle before promotion, and hold reserved promotion or pre-Oracle pauses separately without bypassing the Oracle."
+lanes:
+  - Owner
+  - Overseer (tier 0)
+  - Lead (tier 1)
+  - Oracle
+  - Core
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: ask, kind: activity, lane: Owner, step: 1, label: "names the new project, goals, disqualifiers and initial folders or references"}
+  - {id: frame, kind: activity, lane: Overseer (tier 0), step: 2, label: "opens add_project sprint, creates Project note and approves the scoped permission envelope once"}
+  - {id: dsources, kind: decision, lane: Core, label: "did the Owner supply sources to ingest into the library?"}
+  - {id: ref_ingest, kind: ref, lane: Core, step: 3, use_case: ingestion, label: "ingests and screens supplied sources under UC1 within the sprint mandate"}
+  - {id: hold_ingest, kind: activity, lane: Core, label: "records paused source-ingestion operation and resume point on Owner's agenda before mapping"}
+  - {id: map, kind: activity, lane: Lead (tier 1), step: 4, label: "maps existing library notes and project-scoped candidates against the project's disqualifiers"}
+  - {id: synth, kind: activity, lane: Lead (tier 1), step: 5, label: "records synthesis and drafts the initial project map Offering with pinned source_refs"}
+  - {id: ref_oracle, kind: ref, lane: Oracle, step: 6, use_case: oracle, label: "checks map completeness, quotes verbatim and findability on a distinct route"}
+  - {id: ref_agenda, kind: ref, lane: Owner, step: 7, use_case: agenda, label: "holds project Offering promotion on Owner's agenda for explicit Owner decision"}
+  - {id: dpromote, kind: decision, lane: Core, label: "did the Owner approve promotion of the Oracle-verified Offering?"}
+  - {id: dprom_ev, kind: decision, lane: Core, label: "does Core hold verified promotion evidence for this Offering?"}
+  - {id: handover, kind: activity, lane: Overseer (tier 0), step: 8, label: "hands back Project note, mapped holdings, spend and open tickets"}
+  - {id: e1, kind: end, outcome: success, label: "Project note and Oracle-verified project map promoted into library"}
+  - {id: e_partial, kind: end, outcome: partial, label: "project created and Oracle-checked map draft held unpromoted on agenda (or declined)"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused awaiting Owner agenda decision, intake hold at recorded resume point, or distinct Oracle route"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "critical failure escalated with evidence and ticket"}
+edges:
+  - {from: s, to: ask}
+  - {from: ask, to: frame}
+  - {from: frame, to: dsources}
+  - {from: dsources, to: ref_ingest, guard: "yes: sources provided"}
+  - {from: dsources, to: map, guard: "no: ingested='none'", ext: 3a}
+  - {from: ref_ingest, to: map, guard: "success"}
+  - {from: ref_ingest, to: map, guard: "reused"}
+  - {from: ref_ingest, to: map, guard: "partial", ext: 3b}
+  - {from: ref_ingest, to: hold_ingest, guard: "paused", ext: 3c}
+  - {from: hold_ingest, to: e_paused}
+  - {from: ref_ingest, to: e_escalated, guard: "escalated", ext: 3d}
+  - {from: map, to: synth}
+  - {from: synth, to: ref_oracle}
+  - {from: ref_oracle, to: ref_agenda, guard: "success"}
+  - {from: ref_oracle, to: map, guard: "shortfall", ext: 6a}
+  - {from: ref_oracle, to: e_paused, guard: "paused", ext: 6b}
+  - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 6c}
+  - {from: ref_agenda, to: dpromote, guard: "success"}
+  - {from: dpromote, to: handover, guard: "approved and promoted"}
+  - {from: dpromote, to: e_partial, guard: "declined or deferred", ext: 7a}
+  - {from: ref_agenda, to: dprom_ev, guard: "nothing held", ext: 7b}
+  - {from: dprom_ev, to: handover, guard: "yes: verified already promoted"}
+  - {from: dprom_ev, to: e_partial, guard: "no: unpromoted draft stays on agenda"}
+  - {from: ref_agenda, to: e_paused, guard: "paused", ext: 7c}
+  - {from: ref_agenda, to: e_escalated, guard: "escalated", ext: 7d}
+  - {from: handover, to: e1}
+evidence:
+  - "builds-on.md; phases.yaml add_project; initiators.table.yaml UC11; agenda, ingestion, oracle specs."

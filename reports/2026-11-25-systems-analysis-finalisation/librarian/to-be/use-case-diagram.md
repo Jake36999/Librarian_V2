@@ -40,13 +40,13 @@ flowchart LR
     UC5(["UC5 Trust a relation (deferred)"])
     UC6(["UC6 Reorganise a folder into groups (deferred)"])
     UC7(["UC7 See the data in another model (deferred)"])
-    UC10(["UC10 Search and read the library (deferred)"])
-    UC11(["UC11 Add a project and map what the library holds for it (deferred)"])
-    UC12(["UC12 Suggest work for the vault (deferred)"])
-    UC13(["UC13 Start a pursuit (a course, a role or a project) (deferred)"])
-    UC14(["UC14 Study a topic with the library (deferred)"])
-    UC15(["UC15 Add a capability (an MCP server) (deferred)"])
-    UC16(["UC16 Run a scheduled pipeline (deferred)"])
+    UC10(["UC10 Search and read the library"])
+    UC11(["UC11 Add a project and map what the library holds for it"])
+    UC12(["UC12 Suggest work for the vault"])
+    UC13(["UC13 Start a pursuit (a course, a role or a project)"])
+    UC14(["UC14 Study a topic with the library"])
+    UC15(["UC15 Add a capability (an MCP server)"])
+    UC16(["UC16 Run a scheduled pipeline"])
   end
   owner --- UC8
   overseer --- UC8
@@ -108,15 +108,45 @@ flowchart LR
   owner --- UC6
   owner --- UC7
   owner --- UC10
+  geo --- UC10
+  doctor --- UC10
   overseer --- UC11
+  owner --- UC11
+  lead --- UC11
+  oracle --- UC11
+  UC11 -. "«include»" .-> UC1
+  UC11 -. "«include»" .-> UC_O
+  UC11 -. "«include»" .-> UC9
   overseer --- UC12
+  owner --- UC12
+  lead --- UC12
+  oracle --- UC12
+  UC12 -. "«include»" .-> UC_O
+  UC12 -. "«include»" .-> UC9
   overseer --- UC13
   owner --- UC13
+  lead --- UC13
+  oracle --- UC13
+  UC13 -. "«include»" .-> UC1
+  UC13 -. "«include»" .-> UC_O
+  UC13 -. "«include»" .-> UC9
   overseer --- UC14
   owner --- UC14
+  oracle --- UC14
+  UC14 -. "«include»" .-> UC_O
   overseer --- UC15
   owner --- UC15
+  lead --- UC15
+  oracle --- UC15
+  UC15 -. "«include»" .-> UC1
+  UC15 -. "«include»" .-> UC_O
+  UC15 -. "«include»" .-> UC9
   owner --- UC16
+  oracle --- UC16
+  doctor --- UC16
+  UC16 -. "«include»" .-> UC_O
+  UC16 -. "«include»" .-> UC_D
+  UC16 -. "«include»" .-> UC9
 ```
 
 | Use case | Actors | Spec | Status |
@@ -147,10 +177,10 @@ flowchart LR
 | UC5 Trust a relation | Owner | — | deferred: USE-CASES.md UC5; not yet drawn |
 | UC6 Reorganise a folder into groups | Owner | — | deferred: PLAN.md 2.2 |
 | UC7 See the data in another model | Owner | — | deferred: PLAN.md 2.2 |
-| UC10 Search and read the library | Owner | — | deferred: the Web UI's Search and note view, and the search and get_note tools; it only reads |
-| UC11 Add a project and map what the library holds for it | Overseer (tier 0) | — | deferred: the add_project session purpose; its sources go through UC1 |
-| UC12 Suggest work for the vault | Overseer (tier 0) | — | deferred: the suggest session purpose |
-| UC13 Start a pursuit (a course, a role or a project) | Overseer (tier 0), Owner | — | deferred: the start_pursuit session purpose |
-| UC14 Study a topic with the library | Overseer (tier 0), Owner | — | deferred: the learn session purpose (tutoring); not UC-L, which learns a remedy |
-| UC15 Add a capability (an MCP server) | Overseer (tier 0), Owner | — | deferred: the add_capability session purpose; the person decides the install |
-| UC16 Run a scheduled pipeline | Owner | — | deferred: weekly-review and clear-enrichment-backlog; not overseen, so a high-risk decision holds for the Owner |
+| UC10 Search and read the library | Owner, Geo-Grapher, Doctor | [search-and-read](views/search-and-read.views.md) | PROPOSED_UNACCEPTED |
+| UC11 Add a project and map what the library holds for it | Overseer (tier 0), Owner, Lead (tier 1), Oracle | [add-project](views/add-project.views.md) | PROPOSED_UNACCEPTED |
+| UC12 Suggest work for the vault | Overseer (tier 0), Owner, Lead (tier 1), Oracle | [suggest](views/suggest.views.md) | PROPOSED_UNACCEPTED |
+| UC13 Start a pursuit (a course, a role or a project) | Overseer (tier 0), Owner, Lead (tier 1), Oracle | [start-pursuit](views/start-pursuit.views.md) | PROPOSED_UNACCEPTED |
+| UC14 Study a topic with the library | Overseer (tier 0), Owner, Oracle | [study-topic](views/study-topic.views.md) | PROPOSED_UNACCEPTED |
+| UC15 Add a capability (an MCP server) | Overseer (tier 0), Owner, Lead (tier 1), Oracle | [add-capability](views/add-capability.views.md) | PROPOSED_UNACCEPTED |
+| UC16 Run a scheduled pipeline | Owner, Oracle, Doctor | [scheduled-pipeline](views/scheduled-pipeline.views.md) | PROPOSED_UNACCEPTED |

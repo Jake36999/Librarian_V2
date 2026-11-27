@@ -7942,6 +7942,65 @@ It stops at the person's decisions: approving into the batch, and starting it.
 
 Tests: `test_ingestion.py` (+4); `test_macro_permissions.py` adds `folder_queue_accepted` to the reviewed orchestrators; the new pipeline joins the manifest and load checks; access declarations for the two tools and the changed `agenda`.
 
+### G6 inventory and four-defect triage (2026-11-26)
+
+Read-only code audit comparing Geo-Grapher Phase 6–7 (`e71967a`) and v1.1 contracts against GT6 (`query-graph`) and GT5 (`federated-search`), plus triage of the four deferred defects from the systems-analysis README ([report](../reports/2026-11-26-geo-grapher-inventory/README.md)):
+- **GT6:** graph discovery (`list_graphs`), label/alias resolution, consumer-role/profile enforcement, paginated `search_entities`, token budgets/profile ceilings/`GreedyPacker`, `compile_task_packet`, and `cite_as` handles **exist**; `list_graphs` paging (`G-QRY-01`, **partly**) and single-item outline + part-handle fallback (`G-QRY-02`, **missing**) remain open.
+- **GT5:** bounded 2–8 graph `federated_search` (`pc-mckp-v1`), bridge candidate scoring, catalog/HTTP `bridge_proposals` review + declared `bridges` + `lineage.py` staleness, and `cross_graph` analysis **exist**; inline accepted bridges in `federated_search` (**partly**), Oracle Tier A witness gate (**missing**), and standing-policy auto-approval (**partly**) remain open.
+- **Four defects:** `t4/recon-25` (Python function deps) **confirmed** for flat MCP `direction='incoming'` lock and `DEFAULT_FILTER` dropping `candidate` edges (direct incoming calls exist); `t4/recon-26` (omitted `repo_ids`) **not reproduced** on flat MCP/`federated_search`; `t4/recon-29` (conversions persisting a source graph) **not reproduced**; `t4/recon-30` (attached repos read-only) **confirmed** on `init`/`deploy_survey` allowing direct opening/adoption of `.git` repos (attached content roots are enforced read-only).
+
+Verified: report reviewed via DeepInfra (`deepseek-ai/DeepSeek-V4.1-Flash`, run `20261126T211011-9f8dfdb2`, \$0.00265) and locally checked against exact source lines; clean-clone full `pytest tests/test_*.py` run before commit. No source files modified.
+
+### UC10–UC16 in systems-analysis packs (2026-11-26)
+
+Drew the seven remaining use cases mapped on the initiators table (`UC10` through `UC16`) in both `librarian/as-is` and `librarian/to-be` packs, rendered the views, and updated the packs and initiators table ([index](../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/INDEX.md)):
+- **`search-and-read.spec.yaml` (`UC10`):** read-only zero-generation search (`search.py`, `work_search.py`, `THIRD_PARTY_ROUTE_REQUIRED`); to-be adds Geo-Grapher `query-graph` (`UC-G3`) and Doctor repair for broken index or unreadable notes.
+- **`add-project.spec.yaml` (`UC11`):** as-is walks `add_project` eight-phase session gates (`phases.yaml`, `session.py`); to-be commissions one envelope, delegates supplied sources through `ingestion` (`UC1`), checks via `oracle`, and sends promotion to `agenda`.
+- **`suggest.spec.yaml` (`UC12`):** as-is walks `suggest` phases with silent `read_project` fallback; to-be logs workspace-access gaps explicitly, checks via `oracle`, and lands promotion on `agenda`.
+- **`start-pursuit.spec.yaml` (`UC13`):** as-is walks `start_pursuit` (`frame`, `inventory`, `plan`, `seed`, `check_out`); to-be routes seeds cleanly through `ingestion` and unified `agenda` milestones.
+- **`study-topic.spec.yaml` (`UC14`):** named `study-topic` rather than `learn` to avoid colliding with `UC-L` (`learn.spec.yaml`); covers `learn` tutoring phases (`goal`, `baseline`, `focus`, `practice`, `consolidate`, `next`) with to-be Oracle citation checks and agenda review scheduling.
+- **`add-capability.spec.yaml` (`UC15`):** as-is walks `add_capability` (`candidate`, `assess`, `propose`, `install`, `check_out`) with `capability_install`; to-be assesses via `ingestion` + `oracle` and holds high-risk installs on the Owner's `agenda`.
+- **`scheduled-pipeline.spec.yaml` (`UC16`):** as-is covers `weekly-review` and `clear-enrichment-backlog` (`workflows.py` MF-017/MF-018, `MAX_EACH = 200`); to-be routes unattended high-risk holds/pauses to `agenda` and mapped shortfalls to `doctor`.
+
+Protected files (`stages.table.yaml`, `stages.md`, `builds-on.table.yaml`, `builds-on.md`, `weaknesses.yaml`, `handles.yaml`) were left untouched. Reviewed via DeepInfra (`deepseek-ai/DeepSeek-V4-Pro`, run `20261126T213009-f4d7aedd`, \$0.03774): confirmed zero gate/filename/outcome mismatches. `render_pack.py --all` and `render_pack.py --check --all` pass with `0 errors, 0 warnings` across all 4 packs; `pytest tests/test_packs.py` passes (3 passed); clean-clone full `pytest tests/test_*.py` run before commit.
+
+### M1a Web UI browser verification (2026-11-26)
+
+Verified all four M1a Web UI behaviours against live disposable Core instances (`tests/folder_review_demo.py`, zero model calls, temp dir on `G:\Librarian-work\tmp`, [report](../reports/2026-11-26-m1a-browser-check/README.md)):
+- **`ui/folders-smoke.mjs`:** updated fixture root guard to allow `G:\Librarian-work\tmp` alongside `G:\Libraries\_qa` and wait for async waiting-filter re-renders before expanding `details.lib-inherited-folders` (`PASS`).
+- **`ui/m1a-smoke.mjs`:** added repeatable Playwright verification + 6 screenshots confirming: (1) finished `gather-agenda` chip `Details` button opens the `run_status` modal dialog; (2) stale-revision `409` on `Accept as captured` -> `"Reload item, keeping your edits"` preserves the edited `Bottom Line` (`#lib-bl`); (3) `"Which sources"` exposes `processing` (`Being ingested`) and `accepted` (`Accepted into the library`) and lists newly accepted `m1a-fixture`; (4) folder cards render `"Selected for the description batch; not decided yet"` separately from `"Decided and applied by a person"`.
+- **Clean-clone verification:** both browser smokes pass with zero `pageerror`s and zero unexpected console errors; full `pytest tests/test_*.py` run before commit. No `src/resource_librarian/` files modified.
+
+### Obsidian plugin rebuild and deployment (2026-11-26)
+
+Rebuilt `obsidian/dist/` from current `ui/src/` and `obsidian/src/` (`cd obsidian && npm ci && npm run check && node build.mjs`) and reviewed the diff (`obsidian/dist/main.js` +1,247/-147 lines across M1a and prior November UI updates, `obsidian/dist/styles.css` +49 lines preserving `.lib-*` namespacing and `@container` width rules; `manifest.json` unchanged):
+- Verified `Reload item, keeping your edits`, `Details of `, `Being ingested`, `Accepted into the library`, `Select for the description batch`, and Core `state_label` wiring in `obsidian/dist/main.js`.
+- Verified `tests/test_obsidian_adapter_contract.py` (**10 passed in 0.12s**) and `node ui/obsidian-view-smoke.mjs` (**passed**), plus full clean-clone `pytest tests/test_*.py` before commit.
+- Backed up the prior `E:\Librarian ACCEPT-02 Vault\.obsidian\plugins\librarian\{main.js,manifest.json,styles.css}` to `G:\Librarian-work\obsidian-backup-2026-11-26\` (leaving `data.json` untouched) and deployed the rebuilt `obsidian/dist/` files with matching SHA-256 checksums.
+- **Not verified here (for Owner):** opening `E:\Librarian ACCEPT-02 Vault` in the desktop Obsidian GUI to verify live views open with zero runtime console errors.
+
+### UC10–UC16 semantic corrections & Brief 2 report-first qualification (2026-11-26)
+
+Addressed the post-review findings on Briefs 5 and 2 (committed before Brief 4 UI verification):
+- **UC16 `to-be/scheduled-pipeline.spec.yaml`:** eliminated the `holditem -> ref_agenda -> receipt -> e1` bypass for both `success` and `nothing held`. `ref_agenda` now requires the held operation and recorded resume point (`reconcile` reconciles unknown writes `applied`/`retry` and rejoins `run` -> `dstep` -> `ref_oracle`); `nothing held` checks verified completion evidence (`devidence`) before rejoining `dstep` -> `ref_oracle`, or keeps the run paused (`e_paused`) if unverified; `ref_oracle` is the sole path into `receipt -> e1`. Explicitly labelled the `MAX_EACH = 200` hold/refusal bound as a behavior change vs. as-is truncation shipping in report mode first.
+- **UC16 `as-is/scheduled-pipeline.spec.yaml` & `pack.yaml`:** moved `MAX_EACH = 200` slicing (`considered`, `truncated`) from `dpin` admission into `runsteps` execution loop (`workflows.py:1030-1043`), moved durable dispatch/done, `outcome_unknown` recovery, and scripted declared routes into `Core`, and restricted `Model host` strictly to reasoned `Router.choose` (`workflows.py:1177`).
+- **UC10–UC15 semantic fixes (`as-is` & `to-be`):** removed every `ref_agenda` / `ref_oracle` pause bypass across `add-project`, `suggest`, `start-pursuit`, and `add-capability` (separating pre-Oracle holds from post-Oracle agenda promotion and requiring verified completion evidence on `nothing held`); harmonized `ref_ingest` in `to-be/start-pursuit.spec.yaml` to `Core`; aligned `as-is` `add-project`, `suggest`, `start-pursuit`, `study-topic`, and `add-capability` lanes/step order with `phases.yaml`, `session.py`, and `capabilities.py`; fixed `to-be/search-and-read` `ref_graph` refusal routing to `e_refused`.
+- **Brief 2 (`reports/2026-11-26-geo-grapher-inventory/README.md`):** recorded the delegation brief's report-mode-first qualification on `.git` repository adoption blocking (`t4/recon-30`) so acceptance of the inventory preserves that precondition.
+- **Adversarial DeepInfra review & pack checks:** audited via `DeepSeek-V4-Pro` (run `20261126T225132-53cb2e85`, \$0.04603, caught UC13 `ref_ingest` lane mismatch) and `Qwen3-Coder-480B` (run `20261126T225424-981b9227`, \$0.00483, confirmed as-is UC10–UC16 alignment); `render_pack.py --check --all` (`0 errors, 0 warnings`) and `pytest tests/test_packs.py` (`3 passed`) verified cleanly. Protected files (`stages.*`, `builds-on.*`, `weaknesses.yaml`, `handles.yaml`) untouched.
+
+### M1a Web UI processing-filter mutual-exclusion check (2026-11-26)
+
+Updated `ui/m1a-smoke.mjs` and [report](../reports/2026-11-26-m1a-browser-check/README.md) after review to verify mutual exclusion between two distinct fixtures under `"Which sources"`:
+- Seeded `m1a-processing-fixture-*` (`status="processing"`, `batch="batch-m1a-demo"`) alongside `m1a-accepted-fixture-*` (`status="accepted"`).
+- Under `processing` (`Being ingested`), asserted the processing row renders with `"Being ingested in batch-m1a-demo."` while the accepted row count is `0`; under `accepted` (`Accepted into the library`), asserted the accepted row renders while the processing row count is `0`.
+- Re-ran both `ui/folders-smoke.mjs` and `ui/m1a-smoke.mjs` against fresh `tests/folder_review_demo.py` instances (`PASS`, 0 `pageerror`s, 0 unexpected console errors) and full clean-clone `pytest tests/test_*.py`. No `src/resource_librarian/` files modified.
+
+### Delegation finishing checks (26 November 2026)
+
+UC16 routes both a failed step and an Oracle shortfall through ticket classification. Core sends mapped remedies to Doctor, assigns unmapped failures to the Lead with their resume point, and immediately alerts the Owner on critical unattended failures.
+
+In desktop Obsidian 1.15.1 the deployed b49b6cf plugin loaded in E:\Librarian ACCEPT-02 Vault. The adapter recovered a stale Core lease through its recovery control. Staging, Search and Chat rendered in the connected library with zero console errors or uncaught page exceptions observed during those interactions. The deployed main.js SHA-256 matched the branch build (BD6CC6D361BA634345FFF6329342699895192C0772DC972F88DC37C2F4ED2322). The desktop screenshot and fresh folder and M1a browser captures are under G:\Librarian-work\tmp\finisher-browser.
+
 ### Review of the delegated work, and M5's second part (2026-11-27)
 
 **The delegated branches were reviewed, and are not merged here** (the Owner decides that, and the pushes).

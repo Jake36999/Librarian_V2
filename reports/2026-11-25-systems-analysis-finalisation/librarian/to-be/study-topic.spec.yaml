@@ -1,0 +1,43 @@
+diagram: study-topic
+use_case: UC14
+status: PROPOSED_UNACCEPTED
+supersedes: [reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/study-topic.spec.yaml]
+kind: activity
+title: Study a topic with the library (proposed)
+problem:
+  symptom: "As-is: tutoring accuracy relies solely on tier 0 without checking source quotes, and spent practice budgets stall phase transitions."
+  root: "Anchor diagnostic baseline, source-grounded practice and consolidation in verified library passages/refs, validate factual grounding via Oracle, and schedule spaced review tasks directly onto the agenda."
+lanes:
+  - Owner
+  - Overseer (tier 0)
+  - Oracle
+  - Core
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: goal, kind: activity, lane: Owner, step: 1, label: "states learning goal, target deadline and answers 2-3 baseline diagnostic questions"}
+  - {id: focus, kind: activity, lane: Overseer (tier 0), step: 2, label: "maps library notes/passages (plus readable graphs if present) and selects bounded focus concepts"}
+  - {id: practice, kind: activity, lane: Overseer (tier 0), step: 3, label: "runs source-anchored practice rounds with Owner; Core verifies every passage quote/source_ref and writes understanding_record"}
+  - {id: ddone, kind: decision, lane: Core, label: "has each focus concept an understanding_record (or explicit stop) within session budget?"}
+  - {id: park, kind: activity, lane: Core, label: "records covered concepts and remaining focus concepts on the session for clean continuation"}
+  - {id: consolidate, kind: activity, lane: Owner, step: 4, label: "explains consolidated understanding in own words; recorded as consolidate understanding_record"}
+  - {id: ref_oracle, kind: ref, lane: Oracle, step: 5, use_case: oracle, label: "checks that teaching citations and source_refs match cited passages on a distinct route"}
+  - {id: schedule, kind: activity, lane: Core, step: 6, label: "writes spaced review dates as tasks on the unified agenda and closes session"}
+  - {id: e1, kind: end, outcome: success, label: "understanding consolidated, source-checked and review scheduled"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused between practice concepts, on missing Oracle route, or awaiting Owner"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "critical source-grounding fault escalated"}
+edges:
+  - {from: s, to: goal}
+  - {from: goal, to: focus}
+  - {from: focus, to: practice}
+  - {from: practice, to: ddone}
+  - {from: ddone, to: consolidate, guard: "yes: focus concepts practiced within budget"}
+  - {from: ddone, to: park, guard: "no: paused by learner or budget ceiling", ext: 3a}
+  - {from: park, to: e_paused}
+  - {from: consolidate, to: ref_oracle}
+  - {from: ref_oracle, to: schedule, guard: "success"}
+  - {from: ref_oracle, to: practice, guard: "shortfall", ext: 5a}
+  - {from: ref_oracle, to: e_paused, guard: "paused", ext: 5b}
+  - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 5c}
+  - {from: schedule, to: e1}
+evidence:
+  - "builds-on.md (agenda, oracle); phases.yaml learn; initiators.table.yaml UC14 (named Study a topic to distinguish from UC-L)."

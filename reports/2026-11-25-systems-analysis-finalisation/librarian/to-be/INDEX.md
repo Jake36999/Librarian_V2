@@ -12,6 +12,8 @@ The preferred Librarian: every use case runs under a parent process that owns it
 | UC0 | [activation-external-project](views/activation-external-project.views.md) | `PROPOSED_UNACCEPTED` | 34 | 8 | 12 | 2 / 2 | 0 | 4 | 0 | 0 |
 | UC0 | [activation-overseer](views/activation-overseer.views.md) | `PROPOSED_UNACCEPTED` | 39 | 9 | 16 | 2 / 2 | 0 | 2 | 0 | 0 |
 | UC0 | [activation-web-ui](views/activation-web-ui.views.md) | `PROPOSED_UNACCEPTED` | 39 | 12 | 22 | — | 0 | 3 | 0 | 0 |
+| UC15 | [add-capability](views/add-capability.views.md) | `PROPOSED_UNACCEPTED` | 15 | 7 | 14 | 1 / 1 | 0 | 0 | 0 | 0 |
+| UC11 | [add-project](views/add-project.views.md) | `PROPOSED_UNACCEPTED` | 17 | 8 | 14 | 2 / 2 | 0 | 0 | 0 | 0 |
 | UC9 | [agenda](views/agenda.views.md) | `PROPOSED_UNACCEPTED` | 20 | 6 | 8 | 0 / 1 | 0 | 0 | 0 | 0 |
 | UC1b | [batch-enrichment](views/batch-enrichment.views.md) | `PROPOSED_UNACCEPTED` | 37 | 10 | 21 | — | 0 | 1 | 0 | 0 |
 | UC8.2 | [catalogue](views/catalogue.views.md) | `PROPOSED_UNACCEPTED` | 34 | 12 | 12 | — | 0 | 0 | 0 | 0 |
@@ -25,13 +27,18 @@ The preferred Librarian: every use case runs under a parent process that owns it
 | UC-O | [oracle](views/oracle.views.md) | `PROPOSED_UNACCEPTED` | 16 | 5 | 7 | — | 0 | 1 | 0 | 0 |
 | UC1c.3 | [paper-publication](views/paper-publication.views.md) | `PROPOSED_UNACCEPTED` | 8 | 2 | 6 | — | 0 | 1 | 0 | 0 |
 | UC2 | [research](views/research.views.md) | `PROPOSED_UNACCEPTED` | 34 | 15 | 18 | — | 0 | 6 | 0 | 0 |
+| UC16 | [scheduled-pipeline](views/scheduled-pipeline.views.md) | `PROPOSED_UNACCEPTED` | 19 | 4 | 27 | — | 0 | 0 | 0 | 0 |
+| UC10 | [search-and-read](views/search-and-read.views.md) | `PROPOSED_UNACCEPTED` | 15 | 4 | 8 | — | 0 | 0 | 0 | 0 |
 | UC1c | [source-enrichment](views/source-enrichment.views.md) | `PROPOSED_UNACCEPTED` | 26 | 7 | 16 | — | 0 | 2 | 0 | 0 |
 | UC1.2 | [source-intake](views/source-intake.views.md) | `PROPOSED_UNACCEPTED` | 9 | 4 | 3 | — | 0 | 2 | 0 | 0 |
 | UC1c.1 | [source-parse](views/source-parse.views.md) | `PROPOSED_UNACCEPTED` | 17 | 3 | 6 | — | 0 | 1 | 0 | 0 |
 | UC1c.2 | [source-reading](views/source-reading.views.md) | `PROPOSED_UNACCEPTED` | 20 | 12 | 5 | — | 0 | 2 | 0 | 0 |
+| UC13 | [start-pursuit](views/start-pursuit.views.md) | `PROPOSED_UNACCEPTED` | 17 | 6 | 14 | 2 / 3 | 0 | 0 | 0 | 0 |
+| UC14 | [study-topic](views/study-topic.views.md) | `PROPOSED_UNACCEPTED` | 12 | 6 | 5 | 1 / 2 | 0 | 0 | 0 | 0 |
+| UC12 | [suggest](views/suggest.views.md) | `PROPOSED_UNACCEPTED` | 15 | 6 | 10 | 2 / 2 | 0 | 0 | 0 | 0 |
 | UC3 | [verify-claims](views/verify-claims.views.md) | `PROPOSED_UNACCEPTED` | 20 | 6 | 6 | — | 0 | 2 | 0 | 0 |
 
-Not drawn yet: UC8.1 Run a saved workflow from the Web UI (deferred: no separate to-be spec: its steps are wgrant, uinotify and uiagenda in activation-web-ui, under compose (as-is W-WFR-01 to 03 are handled there)); UC5 Trust a relation (deferred: USE-CASES.md UC5; not yet drawn); UC6 Reorganise a folder into groups (deferred: PLAN.md 2.2); UC7 See the data in another model (deferred: PLAN.md 2.2); UC10 Search and read the library (deferred: the Web UI's Search and note view, and the search and get_note tools; it only reads); UC11 Add a project and map what the library holds for it (deferred: the add_project session purpose; its sources go through UC1); UC12 Suggest work for the vault (deferred: the suggest session purpose); UC13 Start a pursuit (a course, a role or a project) (deferred: the start_pursuit session purpose); UC14 Study a topic with the library (deferred: the learn session purpose (tutoring); not UC-L, which learns a remedy); UC15 Add a capability (an MCP server) (deferred: the add_capability session purpose; the person decides the install); UC16 Run a scheduled pipeline (deferred: weekly-review and clear-enrichment-backlog; not overseen, so a high-risk decision holds for the Owner).
+Not drawn yet: UC8.1 Run a saved workflow from the Web UI (deferred: no separate to-be spec: its steps are wgrant, uinotify and uiagenda in activation-web-ui, under compose (as-is W-WFR-01 to 03 are handled there)); UC5 Trust a relation (deferred: USE-CASES.md UC5; not yet drawn); UC6 Reorganise a folder into groups (deferred: PLAN.md 2.2); UC7 See the data in another model (deferred: PLAN.md 2.2).
 
 ## Checks
 

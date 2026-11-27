@@ -33,6 +33,13 @@ flowchart LR
     UC5(["UC5 Trust a relation (deferred)"])
     UC6(["UC6 Reorganise a folder into groups (deferred)"])
     UC7(["UC7 See the data in another model (deferred)"])
+    UC10(["UC10 Search and read the library"])
+    UC11(["UC11 Add a project and map what the library holds for it"])
+    UC12(["UC12 Suggest work for the vault"])
+    UC13(["UC13 Start a pursuit (a course, a role or a project)"])
+    UC14(["UC14 Study a topic with the library"])
+    UC15(["UC15 Add a capability (an MCP server)"])
+    UC16(["UC16 Run a scheduled pipeline"])
   end
   owner --- UC0
   overseer --- UC0
@@ -85,6 +92,19 @@ flowchart LR
   owner --- UC5
   owner --- UC6
   owner --- UC7
+  owner --- UC10
+  overseer --- UC11
+  owner --- UC11
+  overseer --- UC12
+  owner --- UC12
+  overseer --- UC13
+  owner --- UC13
+  overseer --- UC14
+  owner --- UC14
+  overseer --- UC15
+  owner --- UC15
+  UC15 -. "«include»" .-> UC1_2
+  owner --- UC16
 ```
 
 | Use case | Actors | Spec | Status |
@@ -110,3 +130,10 @@ flowchart LR
 | UC5 Trust a relation | Owner | — | deferred: to-be only; there is no as-is (USE-CASES.md UC5) |
 | UC6 Reorganise a folder into groups | Owner | — | deferred: PLAN.md 2.2 |
 | UC7 See the data in another model | Owner | — | deferred: PLAN.md 2.2 |
+| UC10 Search and read the library | Owner | [search-and-read](views/search-and-read.views.md) | IMPLEMENTED_VERIFIED |
+| UC11 Add a project and map what the library holds for it | Overseer (tier 0), Owner | [add-project](views/add-project.views.md) | IMPLEMENTED_VERIFIED |
+| UC12 Suggest work for the vault | Overseer (tier 0), Owner | [suggest](views/suggest.views.md) | IMPLEMENTED_VERIFIED |
+| UC13 Start a pursuit (a course, a role or a project) | Overseer (tier 0), Owner | [start-pursuit](views/start-pursuit.views.md) | IMPLEMENTED_VERIFIED |
+| UC14 Study a topic with the library | Overseer (tier 0), Owner | [study-topic](views/study-topic.views.md) | IMPLEMENTED_VERIFIED |
+| UC15 Add a capability (an MCP server) | Overseer (tier 0), Owner | [add-capability](views/add-capability.views.md) | IMPLEMENTED_VERIFIED |
+| UC16 Run a scheduled pipeline | Owner | [scheduled-pipeline](views/scheduled-pipeline.views.md) | IMPLEMENTED_VERIFIED |

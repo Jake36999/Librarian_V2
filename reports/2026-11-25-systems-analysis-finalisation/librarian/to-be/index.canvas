@@ -43,7 +43,7 @@
       "x": 1160,
       "y": 0,
       "width": 520,
-      "height": 9300
+      "height": 12240
     },
     {
       "id": "librarian-card-2-0",
@@ -84,7 +84,7 @@
     {
       "id": "librarian-card-2-4",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/agenda.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/add-capability.views.md",
       "x": 1180,
       "y": 1720,
       "width": 480,
@@ -93,7 +93,7 @@
     {
       "id": "librarian-card-2-5",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/batch-enrichment.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/add-project.views.md",
       "x": 1180,
       "y": 2140,
       "width": 480,
@@ -102,7 +102,7 @@
     {
       "id": "librarian-card-2-6",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/catalogue.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/agenda.views.md",
       "x": 1180,
       "y": 2560,
       "width": 480,
@@ -111,7 +111,7 @@
     {
       "id": "librarian-card-2-7",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/cite-graph.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/batch-enrichment.views.md",
       "x": 1180,
       "y": 2980,
       "width": 480,
@@ -120,7 +120,7 @@
     {
       "id": "librarian-card-2-8",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/compose.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/catalogue.views.md",
       "x": 1180,
       "y": 3400,
       "width": 480,
@@ -129,7 +129,7 @@
     {
       "id": "librarian-card-2-9",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/delegate.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/cite-graph.views.md",
       "x": 1180,
       "y": 3820,
       "width": 480,
@@ -138,7 +138,7 @@
     {
       "id": "librarian-card-2-10",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/doctor.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/compose.views.md",
       "x": 1180,
       "y": 4240,
       "width": 480,
@@ -147,7 +147,7 @@
     {
       "id": "librarian-card-2-11",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/folder-review.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/delegate.views.md",
       "x": 1180,
       "y": 4660,
       "width": 480,
@@ -156,7 +156,7 @@
     {
       "id": "librarian-card-2-12",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/ingestion.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/doctor.views.md",
       "x": 1180,
       "y": 5080,
       "width": 480,
@@ -165,7 +165,7 @@
     {
       "id": "librarian-card-2-13",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/learn.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/folder-review.views.md",
       "x": 1180,
       "y": 5500,
       "width": 480,
@@ -174,7 +174,7 @@
     {
       "id": "librarian-card-2-14",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/oracle.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/ingestion.views.md",
       "x": 1180,
       "y": 5920,
       "width": 480,
@@ -183,7 +183,7 @@
     {
       "id": "librarian-card-2-15",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/paper-publication.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/learn.views.md",
       "x": 1180,
       "y": 6340,
       "width": 480,
@@ -192,7 +192,7 @@
     {
       "id": "librarian-card-2-16",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/research.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/oracle.views.md",
       "x": 1180,
       "y": 6760,
       "width": 480,
@@ -201,7 +201,7 @@
     {
       "id": "librarian-card-2-17",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/source-enrichment.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/paper-publication.views.md",
       "x": 1180,
       "y": 7180,
       "width": 480,
@@ -210,7 +210,7 @@
     {
       "id": "librarian-card-2-18",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/source-intake.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/research.views.md",
       "x": 1180,
       "y": 7600,
       "width": 480,
@@ -219,7 +219,7 @@
     {
       "id": "librarian-card-2-19",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/source-parse.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/scheduled-pipeline.views.md",
       "x": 1180,
       "y": 8020,
       "width": 480,
@@ -228,7 +228,7 @@
     {
       "id": "librarian-card-2-20",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/source-reading.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/search-and-read.views.md",
       "x": 1180,
       "y": 8440,
       "width": 480,
@@ -237,9 +237,72 @@
     {
       "id": "librarian-card-2-21",
       "type": "file",
-      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/verify-claims.views.md",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/source-enrichment.views.md",
       "x": 1180,
       "y": 8860,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-22",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/source-intake.views.md",
+      "x": 1180,
+      "y": 9280,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-23",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/source-parse.views.md",
+      "x": 1180,
+      "y": 9700,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-24",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/source-reading.views.md",
+      "x": 1180,
+      "y": 10120,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-25",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/start-pursuit.views.md",
+      "x": 1180,
+      "y": 10540,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-26",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/study-topic.views.md",
+      "x": 1180,
+      "y": 10960,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-27",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/suggest.views.md",
+      "x": 1180,
+      "y": 11380,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-28",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/views/verify-claims.views.md",
+      "x": 1180,
+      "y": 11800,
       "width": 480,
       "height": 400
     },

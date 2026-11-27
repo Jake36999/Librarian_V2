@@ -11,6 +11,8 @@ How the Librarian works today, drawn from the code at d9435e1 and the runs of 19
 | UC1.3 | [acceptance](views/acceptance.views.md) | `IMPLEMENTED_VERIFIED` | 10 | 3 | 5 | — | 4 | 0 | 0 | 0 |
 | UC0.2 | [activation-external-project](views/activation-external-project.views.md) | `IMPLEMENTED_VERIFIED` | 14 | 4 | 5 | 2 / 2 | 3 | 0 | 0 | 0 |
 | UC0 | [activation](views/activation.views.md) | `IMPLEMENTED_VERIFIED` | 36 | 8 | 36 | 0 / 2 | 5 | 0 | 0 | 0 |
+| UC15 | [add-capability](views/add-capability.views.md) | `IMPLEMENTED_VERIFIED` | 13 | 7 | 5 | 3 / 3 | 0 | 0 | 0 | 0 |
+| UC11 | [add-project](views/add-project.views.md) | `IMPLEMENTED_VERIFIED` | 16 | 9 | 3 | 3 / 3 | 0 | 0 | 0 | 0 |
 | UC1b | [batch-enrichment](views/batch-enrichment.views.md) | `IMPLEMENTED_VERIFIED` | 29 | 5 | 16 | 1 / 1 | 2 | 0 | 0 | 0 |
 | UC4 | [cite-graph](views/cite-graph.views.md) | `IMPLEMENTED_OBSERVED` | 14 | 7 | 3 | — | 2 | 0 | 0 | 0 |
 | UC8 | [compose](views/compose.views.md) | `IMPLEMENTED_VERIFIED` | 17 | 6 | 7 | 1 / 1 | 1 | 0 | 0 | 0 |
@@ -20,10 +22,15 @@ How the Librarian works today, drawn from the code at d9435e1 and the runs of 19
 | UC-O | [oracle](views/oracle.views.md) | `IMPLEMENTED_VERIFIED` | 16 | 8 | 5 | — | 1 | 0 | 0 | 0 |
 | UC1c.3 | [paper-publication](views/paper-publication.views.md) | `IMPLEMENTED_VERIFIED` | 9 | 2 | 6 | — | 2 | 0 | 0 | 0 |
 | UC2 | [research](views/research.views.md) | `IMPLEMENTED_OBSERVED` | 33 | 15 | 13 | — | 6 | 0 | 0 | 0 |
+| UC16 | [scheduled-pipeline](views/scheduled-pipeline.views.md) | `IMPLEMENTED_VERIFIED` | 16 | 5 | 6 | — | 0 | 0 | 0 | 0 |
+| UC10 | [search-and-read](views/search-and-read.views.md) | `IMPLEMENTED_VERIFIED` | 14 | 4 | 5 | — | 0 | 0 | 0 | 0 |
 | UC1c | [source-enrichment](views/source-enrichment.views.md) | `IMPLEMENTED_VERIFIED` | 21 | 7 | 11 | 1 / 1 | 1 | 0 | 0 | 0 |
 | UC1.2 | [source-intake](views/source-intake.views.md) | `IMPLEMENTED_VERIFIED` | 9 | 3 | 3 | — | 2 | 0 | 0 | 0 |
 | UC1c.1 | [source-parse](views/source-parse.views.md) | `IMPLEMENTED_VERIFIED` | 17 | 3 | 12 | — | 1 | 0 | 0 | 0 |
 | UC1c.2 | [source-reading](views/source-reading.views.md) | `IMPLEMENTED_VERIFIED` | 19 | 9 | 8 | — | 2 | 0 | 0 | 0 |
+| UC13 | [start-pursuit](views/start-pursuit.views.md) | `IMPLEMENTED_VERIFIED` | 12 | 5 | 3 | 2 / 2 | 0 | 0 | 0 | 0 |
+| UC14 | [study-topic](views/study-topic.views.md) | `IMPLEMENTED_VERIFIED` | 12 | 7 | 2 | 3 / 3 | 0 | 0 | 0 | 0 |
+| UC12 | [suggest](views/suggest.views.md) | `IMPLEMENTED_VERIFIED` | 15 | 7 | 4 | 4 / 4 | 0 | 0 | 0 | 0 |
 | UC3 | [verify-claims](views/verify-claims.views.md) | `IMPLEMENTED_OBSERVED` | 20 | 6 | 7 | — | 2 | 0 | 0 | 0 |
 | UC8.1 | [workflow-run](views/workflow-run.views.md) | `IMPLEMENTED_VERIFIED` | 13 | 3 | 6 | — | 3 | 0 | 0 | 0 |
 
