@@ -28,6 +28,7 @@ changes:
   # Folder review: folder cards, the read barrier, and the group applied to Geo-Grapher.
   folder_survey: [staging]
   folder_draft: [staging, outside]
+  folder_draft_pending: [staging, outside]
   folder_accept: [staging, graphs]
   folder_accept_policy: [staging, graphs]
   folder_approve_batch: [staging]

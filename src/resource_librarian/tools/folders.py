@@ -119,6 +119,55 @@ def folder_draft(ctx: Context, id: str = "", approve_spend: bool = False) -> dic
     return _run(lambda: _service(ctx).draft(id, clerk_endpoint(ctx), approve_spend=approve_spend))
 
 
+
+# A card is drafted when the Clerk has checked its sensitivity (`folder_review.draft`). Until then,
+# policy acceptance holds it ("sensitivity not yet checked"), and an excluded or inherited card needs
+# no check of its own.
+_CHECKED = frozenset({"normal", "review_required"})
+
+
+def _needs_draft(card: dict) -> bool:
+    return (card.get("status") != "accepted" and not card.get("decision") and not card.get("inherited")
+            and card.get("suggested_purpose") != "exclude"
+            and (card.get("sensitivity") or {}).get("sensitivity") not in _CHECKED)
+
+
+@tool("folder_draft_pending", tier="contribute", effect="write", scope="library", orchestrates=True,
+      open_world=True, returns=("drafted", "held", "failed", "remaining"),
+      card=Card("Have the Clerk draft every waiting folder card under a surveyed root that has no draft "
+                "yet: its description and its sensitivity check",
+                "after a survey, so that policy acceptance can decide the cards (an undrafted card is held "
+                "as 'sensitivity not yet checked'); the ingest-folder pipeline's draft step",
+                "Spends: pass approve_spend=true for this request (SPEND_APPROVAL_REQUIRED otherwise). Each "
+                "card is one folder_draft call with the caller's own authority, so its gates hold "
+                "(FOLDER_DRAFT_DISABLED without the owner's approval of the Clerk route). Only folder "
+                "metadata reaches the Clerk"))
+def folder_draft_pending(ctx: Context, root: str, approve_spend: bool = False, limit: int = 50) -> dict:
+    """The draft step of a folder's ingestion (M5; as-is W-BAT-01): `folder_draft`, card by card, for
+    the cards that need one, as `folder_queue_accepted` runs `folder_queue_sources`. A card the Clerk
+    finds sensitive is reported as held; a failed draft says why, and the others go on."""
+    if approve_spend is not True:
+        raise Refusal("SPEND_APPROVAL_REQUIRED", "drafting asks the Clerk two questions per folder card; "
+                                                 "pass approve_spend=true for this request")
+    from ..ingestion import _key
+    base = _key(root)
+    pending = [c for c in _service(ctx).overview().get("cards", [])
+               if c.get("source_root") and _key(c["source_root"]) == base and _needs_draft(c)]
+    pending.sort(key=lambda c: (c.get("path") != ".", str(c.get("path"))))
+    drafted, held, failed = [], [], []
+    for card in pending[:max(0, int(limit))]:
+        out = REGISTRY.call("folder_draft", {"id": card["id"], "approve_spend": True}, ctx)
+        if "error" in out:
+            failed.append({"path": card.get("path"), "refused": out.get("refused") or out.get("error"),
+                           "detail": str(out.get("detail") or "")[:300]})
+            if out.get("refused") in ("FOLDER_DRAFT_DISABLED", "SPEND_APPROVAL_REQUIRED", "CLERK_UNAVAILABLE"):
+                break                                    # the same for every card: say it once
+            continue
+        sensitivity = (out.get("sensitivity") or {}).get("sensitivity")
+        (held if sensitivity == "review_required" else drafted).append(card.get("path"))
+    return {"drafted": drafted, "held": held, "failed": failed,
+            "remaining": max(0, len(pending) - max(0, int(limit)))}
+
 @tool("folder_accept", tier="curate", effect="write", scope="library", orchestrates=True,
       returns=("id", "status", "decision"),
       card=Card("Accept one folder card with its purpose, authorship and graph, and apply its group",

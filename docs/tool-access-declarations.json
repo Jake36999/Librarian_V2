@@ -5962,6 +5962,33 @@
       }
     },
     {
+      "tool": "folder_draft_pending",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 135,
+        "symbol": "folder_draft_pending"
+      },
+      "fingerprint": {
+        "source_sha256": "cfd1bb65b68d732d8d9fac6d076e0d81f607e5a4456a476e30ff7af327be00b7",
+        "schema_sha256": "366e5122b26be06c09ea935329f9b8df0cfa65431072fbc09bc8bb6c54976a07",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
       "tool": "folder_overview",
       "minimum_tier": "consult",
       "actors": [

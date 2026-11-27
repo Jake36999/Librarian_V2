@@ -313,9 +313,11 @@ They found three faults, fixed:
 - a run that left sources partial raised none;
 - a resume after parse re-read the stopped source from the start.
 
+The folder draft step, 27 November: `folder_draft_pending` runs the existing `folder_draft` over a root's waiting, undrafted cards. It is the `draft` step of `ingest-folder`, and runs when the commissioner passes `approve_folder_drafts: true`. Without it, the run is as before.
+
 Still to do:
 - Starting the batch inside the pipeline (it waits for the commission). Until then, "at most 2 tier-0 turns" is not shown.
-- Folder descriptions measured against the 90% floor: the acceptance run drafted none. The `ingest-folder` pipeline has no draft step. Under promotion mode agent, every card not yet drafted is held ("sensitivity not yet checked"), now with a ticket naming the draft as the remedy.
+- Folder descriptions on a real folder. The pipeline now has its draft step: with `approve_folder_drafts`, the Clerk describes every waiting card and checks its sensitivity. The planted folder is fully described; the 90% floor is still to be measured on a real folder with the real Clerk.
 - Free-text required fields (a paper's identifier, authors, year) have no task after capture. They stay Unknown unless a fetcher supplied them. The acceptance run's arXiv files were captured as `document`, not `paper`, so they carried none of these fields.
 - The supervised run in Resource-Library.
 

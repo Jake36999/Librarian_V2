@@ -8185,3 +8185,26 @@ All five pass.
 Access-review rows refreshed for `folder_accept` and `folder_accept_policy` (fingerprint and line only).
 
 Tests: `test_m5_planted.py` (5, new), `test_m5_batch.py` (+1, keys). Each fails on the previous code.
+
+### M5, sixth part: the folder draft step (2026-11-27)
+
+The planted cases found that `ingest-folder` never drafted folder cards. Under promotion mode agent, policy acceptance therefore held every card not yet drafted ("sensitivity not yet checked"), and nothing was described (M5's floor is 90% of non-excluded folders, with no silent failure; as-is W-BAT-01).
+
+**The tool.** `folder_draft_pending(root, approve_spend, limit)` runs the existing `folder_draft` card by card, as `folder_queue_accepted` runs `folder_queue_sources`.
+- It drafts each card under the root that is waiting, undecided, not inherited, not excluded and not yet checked.
+- Each call has the caller's own authority, so `folder_draft`'s gates all hold: spend approval, the owner's approval of a real Clerk route (`[folders] production_drafting`), and its provenance and sensitivity checks.
+- Without `approve_spend` it refuses `SPEND_APPROVAL_REQUIRED`.
+- A card the Clerk finds sensitive is reported as held.
+- A failed draft says why, and the others go on; a refusal that would repeat for every card is reported once.
+- A drafted card is never drafted again, so never paid for twice.
+
+**The pipeline.** `ingest-folder` gains a `draft` step between survey and policy acceptance.
+- It runs only when the commissioner passes `approve_folder_drafts: true`. The default is false, which leaves the run as before, and each undrafted card is then held with a ticket naming the draft.
+- The pipeline's side effects now include `external_write`, so in Ask mode a person is asked before it runs, as for any run that can spend.
+
+`actions.yaml` declares the tool as `[staging, outside]`, as `folder_draft` is; it has an access-review row modelled on `folder_draft`'s and is on the orchestrator allow-list.
+
+Tests: `test_m5_planted.py` (+3), with the planted cases now drafting through the pipeline:
+- every waiting folder is described when the spend is approved, and a second run drafts nothing;
+- without approval, nothing is drafted and each card is held with its remedy;
+- a refusal common to every card (no approval of the real Clerk route) is said once.

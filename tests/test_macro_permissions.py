@@ -105,6 +105,7 @@ def test_macro_approval_never_overrides_a_denied_step_or_plan_mode(core):
 def test_only_reviewed_first_party_workflows_can_orchestrate_writer_operations():
     assert [name for name in REGISTRY.names() if REGISTRY.get(name).orchestrates] == [
         "batch_cancel", "folder_accept", "folder_accept_policy", "folder_approve_batch", "folder_draft",
+        "folder_draft_pending",
         "folder_queue_accepted", "folder_queue_sources", "folder_survey", "macro_resolve", "macro_run", "model_catalog_adopt",
         "ocr_pdf", "process_approved", "run_pipeline", "run_resume", "run_workflow"]
     # Workflows and pipelines (M5 acceptance, 2026-11-27): their runner sat inside one writer

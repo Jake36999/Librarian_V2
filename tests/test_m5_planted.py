@@ -120,14 +120,12 @@ def planted(vault, tmp_path, monkeypatch):
         core.close_runtime()
 
 
-def to_the_persons_decisions(core, root):
-    """Survey, draft every card (the Clerk checks its sensitivity), then the pipeline."""
-    call = core.person_call
-    assert "error" not in call("folder_survey", {"path": str(root)})
-    for card in call("folder_overview", {})["cards"]:
-        out = call("folder_draft", {"id": card["id"], "approve_spend": True})
-        assert "error" not in out, out
-    run = call("run_pipeline", {"name": "ingest-folder", "inputs": {"path": str(root), "limit": 20}})
+def to_the_persons_decisions(core, root, approve_folder_drafts=True):
+    """The pipeline, commissioned with the Clerk's folder drafts approved: it surveys, drafts every
+    waiting card (the Clerk describes it and checks its sensitivity), accepts by policy, queues and
+    captures."""
+    run = core.person_call("run_pipeline", {"name": "ingest-folder", "inputs": {
+        "path": str(root), "limit": 20, "approve_folder_drafts": approve_folder_drafts}})
     assert run["status"] == "finished", run
     return run
 
@@ -263,3 +261,61 @@ def test_the_paper_link_is_kept_through_acceptance(planted):
     # The ledger reconciles: every captured document accounted for.
     books = ledger(core.vault, str(root))
     assert books["unaccounted_count"] == 0 and books["sources"].get("accepted") == 3
+
+
+
+def test_the_pipeline_describes_every_waiting_folder_when_the_spend_is_approved(planted):
+    # M5's floor: at least 90% of the non-excluded folders described, with no silent failure.
+    core, root, _, _ = planted
+    run = to_the_persons_decisions(core, root)
+    drafted = run["outputs"]["drafted"]
+    assert sorted(drafted["drafted"]) == ["baseline", "external", "private"] and drafted["failed"] == []
+    cards = core.person_call("folder_overview", {})["cards"]
+    described = [c for c in cards if (c.get("description") or {}).get("state") == "model_draft"]
+    assert len(described) == len(cards) == 3
+    assert all((c.get("sensitivity") or {}).get("sensitivity") == "normal" for c in cards)
+    # A second run finds nothing left to draft: drafting is never repeated, so never paid twice.
+    again = to_the_persons_decisions(core, root)
+    assert again["outputs"]["drafted"]["drafted"] == [] and again["outputs"]["drafted"]["failed"] == []
+
+
+def test_without_the_spend_approved_nothing_is_drafted_and_each_card_is_held_with_its_remedy(planted):
+    core, root, _, _ = planted
+    run = to_the_persons_decisions(core, root, approve_folder_drafts=False)
+    assert run["outputs"]["drafted"] == {"skipped": True}
+    assert run["outputs"]["folders"]["accepted"] == 0
+    held = open_tickets(core, "folder:")
+    assert len(held) == 3 and {t["class"] for t in held} == {"partial_or_unmet"}
+    assert all("folder_draft" in t["summary"] for t in held)
+    # The tool itself refuses spend that was not approved, by name.
+    out = core.person_call("folder_draft_pending", {"root": str(root)})
+    assert out["refused"] == "SPEND_APPROVAL_REQUIRED"
+
+
+def test_a_draft_refused_for_every_card_is_said_once(planted, vault, monkeypatch):
+    # Without the owner's approval of a real Clerk route, each draft would be refused the same way. A
+    # scripted Clerk is exempt from that gate by design, so it is wrapped as a plain endpoint here.
+    from resource_librarian.vault import render_config
+    core, root, _, _ = planted
+    config = vault.config()
+    config["folders"]["production_drafting"] = False
+    vault.config_path.write_text(render_config(config))
+
+    class Plain(clerk.Endpoint):
+        name = "plain"
+
+        def __init__(self, inner):
+            self.inner = inner
+
+        def complete(self, payload, repair=""):
+            return self.inner.complete(payload, repair)
+    scripted = App._extras
+
+    def extras(self):
+        out = scripted(self)
+        out["clerk"] = Plain(out["clerk"])
+        return out
+    monkeypatch.setattr(App, "_extras", extras)
+    run = to_the_persons_decisions(core, root)
+    failed = run["outputs"]["drafted"]["failed"]
+    assert len(failed) == 1 and failed[0]["refused"] == "FOLDER_DRAFT_DISABLED"
