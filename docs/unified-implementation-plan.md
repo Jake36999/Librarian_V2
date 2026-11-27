@@ -8208,3 +8208,20 @@ Tests: `test_m5_planted.py` (+3), with the planted cases now drafting through th
 - every waiting folder is described when the spend is approved, and a second run drafts nothing;
 - without approval, nothing is drafted and each card is held with its remedy;
 - a refusal common to every card (no approval of the real Clerk route) is said once.
+
+### M5 folder-draft run: the fixed test folder, drafts approved (2026-11-27)
+
+`ingest-folder` with `approve_folder_drafts: true` ran on the fixed test folder (8 PDFs, 3 cards) in a new library at `G:\Librarian-work\m5-draft-run`.
+- Promotion mode was `agent`, and `[folders] production_drafting = true`: the Owner's settings for this throwaway library.
+- The real Clerk was DeepInfra Gemma 4, through the Core's per-route profile gate.
+- Geo-Grapher was the 0dcfb9a runtime.
+
+**Result:**
+- **Drafts:** all 3 non-excluded cards were described and checked (100% against M5's 90% floor), and each description states only the inventory's counts and passed provenance.
+- **Decisions:** all 3 were decided by policy, with nothing held and no tickets.
+- **Capture:** the 8 documents were queued and captured, and the ledger reconciles (8 staged, none unaccounted).
+- **Cost:** $0.0071 in 102 s. Drafting itself was 6 calls, under $0.001.
+
+The report is `reports/2026-11-27-m5-draft-run/README.md`.
+
+**For the Owner:** the root card `.` was accepted as `own-current`, Geo-Grapher's suggestion, which the policy takes as it stands. Every file sits in the decided subfolders, so no document is mislabelled here. Holding such a root card, or suggesting from the subfolders, would be a policy or Geo-Grapher change.

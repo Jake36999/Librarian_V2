@@ -315,9 +315,10 @@ They found three faults, fixed:
 
 The folder draft step, 27 November: `folder_draft_pending` runs the existing `folder_draft` over a root's waiting, undrafted cards. It is the `draft` step of `ingest-folder`, and runs when the commissioner passes `approve_folder_drafts: true`. Without it, the run is as before.
 
+The folder-draft run, 27 November (`reports/2026-11-27-m5-draft-run/`): on the fixed test folder with the real Clerk, all 3 non-excluded cards were described and checked (100% against the 90% floor), then decided by policy, for $0.0071. One Owner question came out of it: the root card was accepted as `own-current`, Geo-Grapher's suggestion, although every file sits in decided subfolders.
+
 Still to do:
 - Starting the batch inside the pipeline (it waits for the commission). Until then, "at most 2 tier-0 turns" is not shown.
-- Folder descriptions on a real folder. The pipeline now has its draft step: with `approve_folder_drafts`, the Clerk describes every waiting card and checks its sensitivity. The planted folder is fully described; the 90% floor is still to be measured on a real folder with the real Clerk.
 - Free-text required fields (a paper's identifier, authors, year) have no task after capture. They stay Unknown unless a fetcher supplied them. The acceptance run's arXiv files were captured as `document`, not `paper`, so they carried none of these fields.
 - The supervised run in Resource-Library.
 

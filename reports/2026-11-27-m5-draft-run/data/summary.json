@@ -1,0 +1,88 @@
+{
+ "folder": "E:\\DataManagement\\03-Retrieval-Routing-and-Graph-Query-Systems",
+ "run": {
+  "run": "20261127-162447-ingest-folder-6c87",
+  "status": "finished",
+  "at": null,
+  "result": null
+ },
+ "outputs": {
+  "drafted": {
+   "drafted": [
+    ".",
+    "baseline",
+    "external"
+   ],
+   "held": [],
+   "failed": [],
+   "remaining": 0
+  },
+  "folders": {
+   "surveyed": 3,
+   "accepted": 3,
+   "waiting": 0
+  },
+  "documents": {
+   "in_accepted_reference_folders": 8,
+   "queued_from_folders": 8,
+   "not_yet_queued": 0
+  },
+  "sources": {
+   "staged": 8
+  },
+  "unaccounted": [],
+  "next": "8 staged source(s) wait for approval into the batch"
+ },
+ "cards": [
+  {
+   "path": "baseline",
+   "suggested": "research-docs",
+   "status": "accepted",
+   "inherited": false,
+   "excluded": false,
+   "description_state": "model_draft",
+   "description": "The inventory contains a folder named 'baseline' with 3 files, all of which are .pdf files, totaling 5,575,174 bytes.",
+   "sensitivity": "normal",
+   "sensitivity_reason": "",
+   "accepted_by": "agent-policy",
+   "purpose": "research-docs"
+  },
+  {
+   "path": ".",
+   "suggested": "own-current",
+   "status": "accepted",
+   "inherited": false,
+   "excluded": false,
+   "description_state": "model_draft",
+   "description": "The inventory contains 8 files, all of which are .pdf files, with a total size of 15,254,667 bytes.",
+   "sensitivity": "normal",
+   "sensitivity_reason": "",
+   "accepted_by": "agent-policy",
+   "purpose": "own-current"
+  },
+  {
+   "path": "external",
+   "suggested": "third-party",
+   "status": "accepted",
+   "inherited": false,
+   "excluded": false,
+   "description_state": "model_draft",
+   "description": "The inventory contains 5 files located in the external path, all of which are .pdf files, totaling 9,679,493 bytes.",
+   "sensitivity": "normal",
+   "sensitivity_reason": "",
+   "accepted_by": "agent-policy",
+   "purpose": "third-party"
+  }
+ ],
+ "tickets": [],
+ "seconds": 102,
+ "spend_usd": 0.0071,
+ "model_calls": {
+  "clerk|google/gemma-4-26B-A4B-it": {
+   "calls": 46,
+   "in": 63188,
+   "out": 7780,
+   "unknown": 0
+  }
+ }
+}
