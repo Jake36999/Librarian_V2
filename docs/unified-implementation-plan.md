@@ -7913,3 +7913,9 @@ Updated `ui/m1a-smoke.mjs` and [report](../reports/2026-11-26-m1a-browser-check/
 - Seeded `m1a-processing-fixture-*` (`status="processing"`, `batch="batch-m1a-demo"`) alongside `m1a-accepted-fixture-*` (`status="accepted"`).
 - Under `processing` (`Being ingested`), asserted the processing row renders with `"Being ingested in batch-m1a-demo."` while the accepted row count is `0`; under `accepted` (`Accepted into the library`), asserted the accepted row renders while the processing row count is `0`.
 - Re-ran both `ui/folders-smoke.mjs` and `ui/m1a-smoke.mjs` against fresh `tests/folder_review_demo.py` instances (`PASS`, 0 `pageerror`s, 0 unexpected console errors) and full clean-clone `pytest tests/test_*.py`. No `src/resource_librarian/` files modified.
+
+### Delegation finishing checks (26 November 2026)
+
+UC16 routes both a failed step and an Oracle shortfall through ticket classification. Core sends mapped remedies to Doctor, assigns unmapped failures to the Lead with their resume point, and immediately alerts the Owner on critical unattended failures.
+
+In desktop Obsidian 1.15.1 the deployed b49b6cf plugin loaded in E:\Librarian ACCEPT-02 Vault. The adapter recovered a stale Core lease through its recovery control. Staging, Search and Chat rendered in the connected library with zero console errors or uncaught page exceptions observed during those interactions. The deployed main.js SHA-256 matched the branch build (BD6CC6D361BA634345FFF6329342699895192C0772DC972F88DC37C2F4ED2322). The desktop screenshot and fresh folder and M1a browser captures are under G:\Librarian-work\tmp\finisher-browser.

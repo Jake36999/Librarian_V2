@@ -27,7 +27,7 @@ The preferred Librarian: every use case runs under a parent process that owns it
 | UC-O | [oracle](views/oracle.views.md) | `PROPOSED_UNACCEPTED` | 16 | 5 | 7 | — | 0 | 1 | 0 | 0 |
 | UC1c.3 | [paper-publication](views/paper-publication.views.md) | `PROPOSED_UNACCEPTED` | 8 | 2 | 6 | — | 0 | 1 | 0 | 0 |
 | UC2 | [research](views/research.views.md) | `PROPOSED_UNACCEPTED` | 34 | 15 | 18 | — | 0 | 6 | 0 | 0 |
-| UC16 | [scheduled-pipeline](views/scheduled-pipeline.views.md) | `PROPOSED_UNACCEPTED` | 16 | 4 | 23 | — | 0 | 0 | 0 | 0 |
+| UC16 | [scheduled-pipeline](views/scheduled-pipeline.views.md) | `PROPOSED_UNACCEPTED` | 19 | 4 | 27 | — | 0 | 0 | 0 | 0 |
 | UC10 | [search-and-read](views/search-and-read.views.md) | `PROPOSED_UNACCEPTED` | 15 | 4 | 8 | — | 0 | 0 | 0 | 0 |
 | UC1c | [source-enrichment](views/source-enrichment.views.md) | `PROPOSED_UNACCEPTED` | 26 | 7 | 16 | — | 0 | 2 | 0 | 0 |
 | UC1.2 | [source-intake](views/source-intake.views.md) | `PROPOSED_UNACCEPTED` | 9 | 4 | 3 | — | 0 | 2 | 0 | 0 |

@@ -23,12 +23,15 @@ nodes:
   - {id: ref_agenda, kind: ref, lane: Owner, use_case: agenda, label: "Owner resolves held operation and recorded resume choice once on the agenda"}
   - {id: reconcile, kind: activity, lane: Core, label: "reads held operation and recorded resume point from agenda result, reconciles any unknown write (applied/retry), and resumes the applicable step"}
   - {id: devidence, kind: decision, lane: Core, label: "does Core hold verified checkpoint evidence that the held operation already completed?"}
-  - {id: dstep, kind: decision, lane: Core, label: "did all steps and remaining obligations meet acceptance_criteria without mapped failure?"}
+  - {id: dstep, kind: decision, lane: Core, label: "did all steps and remaining obligations meet acceptance_criteria without failure?"}
+  - {id: classify, kind: decision, lane: Core, label: "which ticket class applies to the failure?"}
+  - {id: leadticket, kind: activity, lane: Core, label: "assigns the unmapped failure to the Lead with its evidence and resume point"}
+  - {id: alert, kind: activity, lane: Core, label: "alerts the Owner immediately and preserves the stopped run"}
   - {id: ref_doctor, kind: ref, lane: Doctor, use_case: doctor, label: "repairs mapped pipeline failure or stale state through a bounded ticket"}
   - {id: ref_oracle, kind: ref, lane: Oracle, step: 3, use_case: oracle, label: "verifies pipeline outputs and spend against specification on a distinct route"}
   - {id: receipt, kind: activity, lane: Core, step: 4, label: "records finished run receipt, spend and overdue counts for Owner handover"}
   - {id: e1, kind: end, outcome: success, label: "scheduled pipeline finished, verified by Oracle, and receipt recorded"}
-  - {id: e_paused, kind: end, outcome: paused, label: "paused on Owner agenda at exact resume point or awaiting completion evidence / Oracle route (nothing redone)"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused with named ticket owner at exact resume point or awaiting completion evidence / Oracle route (nothing redone)"}
   - {id: e_escalated, kind: end, outcome: escalated, label: "unaccepted definition or unresolved failure escalated with compensation shown"}
 edges:
   - {from: s, to: trigger}
@@ -47,14 +50,19 @@ edges:
   - {from: ref_agenda, to: e_paused, guard: "paused"}
   - {from: ref_agenda, to: e_escalated, guard: "escalated"}
   - {from: dstep, to: ref_oracle, guard: "all steps and remaining obligations accepted"}
-  - {from: dstep, to: ref_doctor, guard: "mapped step or acceptance failure", ext: 2c}
+  - {from: dstep, to: classify, guard: "step or acceptance failure", ext: 2c}
   - {from: ref_doctor, to: ref_oracle, guard: "resolved"}
   - {from: ref_doctor, to: holditem, guard: "declined"}
   - {from: ref_doctor, to: e_escalated, guard: "escalated"}
   - {from: ref_oracle, to: receipt, guard: "success"}
-  - {from: ref_oracle, to: ref_doctor, guard: "shortfall", ext: 3a}
+  - {from: ref_oracle, to: classify, guard: "shortfall", ext: 3a}
   - {from: ref_oracle, to: e_paused, guard: "paused", ext: 3b}
   - {from: ref_oracle, to: e_escalated, guard: "escalated", ext: 3c}
+  - {from: classify, to: ref_doctor, guard: "mapped bounded remedy"}
+  - {from: classify, to: leadticket, guard: "unmapped noncritical failure"}
+  - {from: classify, to: alert, guard: "critical failure"}
+  - {from: leadticket, to: e_paused}
+  - {from: alert, to: e_escalated}
   - {from: receipt, to: e1}
 evidence:
   - "builds-on.md (agenda, tickets, Doctor, Oracle); workflows.py; initiators.table.yaml UC16."
