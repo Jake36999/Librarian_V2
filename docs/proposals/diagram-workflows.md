@@ -91,7 +91,7 @@ The course rule is that an actor is a role, not a person or a product, and need 
 | Owner | human | primary |
 | Overseer (tier 0, outside harness through MCP, CLI or Core API) | model | primary; may delegate Librarian work on the owner's behalf |
 | Lead (tier 1) | model | primary or secondary |
-| Scribe (tier 2) | model | secondary; notes and prose, synthesis, review and Clerk direction |
+| Scribe (tier 2) | model | secondary; notes and prose, proofreading, synthesis, review and Clerk direction |
 | Clerk (tier 3) | model | secondary; bounded drafts, checks and reading |
 | Core | the system | the system boundary itself |
 | Geo-Grapher | system | secondary |

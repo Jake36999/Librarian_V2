@@ -8085,3 +8085,35 @@ All 8 were surveyed, queued, captured, read, reviewed, published and accepted, e
 - the supervised Resource-Library run.
 
 Tests: `test_ingestion.py` (+2), `test_m5_batch.py` (+1, and one extended), `test_macro_permissions.py` (allow-list).
+
+### Regression audit of M0–M5, and the order of authority (2026-11-27)
+
+The Owner had asked twice that the hardening pass lose nothing, and no one had checked. `04acfe4` (before the plan) was compared with `3ac06bb` (after the M5 acceptance run) by `scripts/regression_audit.py`, added here. It covered:
+- the tool surface, rules, routes and model task names;
+- standard workflows, pipelines and macros;
+- every module's functions, signatures and constants;
+- batch stages, recipes and dependencies by value;
+- roles and profiles;
+- deleted tests, assertions and documentation lines.
+
+**Nothing removed:**
+- no tool, parameter, default, rule, route, task name, standard definition, stage or profile;
+- no change at all to the adapter layers (`adapters/`, `providers`, `service_adapters`, `model_invocation`, `mcp_client`, `mcp_server`, `geo_service`);
+- no change to the analysis modules (`deep_read`, `lenses`, `dik`, `clerk`, `effort`, `profiles`, `ocr`, `pdf_markdown`, `index`, `search`).
+
+The report is `reports/2026-11-27-regression-audit/README.md`.
+
+**Two regressions, fixed:**
+- **The near-duplicate warning at capture** compared only the readable title (M5.3). A PDF with a metadata title was no longer flagged as a second copy of a held file. It matches on the working title again.
+- **The tier-order correction of 26 November** had dropped the policy's safeguard that existing role slots, profiles and gates keep their behaviour until an explicit change, and proofreading as a tier-2 duty. Both are restored.
+
+**The order of authority** (Owner, 27 November), now in the implementation plan §0:
+1. the existing specifications (Research Pipeline requirements and addendum of 30 September, each library's Note Content Model, the policy, this plan);
+2. then the code;
+3. then the packs, which map them.
+
+Two related changes:
+- **The plan's "Old paths retire" rule** becomes "nothing is removed for being old", and the before/after audit is a gate at every milestone.
+- **Semantic metadata (W-REA-02)** is recorded as specified since 30 September (Research Pipeline §3.4 and §4.3 step 5, Addendum R16) and as an extension of `batch._metadata`. It is not an Owner decision.
+
+Tests: `test_ingest_service.py` (+1).

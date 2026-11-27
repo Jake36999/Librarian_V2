@@ -8,6 +8,13 @@ The Owner, 26 November:
 - The packs map the current system: what makes its processes unreliable, or perform worse than they should. They do not specify additions.
 - This build is an optimisation and hardening pass, now that the system has shown it can do what is needed. It builds on the existing code rather than beside it.
 
+**The order of authority** (Owner, 27 November). The Librarian was built over three months against its own specifications, before the packs existed. The packs were drawn in the last week of November from that system, to map its current behaviour, refine and fix its workflows, and then optimise them; one goal is fewer tier-0 turns and tokens, by delegating to tiers 1–3. So, where they differ:
+1. the existing specifications come first: the Research Pipeline requirements and their addendum of 30 September (`D:/Resource-Library/internal docs/chatgpt-review/`, `.v2/docs/Requirements Addendum 2026-09-30.md`), each library's Note Content Model, `docs/policy/`, and the unified plan;
+2. then the existing code and its tests;
+3. then the packs, which describe both and propose changes to them.
+
+A to-be step is built as an extension of the specification and code it maps, never as a replacement for them. Before an item is built, its existing specification and code are found and named in the commit. Where the pack and the specification disagree, the specification holds, and the disagreement goes to the Owner.
+
 So every task below names the module it extends. The to-be pack's [builds-on table](../../reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/builds-on.md) gives each to-be mechanism one specification: the existing code it hardens. Where the to-be's name for a mechanism duplicated an existing one (the agenda, the grant, the exit gates, the verifiers), the table flattens the two into one.
 
 ## 1. Review
@@ -77,7 +84,18 @@ So every task below names the module it extends. The to-be pack's [builds-on tab
 ## 2. How the build runs
 
 - **The test vault first, behind a named setting.** Each milestone names its setting. With the setting off, the as-is path runs unchanged, and a test proves it.
-- **Old paths retire.** The as-is path a milestone replaces is removed once its acceptance run passes in `Librarian ACCEPT-02 Vault` and one supervised run passes in Resource-Library.
+- **Nothing is removed for being old.** An as-is path is replaced only by one that does everything it did; the replacement keeps the old path's behaviour, settings and messages unless the Owner decides otherwise. Withdrawing a path at all (after its acceptance run in `Librarian ACCEPT-02 Vault` and one supervised run in Resource-Library) is the Owner's decision.
+- **A before/after audit at every milestone** (Owner, 27 November). Before a milestone is committed, its checkout is compared with the one before it:
+  - the registered tools (tier, effect, flags, parameters, defaults);
+  - the refusal rules, API routes and model task names;
+  - the standard workflows, pipelines and macros, step by step;
+  - batch stages, recipes, dependencies and model stages;
+  - every module's public functions, signatures and constants;
+  - role slots and default profiles;
+  - deleted tests and changed assertions;
+  - deleted documentation lines.
+
+  Each difference is either intended, and named in the commit, or restored. Also checked: the libraries' saved workflows still validate, and no new refusal can block a call that succeeded before. The script is `scripts/regression_audit.py`; the first audit, of M0–M5, is `reports/2026-11-27-regression-audit/`.
 - **Existing vaults migrate.** Each milestone that changes stored state includes a migration test over a copy of real state: `checkpoints.json`, saved effort settings, role assignments, the live Resource-Library vault.
 - **Acceptance is a runtime run, not a diagram check.** Each run records the code commit, the manifest and action digests, the vault fixture, the role assignments, the budget, the receipts and the result. Paid calls carry a per-run ceiling and report actual cost.
 - **Measure before and after.** M0 records the baselines. Each run reports tier-0 turns and tier-0 tokens (the Owner's aim is fewer of both), spend, and the performance tables' metrics.
@@ -273,7 +291,14 @@ Acceptance run, 27 November (`reports/2026-11-27-m5-acceptance/`):
 - It found four faults, each fixed with a test: the pipeline runners inside the writer, the ledger's captured sources, a template placeholder title, and graph labels with spaces.
 
 Still to do:
-- Semantic metadata (W-REA-02): a new model step in every batch item, so new spend; its design is the Owner's decision.
+- Semantic metadata (W-REA-02). Specified since 30 September: Research Pipeline §3.4 and §4.3 step 5, and Addendum R16. The existing stage is `batch._metadata`: literal Data facts, unknown fields from `readiness`, `metadata_proposals` confirmed at acceptance. It extends that stage and replaces none of it. The pack's `metapropose` (a Scribe proposes from evidence, Unknown where unsupported) is built within the specification:
+  - values come from the Data and Information records, citing their ids and locators, never from the summary;
+  - fields are the library's own Note Content Model, which stays authoritative;
+  - a value outside an axis's allowed values is staged as a taxonomy candidate for the person, never written into the schema;
+  - with no model, the deterministic part still runs and the model step queues;
+  - extraction gets no project-need context (§4.4).
+
+  The spend is one Scribe call per source; it is not a pending Owner decision.
 - Starting the batch inside the pipeline (it waits for the commission).
 - The supervised run in Resource-Library.
 

@@ -150,6 +150,22 @@ def test_a_similar_title_is_flagged_not_blocked(library):
     assert out["detail"]["possible_duplicate_of"] == "Welcome Week (staged)"
 
 
+
+def test_a_similar_name_is_flagged_when_the_pdf_has_its_own_title(library, monkeypatch):
+    # Regression audit (2026-11-27): readable titles (M5) made a PDF's metadata title its captured
+    # title, and the near-duplicate check compared only that, so a second copy of a held file was no
+    # longer flagged by its name. It matches on the working name again, and on the readable title.
+    from resource_librarian import intake
+    mechanical(library.root / "Inbox" / "Welcome Week.pdf")
+    make_pdf(library.root / "Inbox" / "Welcome Week (1).pdf", [["A different deck."]])
+    monkeypatch.setattr(intake, "readable_title", lambda path: (
+        "Orientation Slides for New Students" if path.name == "Welcome Week (1).pdf" else path.stem))
+    c = ctx(library)
+    call(c, "ingest", ref="Inbox/Welcome Week.pdf")
+    out = call(c, "ingest", ref="Inbox/Welcome Week (1).pdf")
+    assert out["status"] == "staged"
+    assert out["detail"]["possible_duplicate_of"] == "Welcome Week (staged)"
+
 # ------------------------------------------------------------------ pages, papers, datasets
 
 def test_a_script_built_page_is_flagged(library):

@@ -624,6 +624,10 @@ def ingest(vault: Vault, engine: Engine | None, ref: str, *, endpoint: clerk.End
         return IntakeResult(ref, "already_held", name=fetched.name, detail=held_path)
     live = ("staged", "deferred", "approved", "processing", "enriched", "partial")
     near = ""
+    wanted = {_normal_title(fetched.title), _normal_title(fetched.name)}
+    if reference.kind == "file" and fetched.file:
+        wanted.add(_normal_title(file_title(vault.root / fetched.file)))   # the title used before M5.3
+    wanted -= {""}
     for item in staging.items("source"):
         if item.get("ref") and not item.get("evidence"):
             continue                                   # a queued reference, not a capture
@@ -640,11 +644,16 @@ def ingest(vault: Vault, engine: Engine | None, ref: str, *, endpoint: clerk.End
             return IntakeResult(ref, "already_held", item["id"], item.get("name", ""),
                                 f"the same content is already waiting in staging as "
                                 f"{item.get('name')}")
-        if not near and item["status"] in live + ("accepted",) and _normal_title(
-                str(item.get("title") or item.get("name", ""))) == _normal_title(fetched.title):
+        # By the working name, as before readable titles, and by the readable title (regression
+        # audit, 2026-11-27: a PDF's metadata title is not its note's name, so matching on the title
+        # alone stopped flagging a second copy of a held file).
+        if not near and item["status"] in live + ("accepted",) and (({
+                _normal_title(str(item.get("title") or "")), _normal_title(str(item.get("name") or ""))
+        } - {""}) & wanted):
             near = f"{item.get('name')} ({item['status']})"
     if not near:
-        near = index_access(lambda active: _near_library_title(active, fetched.title))
+        near = index_access(lambda active: next(
+            (found for key in sorted(wanted) if (found := _near_library_title(active, key))), ""))
 
     documentation = fetched.texts.get("documentation", "")
     screen: dict[str, Any] = {}

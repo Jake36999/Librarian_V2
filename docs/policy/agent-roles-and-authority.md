@@ -22,13 +22,18 @@ Two more words sound like tiers and are not (21 November 2026):
 |---|---|---|---|
 | **0** | The **Overseer**: an outside agent working for the owner in Codex, Claude, Antigravity or another harness, including using Librarian to support another project | MCP, the CLI, the Core API; may delegate work through Librarian | The current MCP cap is `contribute`; delegated authority must be granted explicitly and does not include the person's reserved decisions |
 | **1** | The **Lead**: manages the main direction and delegated work; currently hosted on DeepInfra | The app's chat loop and its phase-sized tool bundles | Up to the caller's and assigned profile's authority |
-| **2** | The **Scribe**, and the research helpers: writes notes and prose from checked parts, synthesises, reviews and directs Clerks; today the notes model | Work delegated by the Lead through the Core | Within the caller's and assigned profile's authority |
+| **2** | The **Scribe**, and the research helpers: writes notes and prose from checked parts, proofreads, synthesises, reviews and directs Clerks; today the notes model | Work delegated by the Lead through the Core | Within the caller's and assigned profile's authority |
 | **3** | The **Clerk**: bounded tasks across many small units (drafts, checks such as a claim's verdict, reading parts); today the small-task model | Bounded tasks directed by a Scribe or the Lead | Within the caller's and assigned profile's authority |
 
 The names imply the hierarchy: each tier directs the tier below. The code already follows this order:
 the `scribe` slot and `tier2_agents` are tier 2, the `clerk` slot and `tier3_agents` tier 3 (`effort.py`,
 `tools/staging.py`, `tools/plan_dispatch.py`); the order, written reversed on 25 November 2026, was
 restored by the owner on 26 November. Drafting text does not grant a worker authority to write a note.
+
+These are semantic roles, not instructions to swap legacy numeric configuration fields. Existing
+role slots, profiles, qualification records and tool gates keep their current behaviour until an
+explicit implementation change reconciles them. (Restored by the regression audit of 27 November
+2026: the tier-order correction of 26 November had dropped it.)
 
 ## Core services and agent ownership
 
