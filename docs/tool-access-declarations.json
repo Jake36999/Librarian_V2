@@ -4745,7 +4745,7 @@
         "symbol": "staging_decide"
       },
       "fingerprint": {
-        "source_sha256": "8ad839d93524b98349e069f529891d5cc9832f51698c0543c7eddc1824ec4162",
+        "source_sha256": "9fa3e28a78f8ff22f7d115f8e0728efd122e442522b69648516bd20a50d3a64f",
         "schema_sha256": "269eb5420887b52769f7072d567b1d112c73ed488a9eb3f534d0a6f0b35a1600",
         "effect": "vault_write",
         "open_world": false,

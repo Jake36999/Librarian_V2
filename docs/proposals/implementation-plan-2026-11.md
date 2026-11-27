@@ -258,11 +258,17 @@ Done:
 - Queueing the accepted folders (W-FOL-04).
 - The undrained queue on the agenda (W-ING-02).
 
+Second part, 27 November:
+- Stored links from the v1.2 receipt (W-CIT-01).
+- The provisional projection marked (W-PAR-01).
+- A failed folder draft names its reason (W-BAT-01).
+- An unfindable accepted note opens a reindex ticket (W-ACC-02).
+
 Still to do:
-- The batch defects (item 3).
-- Stored links, which wait for G1.
-- The acceptance run on the fixed test folder.
-- Starting the batch inside the pipeline, which waits for M2's commission, because starting a batch is high risk.
+- Readable titles (W-INT-01) and semantic metadata (W-REA-02).
+- Spend reserved before each model call.
+- The acceptance run on the fixed test folder, once the new Geo-Grapher wheel is installed.
+- Starting the batch inside the pipeline (it waits for the commission).
 
 1. **`ingest-folder` as a pipeline** over M1a's actions: folder review, then source intake, then batch enrichment, then acceptance. One parent starts each child.
 2. **The ledger:** the parent reconciles surveyed, queued, staged, enriched and accepted (W-ING-01).

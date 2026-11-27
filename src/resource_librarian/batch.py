@@ -597,7 +597,11 @@ def _publish(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         return {"status": "partial", "paper_graph": artifact, "publication": publication,
                 "reason": f"not published: {publication.get('status', 'refused')}"}
     return {"status": "complete", "paper_graph": artifact,
-            "publication": {k: publication.get(k) for k in ("graph_id", "documents", "paper_database")}}
+            # The stored link to the published paper (M5, as-is W-CIT-01): Geo-Grapher's v1.2 receipt
+            # names the paper (document_id, cite_as) and what was read; an older wheel names neither.
+            "publication": {k: publication.get(k) for k in ("graph_id", "documents", "paper_database",
+                                                            "document_id", "cite_as", "status",
+                                                            "content_coverage") if publication.get(k) is not None}}
 
 
 STAGES: list[tuple[str, Callable[[Context, dict[str, Any]], dict[str, Any]]]] = [
@@ -914,7 +918,9 @@ def _finish_item(store: StagingStore, runs: RunStore, run_id: str, item_id: str,
                           "coverage": "full" if not incomplete and not failed else
                           (f"partial {coverage}" if coverage else "partial"),
                           **({"read_coverage": coverage} if coverage else {}),
-                          **({"not_examined": incomplete} if incomplete else {})}
+                          **({"not_examined": incomplete} if incomplete else {}),
+                          **({"publication": results["publish"]["publication"]}
+                             if (results.get("publish") or {}).get("publication") else {})}
     if item.get('kind') == 'folder':
         item['processing']['coverage'] = 'metadata only; content not examined'
         item['processing']['not_examined'] = ['source content', *incomplete]

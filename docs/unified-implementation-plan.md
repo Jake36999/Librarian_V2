@@ -7941,3 +7941,45 @@ It stops at the person's decisions: approving into the batch, and starting it.
 - the batch start inside the pipeline (high risk; it waits for the commission).
 
 Tests: `test_ingestion.py` (+4); `test_macro_permissions.py` adds `folder_queue_accepted` to the reviewed orchestrators; the new pipeline joins the manifest and load checks; access declarations for the two tools and the changed `agenda`.
+
+### Review of the delegated work, and M5's second part (2026-11-27)
+
+**The delegated branches were reviewed, and are not merged here** (the Owner decides that, and the pushes).
+
+`antigravity/delegated-2026-11-26` (`15b5c12`, Librarian), branched from `b583f03`:
+- the UC10–UC16 specs and views, with the scheduled-pipeline correction;
+- the Geo-Grapher inventory and defect triage;
+- the M1a browser check, with repeatable smoke scripts and screenshots;
+- the Obsidian rebuild, with its desktop acceptance.
+
+It touches no `src/` or `tests/` file. Its §19 entries will conflict, in text only, with the M4 and M5 entries here when merged. Its triage confirms one defect worth scheduling: Geo-Grapher's flat MCP tools drop incoming Python dependencies.
+
+`antigravity/geo-g1-g3-g2` (`0dcfb9a`, Geo-Grapher), from `e71967a`:
+- v1.2 receipt schemas and fixtures;
+- receipts on graph building and paper import, with distinct statuses (complete, partial, refused, not applicable) and a paper's `content_coverage`;
+- hosted CI.
+
+It is checked against what the Librarian reads today:
+- `batch._publish` still gets `published`, `graph_id`, `documents` and `paper_database`;
+- a graph's `coverage` becomes structured, with its note moved to `coverage_note`. The Librarian reads neither.
+
+So the branch is compatible. Its suite: 971 passed.
+
+**M5, second part:**
+- **Stored links (W-CIT-01).**
+  - The publish stage keeps the v1.2 receipt's `document_id`, `cite_as`, `status` and `content_coverage`. An older wheel returns none of them, and nothing changes.
+  - The finished item keeps its publication, and acceptance writes `graph_paper: <cite_as>` to the Source note.
+  - `graph_evidence.resolve` finds a paper's note by that stored link first, so a renamed note keeps its paper. The title match stays the fallback.
+- **The provisional projection (W-PAR-01).** The parse stage's paper projection is marked `provisional` in the batch's record. Only the publish stage's rewrite is ever published. Geo-Grapher's file format is unchanged.
+- **Folder drafts (W-BAT-01).** `FOLDER_DRAFT_FAILED` now carries the Clerk's status and problem.
+  - Evidence: all ten failures were in one batch, on 16 November at 18:34 (Resource-Library), about a second each. Fixes to over-long fields (`acdde33`) and stated totals (`bfdf1b5`) landed later that day.
+  - Four direct re-runs on the same Clerk model pass today, for under a cent.
+  - The likeliest cause is the over-long description, but it cannot be confirmed: the reason was dropped.
+- **Findability (W-ACC-02).** An accepted note that is not findable opens a `mapped_shortfall` ticket for the Doctor's reindex remedy (R5).
+
+Not yet:
+- readable titles and semantic metadata;
+- spend reserved before each call;
+- the acceptance run on the fixed folder, which needs the new wheel installed.
+
+Tests: `test_m5_batch.py` (+5); the access declaration for `staging_decide`.

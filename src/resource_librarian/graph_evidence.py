@@ -51,11 +51,29 @@ def resolve(ctx: Any, handle: str) -> dict[str, Any]:
                         "exactly from a paper search or document result")
     title = str(doc.get("title") or "")
     from .tools.library import IndexGateway
-    row = IndexGateway(ctx).run(lambda engine: engine.index.note_row(title)) if title else None
-    return {"handle": f"{match['graph']}/{match['doc']}", "graph": match["graph"],
+    wanted = f"{match['graph']}/{match['doc']}"
+    # The stored link first (M5, as-is W-CIT-01): a Source note accepted from a publication names its
+    # paper (`graph_paper`), so a renamed note keeps it; the title match stays the fallback.
+    linked = IndexGateway(ctx).run(lambda engine: _linked_note(engine, wanted))
+    row = None if linked else (IndexGateway(ctx).run(lambda engine: engine.index.note_row(title))
+                               if title else None)
+    return {"handle": wanted, "graph": match["graph"],
             "doc": match["doc"], "title": title,
             "provenance": str(doc.get("provenance") or data.get("provenance") or ""),
-            "note": row["name"] if row is not None else ""}
+            "note": linked or (row["name"] if row is not None else ""),
+            "linked_by": "stored link" if linked else ("title" if row is not None else "")}
+
+
+def _linked_note(engine: Any, handle: str) -> str:
+    """The Source note whose `graph_paper` is this handle, or ''."""
+    for row in engine.conn.execute("SELECT name, frontmatter FROM note WHERE frontmatter LIKE ?",
+                                   (f"%{handle}%",)):
+        try:
+            if json.loads(row["frontmatter"] or "{}").get("graph_paper") == handle:
+                return str(row["name"])
+        except ValueError:
+            continue
+    return ""
 
 
 def graph_labels(vault: Any) -> list[str]:

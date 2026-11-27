@@ -156,8 +156,12 @@ def write_artifact(vault, item, *, text_layer=False):
     key = hashlib.sha256(data['file_path'].encode()).hexdigest()[:32]
     path = operation_path(vault, '.librarian/derived/paper-graph/' + key + '.nodes.json')
     atomic_write_text(path, json.dumps(data, indent=2, ensure_ascii=False))
+    # Written before reading (parse stage), the projection is provisional (M5, as-is W-PAR-01): it is
+    # marked so in the record the batch keeps, and only the publish stage's rewrite from the text
+    # layer is ever published. The file's own format is Geo-Grapher's and stays as it was.
     return {'path': path.relative_to(vault.root).as_posix(), 'coverage': data['coverage'],
-            'sha256': file_sha256(path), 'source': data['file_path'], 'authorship': 'generated'}
+            'sha256': file_sha256(path), 'source': data['file_path'], 'authorship': 'generated',
+            'provisional': not text_layer}
 
 
 def publish_artifact(vault, item, artifact):

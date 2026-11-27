@@ -521,7 +521,11 @@ class FolderReview:
         results = clerk.run([clerk.Task(kind, json.dumps(payload), 'Describe this inventory in one sentence.'),
                              clerk.sensitivity(json.dumps(payload))], endpoint)
         result = results[0]
-        if not result.ok: raise ValueError('FOLDER_DRAFT_FAILED')
+        if not result.ok:
+            # The Clerk's own status and problem, about its reply's shape (only folder metadata was
+            # sent): on 16 November ten folder drafts failed as a bare FOLDER_DRAFT_FAILED (W-BAT-01).
+            problem = ' '.join(str(getattr(result, 'problems', '') or '').split())[:200]
+            raise ValueError(f"FOLDER_DRAFT_FAILED: {result.status}{': ' + problem if problem else ''}")
         from . import provenance
         claims = provenance.check_sections(self.vault, {'Description': result.value['description']},
             {'evidence': [e['id'] for e in card.get('evidence', [])]})

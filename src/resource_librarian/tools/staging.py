@@ -754,6 +754,18 @@ def staging_decide(ctx: Context, item_ids: list[str],
                  "not_findable": [r["id"] for r in results if r.get("promotion")
                                   and not r["promotion"]["catalogued"]],
                  "refused": sum(1 for r in results if "refused" in r or "error" in r)}
+    if aggregate["not_findable"]:
+        # A note accepted but not findable is a ticket for the Doctor's reindex remedy (M5, as-is
+        # W-ACC-02): it used to wait for someone to notice and rewrite the indexes by hand.
+        try:
+            from ..tickets import TicketStore
+            for item_id in aggregate["not_findable"]:
+                TicketStore(ctx.vault).ensure(
+                    "mapped_shortfall", f"findability:{item_id}",
+                    summary=f"{item_id} was accepted but is not findable in search (reindex: remedy R5)",
+                    evidence={"item": item_id}, opened_by="acceptance")
+        except Exception:                              # noqa: BLE001 - never blocks the decision
+            pass
     if embedding_entries:
         aggregate[POST_WRITE] = _StagingEmbeddingContinuation(ctx, embedding_entries)
     return aggregate

@@ -570,6 +570,11 @@ def _source_draft(store, item, bottom_line, what_it_solves, decided_by, session,
         merged.setdefault("text_origin", f"OCR by {o.get('model')}: {o.get('read')} of {o.get('needed')} image-only pages")
     if not_examined:
         merged.setdefault("not_examined", not_examined)
+    # A Source note and its graph paper are linked by the publication's receipt, not by a title
+    # derived each time (M5, as-is W-CIT-01): a renamed note keeps its paper.
+    published = ((item.get("processing") or {}).get("publication") or {})
+    if published.get("cite_as"):
+        merged.setdefault("graph_paper", published["cite_as"])
     return Draft(name=item["name"], kind=item.get("source_kind", "repository"),
         title=item.get("title", item["name"]), canonical_url=item.get("canonical_url", ""),
         bottom_line=bottom_line, what_it_solves=what_it_solves or bottom_line,
