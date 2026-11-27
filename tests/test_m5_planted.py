@@ -379,10 +379,13 @@ def test_a_persons_decision_is_never_replaced_after_its_content_changes(planted)
 
 def _wait_for_the_batch(core, seconds=60):
     import time
+    # Wait on the state checked, not on `running` alone: on a slow runner the flag can read false
+    # before the background run has finished its items (hosted CI, 27 November).
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         status = core.person_call("batch_status", {})
-        if not status.get("running"):
+        busy = [i for i in StagingStore(core.vault).items("source") if i.get("status") in ("approved", "processing")]
+        if not status.get("running") and not busy:
             return status
         time.sleep(0.2)
     raise AssertionError("the batch did not finish")
