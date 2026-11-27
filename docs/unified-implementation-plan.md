@@ -8290,3 +8290,9 @@ Tests: `test_paper_from_file.py` (6, new):
 - a failed lookup;
 - no identifier, and no lookup;
 - a DOI record without an abstract.
+
+### Branch vs. `master` audit (`c4eb76f..383a3d1` and `origin/master` `f8dc6b8`, 2026-11-27)
+
+Extended the regression audit ([report](../reports/2026-11-27-branch-vs-master-audit/README.md)) on local branch `audit/branch-vs-master` from `383a3d1`:
+- **Part A (`c4eb76f..383a3d1`, 167 commits):** Compared `c4eb76f` vs `383a3d1` using `scripts/regression_audit.py`, accounted for all 53 surface/constant/standard differences and `deletions` entries as `intended`, read all deletion hunks in changed `src/resource_librarian/` modules, and loaded sanitized copies of all 4 live vaults' `.librarian/` state on `G:` (`Resource-Library`, `Parallax`, `Nonlinear Field Lab`, `Librarian ACCEPT-02 Vault`; 0 live paths retained, 32/32 sessions, all role routes/checkpoints/SQLite stores `ok`). Zero source regressions found (`0 lost`, `0 unclear`).
+- **Part B (`c4eb76f..f8dc6b8` vs `c4eb76f..383a3d1`):** Distinguished public-curation removals in `origin/master` `f8dc6b8` (576 internal reports/docs + `.gitignore` swap) from tip-to-tip differences; `0` files added or modified in `f8dc6b8` are absent on `383a3d1` (87 identical, 64 strictly newer on `383a3d1`). Recorded bidirectional merge-loss analysis and Owner decision list without merging.
