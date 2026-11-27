@@ -264,9 +264,12 @@ Second part, 27 November:
 - A failed folder draft names its reason (W-BAT-01).
 - An unfindable accepted note opens a reindex ticket (W-ACC-02).
 
+Third part, 27 November:
+- Readable titles (W-INT-01).
+- The library's ceiling checked before each Clerk or Scribe call.
+
 Still to do:
-- Readable titles (W-INT-01) and semantic metadata (W-REA-02).
-- Spend reserved before each model call.
+- Semantic metadata (W-REA-02): a new model step in every batch item, so new spend; its design is the Owner's decision.
 - The acceptance run on the fixed test folder, once the new Geo-Grapher wheel is installed.
 - Starting the batch inside the pipeline (it waits for the commission).
 

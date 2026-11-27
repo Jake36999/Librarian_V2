@@ -8042,3 +8042,23 @@ Not yet:
 - the acceptance run on the fixed folder, which needs the new wheel installed.
 
 Tests: `test_m5_batch.py` (+5); the access declaration for `staging_decide`.
+
+### M5, third part: readable titles, and the ceiling before each call (2026-11-27)
+
+**Readable titles** (as-is W-INT-01). `intake.readable_title` gives a captured file its title. There is no model call:
+- a PDF's own metadata title when it is meaningful (at least two words, not "Untitled" or "Microsoft Word - ...", and not the file name itself);
+- otherwise the file's working title with underscores read as spaces, so `Optimizing_Queries_with_Many-to-Many_Joins.pdf` reads "Optimizing Queries with Many-to-Many Joins".
+
+The note's name stays the file's working title, so the duplicate checks by name are unchanged. The near-duplicate check by title already treats underscores as spaces.
+
+**The ceiling before each call** (as-is MC-10).
+- `UsageLog.spent` counts spend as `spent_usd` does, but reads only the lines appended since its last call, so every writer is seen, `record_call` included. `UsageLog.over_ceiling` compares that spend with `[budget] ceiling_usd`.
+- The Clerk and Scribe profile guard (`_background_profile_guard`) now refuses a call once the person's own ceiling is reached. The task queues and resumes after the ceiling is raised.
+- Before this, the ceiling was checked only between batch items, so one long item could spend past it.
+- It does not reserve a call's estimated cost against the ceiling. The profiles' own cost budgets already do that per call.
+
+**Not yet:**
+- semantic metadata (W-REA-02), a new model step and so new spend: the Owner's decision;
+- the fixed-folder acceptance run, which needs the new Geo-Grapher wheel installed.
+
+Tests: `test_m5_batch.py` (+2).

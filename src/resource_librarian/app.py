@@ -2402,6 +2402,11 @@ class App:
             provider.retry_policy = str(getattr(profile, "retry_policy", "bounded"))
         lead = self.lead_status([route]) if profile.role == "lead" else {}
         self._require_profile_qualification(profile, route, lead)
+        # The library's ceiling, checked before each call and not only between batch items (M5): a
+        # long item stops at the person's own limit, and its task queues to resume after it is raised.
+        if self.usage_log.over_ceiling():
+            raise ValueError("the library's budget ceiling ([budget] ceiling_usd) is reached; raise it "
+                             "to continue")
         return self._route_rate_card(route, profile)
 
     def _background_profile_endpoint(self, role: str, endpoint: Any, tier: int) -> Any:

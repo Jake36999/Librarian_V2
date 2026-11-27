@@ -72,3 +72,46 @@ def test_an_accepted_note_that_is_not_findable_opens_a_reindex_ticket(vault, mon
     [ticket] = TicketStore(vault).all(open_only=True)
     assert ticket["class"] == "mapped_shortfall" and ticket["scope"] == "findability:s-x"
     assert ticket["owner"] == "doctor"
+
+
+def test_the_running_spend_reads_only_new_lines_and_sees_every_writer(vault):
+    # M5: the library's ceiling is checked before each model call, so its count must be cheap and
+    # include calls recorded outside the Core's own log instance (record_call).
+    from resource_librarian import usage_log
+    from resource_librarian.vault import render_config
+    log = usage_log.UsageLog(vault)
+    assert log.spent() == 0.0 and log.over_ceiling() is False
+    usage_log.record_call(vault, role="clerk", task="review", usd=0.4)
+    usage_log.record_call(vault, role="clerk", task="review", usd=0.2)
+    assert abs(log.spent() - 0.6) < 1e-9
+    assert abs(log.spent() - usage_log.spent_usd(vault)) < 1e-9          # same count, read once
+    config = vault.config()
+    config.setdefault("budget", {})["ceiling_usd"] = 0.5
+    vault.config_path.write_text(render_config(config))
+    assert log.over_ceiling() is True
+
+
+def test_a_file_source_gets_a_readable_title_and_keeps_its_name(tmp_path, monkeypatch):
+    # M5 (as-is W-INT-01): the title a reader sees; the name (and so duplicate checks) unchanged.
+    from resource_librarian import intake
+    md = tmp_path / "Optimizing_Queries_with_Joins.md"
+    md.write_text("text")
+    assert intake.readable_title(md) == "Optimizing Queries with Joins"
+    assert intake.file_title(md) == "Optimizing_Queries_with_Joins"
+    plain = tmp_path / "already readable.md"
+    plain.write_text("text")
+    assert intake.readable_title(plain) == "already readable"
+    pdf = tmp_path / "x_y_z.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+
+    class Meta:
+        title = "A Real Paper Title About Joins"
+
+    class Reader:
+        def __init__(self, path):
+            self.metadata = Meta
+    import pypdf
+    monkeypatch.setattr(pypdf, "PdfReader", Reader)
+    assert intake.readable_title(pdf) == "A Real Paper Title About Joins"
+    Meta.title = "Microsoft Word - draft3.docx"
+    assert intake.readable_title(pdf) == "x y z"

@@ -462,6 +462,30 @@ def file_title(path: Path) -> str:
     return stem
 
 
+_FILLER_TITLES = re.compile(r"^(untitled|title|document|microsoft word\b|slide \d+|presentation\d*)", re.I)
+
+
+def readable_title(path: Path) -> str:
+    """A title a reader can use (M5, as-is W-INT-01): a PDF's own title when it has a meaningful one,
+    else the file's working title with underscores read as spaces. Deterministic, no model call; the
+    note's name stays the file's working title, so duplicate checks are unchanged."""
+    stem = file_title(path)
+    if path.suffix.lower() == ".pdf":
+        try:
+            from pypdf import PdfReader
+            meta = PdfReader(str(path)).metadata
+            title = " ".join(str((meta.title if meta else "") or "").split())
+        except Exception:                                   # noqa: BLE001 - metadata is optional
+            title = ""
+        words = re.findall(r"[A-Za-z]{2,}", title)
+        meaningful = (len(title) >= 8 and len(words) >= 2 and not _FILLER_TITLES.match(title)
+                      and _normal_title(title) != _normal_title(path.name)
+                      and not title.lower().endswith((".pdf", ".docx", ".doc")))
+        if meaningful:
+            return title[:200]
+    return " ".join(stem.replace("_", " ").split()) if "_" in stem and " " not in stem else stem
+
+
 def fetch_file(rel: str, vault: Vault, store: EvidenceStore) -> Fetched:
     from .credentials import refuse_credentials
     refuse_credentials(rel)
@@ -472,8 +496,8 @@ def fetch_file(rel: str, vault: Vault, store: EvidenceStore) -> Fetched:
         raise FetchError(f"{rel}: {result.error}")
     body = "\n\n".join(result.pages)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()[:16]
-    title = file_title(path)
-    fetched = Fetched("document", notes.safe_name(title)[:120], title,
+    title = readable_title(path)
+    fetched = Fetched("document", notes.safe_name(file_title(path))[:120], title,
                       f"file:{digest}", file=rel)
     _record(store, fetched, "pdf_text" if path.suffix.lower() == ".pdf" else "page",
             f"file:{path.name}#{digest}",

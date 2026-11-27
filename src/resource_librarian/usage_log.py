@@ -21,6 +21,46 @@ class UsageLog:
     def __init__(self, vault: Any):
         self.vault = vault
         self._lock = threading.Lock()
+        self._read: dict[str, int] = {}          # usage file -> bytes already counted
+        self._spent = 0.0
+
+    def spent(self) -> float:
+        """Dollars spent, as `spent_usd` counts them, reading only what was appended since the last
+        call: cheap enough to check before every model call (M5), whoever wrote the line."""
+        price_in = self.vault.setting("budget", "cleanup_usd_per_mtok_in")
+        price_out = self.vault.setting("budget", "cleanup_usd_per_mtok_out")
+        priced = isinstance(price_in, (int, float)) and isinstance(price_out, (int, float))
+        with self._lock:
+            for path in sorted(self.folder().glob("usage-*.jsonl")):
+                key, size = str(path), path.stat().st_size
+                start = self._read.get(key, 0)
+                if size <= start:
+                    continue
+                with open(path, "rb") as handle:
+                    handle.seek(start)
+                    chunk = handle.read(size - start)
+                complete = chunk.rfind(b"\n") + 1          # a half-written last line waits
+                for text in chunk[:complete].decode("utf-8", "replace").splitlines():
+                    try:
+                        line = json.loads(text)
+                    except ValueError:
+                        continue
+                    if isinstance(line.get("usd"), (int, float)):
+                        self._spent += line["usd"]
+                    elif line.get("role") == "cleanup" and priced:
+                        self._spent += ((line.get("in") or 0) * price_in + (line.get("out") or 0) * price_out) / 1e6
+                self._read[key] = start + complete
+            return self._spent
+
+    def over_ceiling(self) -> bool:
+        """Whether the library's own ceiling (`[budget] ceiling_usd`) is reached."""
+        ceiling = self.vault.setting("budget", "ceiling_usd")
+        if not isinstance(ceiling, (int, float)) or isinstance(ceiling, bool):
+            return False
+        try:
+            return self.spent() >= float(ceiling)
+        except OSError:
+            return False
 
     def folder(self) -> Path:
         return self.vault.librarian / "runtime"
