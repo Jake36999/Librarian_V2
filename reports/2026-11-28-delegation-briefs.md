@@ -1,5 +1,7 @@
 # Work to hand off (28 November 2026)
 
+**Superseded the same day by the tracks in [2026-11-28-tracks/](2026-11-28-tracks/README.md)**, which cover these briefs as sprints.
+
 Claude moves to review. These briefs hand the remaining implementation to other agents (ChatGPT/Codex, Antigravity, or a tier-1 model). Claude reviews each result against its brief's "done when" before anything is merged.
 
 ## Rules for every brief

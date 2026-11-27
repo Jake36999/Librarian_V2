@@ -8352,3 +8352,19 @@ The plan's M5 still-to-do list now carries the review's findings: `unlinked_pape
 - **W-PUB-02** waits on G4. Geo-Grapher's paper import publishes only into an existing reviewed folder group whose stratum matches the paper's authorship, so a library papers group is a Geo-Grapher change, on top of G4's `library_papers.py`.
 
 The access-review row for `intake_run` was refreshed. Tests: `test_m5_batch.py` (+1), `test_ingestion.py` (+1).
+
+### The remaining work as five tracks, for delegated sprints (2026-11-28)
+
+The Owner will delegate the remaining work in sprints, aiming for a Librarian that works on itself with tier 0 reviewing, which compounds. `reports/2026-11-28-tracks/` holds:
+- a README with the shared rules, the order and the dependencies;
+- one file per track, each split into sprints with a "done when".
+
+The tracks:
+- **A:** the UI smoke's inspector timeouts.
+- **B:** Geo-Grapher G4 integration, G5's one active paper database, and W-PUB-02.
+- **C:** M2's commission and M3's consolidated question.
+- **D:** M6, the Librarian maintaining itself. It joins tickets, the doctor, the oracle, the declarations and the DELEG-06 code workers into a repair loop and a code loop, with tier 0 reviewing.
+- **E:** M7, research fitted to a brief.
+
+They supersede `reports/2026-11-28-delegation-briefs.md`. Each sprint ends in a report that a tier-0 reviewer checks against its "done when" before merging.
+
