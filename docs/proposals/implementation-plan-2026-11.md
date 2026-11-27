@@ -317,8 +317,12 @@ The folder draft step, 27 November: `folder_draft_pending` runs the existing `fo
 
 The folder-draft run, 27 November (`reports/2026-11-27-m5-draft-run/`): on the fixed test folder with the real Clerk, all 3 non-excluded cards were described and checked (100% against the 90% floor), then decided by policy, for $0.0071. One Owner question came out of it: the root card was accepted as `own-current`, Geo-Grapher's suggestion, although every file sits in decided subfolders.
 
+The batch from the pipeline, 27 November: `ingest-folder` with `start_batch` ends with `ingestion_begin`.
+- The person's own run approves the folder's staged sources, never those marked sensitive, and begins the batch, through `staging_decide` and `process_approved`.
+- Another caller's run holds that decision on the person's agenda, as one reserved decision, until the commission lets tier 0 decide it.
+
 Still to do:
-- Starting the batch inside the pipeline (it waits for the commission). Until then, "at most 2 tier-0 turns" is not shown.
+- Tier 0 starting the batch inside the pipeline: this waits for the commission (M2 item 1). Until then, "at most 2 tier-0 turns" is not shown.
 - Free-text required fields (a paper's identifier, authors, year) have no task after capture. They stay Unknown unless a fetcher supplied them. The acceptance run's arXiv files were captured as `document`, not `paper`, so they carried none of these fields.
 - The supervised run in Resource-Library.
 

@@ -921,6 +921,13 @@ def _partial_ticket(ctx: Context, run_id: str, items: list[str]) -> None:
 
         def write() -> None:
             for ticket in tickets.all(open_only=True):
+                if ticket["class"] == "reserved_decision" and ticket["scope"].startswith("ingestion:"):
+                    # A held "approve and begin" (tools.folders.ingestion_begin): once none of its
+                    # sources is still staged, the person has decided them, here or in Staging.
+                    listed = (ticket.get("evidence") or {}).get("items") or []
+                    if listed and not any(status(i) == "staged" for i in listed):
+                        tickets.close(ticket["id"], "core-recheck", "its sources were decided")
+                    continue
                 if ticket["class"] != "partial_or_unmet" or not ticket["scope"].startswith("batch:") \
                         or ticket["scope"] == f"batch:{run_id}":
                     continue

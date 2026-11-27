@@ -8243,3 +8243,23 @@ The report is `reports/2026-11-27-m5-draft-run/README.md`.
 The rule is in `docs/policy/agent-roles-and-authority.md`, under "A connected folder is the person's decision".
 
 Tests: `test_m5_planted.py` (+3). The root and person cases fail on the previous code; the reference-folder case passes on both. The planted plan now gives the root its own card, as the real plan did.
+
+### M5, seventh part: the batch from the pipeline (2026-11-27)
+
+Approving staged sources into the batch and starting it are high-risk decisions (they commit spend). Starting has always been the person's: `process_approved` is curate tier, per Research Pipeline §4.2. The commission that would let tier 0 decide them is M2 item 1, not yet built. So this widens no one's authority.
+
+**`ingestion_begin(root)`** (`tools/folders.py`) is the new last decision step of `ingest-folder`. It runs when the commissioner passes `start_batch: true`; the default leaves the run as before.
+- **The person's own run** approves the root's staged sources through `staging_decide`, then begins the batch in the background through `process_approved`. Both keep their existing checks.
+  - A source marked sensitive is never approved here: a person reviews it on its own.
+  - The sources come from `ingestion.staged_under`, which matches documents as the ledger does.
+- **Any other caller's run** (an agent through MCP, or a declared agent on the Core API) changes nothing. It raises one `reserved_decision` ticket on the person's agenda, listing the sources, and the rest of its run goes on. This follows the policy "High risk when no tier 0 oversees".
+- **The hold closes** by the Core's recheck: when the person's own run begins the batch, or at the end of a batch run once none of its sources is still staged (`batch._partial_ticket`).
+
+The tool is declared in `actions.yaml` as `[staging, outside]`; it has an access-review row and is on the orchestrator allow-list.
+
+Tests: `test_m5_planted.py` (+3):
+- the person's own run approves and begins, and the batch finishes as before;
+- an agent's run holds the decision, and the person's decision in Staging closes the hold;
+- a sensitive source is never approved by the pipeline.
+
+**Not yet:** tier 0 deciding it under a commission (M2 item 1). Until then, the done-when "at most 2 tier-0 turns" for a commissioned ingestion is not shown.

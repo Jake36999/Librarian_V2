@@ -77,6 +77,19 @@ def ledger(vault: Any, root: str) -> dict[str, Any]:
     }
 
 
+
+def staged_under(vault: Any, root: str, status: str = "staged") -> list[dict[str, Any]]:
+    """The sources from one surveyed root waiting at `status`, matched by their document as the
+    ledger matches them (a queued item's `ref`, a captured one's `file`)."""
+    from .staging import StagingStore
+    base = _key(root)
+    out = []
+    for item in StagingStore(vault).items("source", status):
+        ref = str(item.get("ref") or item.get("file_original") or item.get("file") or "")
+        if ref and not ref.startswith(("http:", "https:")) and _under(ref, base):
+            out.append(item)
+    return out
+
 def _next(folders: dict[str, int], documents: int, not_queued: int, statuses: dict[str, int]) -> str:
     if folders["waiting"]:
         return f"{folders['waiting']} folder card(s) wait for a decision (Folders, or folder_accept_policy)"

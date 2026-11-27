@@ -375,3 +375,58 @@ def test_a_persons_decision_is_never_replaced_after_its_content_changes(planted)
     assert cards["private"]["status"] != "accepted"             # not re-decided by suggestion
     [held] = open_tickets(core, "folder:")
     assert held["class"] == "reserved_decision" and "after a person decided it" in held["summary"]
+
+
+def _wait_for_the_batch(core, seconds=60):
+    import time
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        status = core.person_call("batch_status", {})
+        if not status.get("running"):
+            return status
+        time.sleep(0.2)
+    raise AssertionError("the batch did not finish")
+
+
+def test_the_persons_own_run_approves_and_begins_the_batch(planted):
+    core, root, _, _ = planted
+    run = core.person_call("run_pipeline", {"name": "ingest-folder", "inputs": {
+        "path": str(root), "limit": 20, "approve_folder_drafts": True, "start_batch": True}})
+    assert run["status"] == "finished", run
+    begun = run["outputs"]["begun"]
+    assert begun["approved"] == 4 and begun["started"] is True and begun["held"] is False
+    _wait_for_the_batch(core)
+    statuses = sorted(i["status"] for i in StagingStore(core.vault).items("source"))
+    assert statuses == ["enriched", "enriched", "enriched", "partial"]   # the scan is partial, as before
+    assert open_tickets(core, "ingestion:") == []
+
+
+def test_an_agents_run_holds_approving_and_beginning_for_the_person(planted):
+    # Policy: "High risk when no tier 0 oversees". Until the commission (M2), an agent's run holds the
+    # decision on the person's agenda and changes nothing else; the rest of its run goes on.
+    core, root, _, _ = planted
+    run = core.person_call("run_pipeline", {"name": "ingest-folder", "inputs": {
+        "path": str(root), "limit": 20, "approve_folder_drafts": True, "start_batch": True}},
+        actor={"kind": "agent", "name": "an outside agent"})
+    assert run["status"] == "finished", run
+    begun = run["outputs"]["begun"]
+    assert begun["held"] is True and begun["approved"] == 0 and begun["started"] is False
+    assert len(items(core, "staged")) == 4 and items(core, "approved") == []
+    [held] = open_tickets(core, "ingestion:")
+    assert held["class"] == "reserved_decision" and held["queue"] == "agenda"
+    assert sorted(held["evidence"]["items"]) == sorted(items(core, "staged"))
+    # The person decides it in Staging; the batch's own recheck closes the hold.
+    core.person_call("staging_decide", {"item_ids": items(core, "staged"), "decision": "approve"})
+    core.person_call("process_approved", {})
+    assert open_tickets(core, "ingestion:") == []
+
+
+def test_a_source_marked_sensitive_is_never_approved_by_the_pipeline(planted):
+    core, root, _, _ = planted
+    to_the_persons_decisions(core, root)
+    flagged = sorted(items(core, "staged"))[0]
+    core.person_call("staging_flag", {"item_id": flagged, "sensitive": True, "reason": "planted"})
+    out = core.person_call("ingestion_begin", {"root": str(root)})
+    assert out["approved"] == 3 and out["sensitive"] == [flagged]
+    _wait_for_the_batch(core)
+    assert StagingStore(core.vault).load(flagged)["status"] == "staged"

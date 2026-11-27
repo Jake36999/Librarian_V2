@@ -5989,6 +5989,33 @@
       }
     },
     {
+      "tool": "ingestion_begin",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/folders.py",
+        "line": 269,
+        "symbol": "ingestion_begin"
+      },
+      "fingerprint": {
+        "source_sha256": "f44fa6930efc19df7426be108a53c97fe9e7a0761a0d15a73d25fd37b35cd14b",
+        "schema_sha256": "6ca2cad19c00a567c940f37f9152227f89cc975138708bc1138e113554e0b93b",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
       "tool": "folder_overview",
       "minimum_tier": "consult",
       "actors": [

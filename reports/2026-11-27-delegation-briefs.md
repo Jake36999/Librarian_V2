@@ -101,3 +101,18 @@ The 27 November audit compared the Core, not the plugin or the UI's behaviour.
 **Done when:**
 - G4's rows pass, with the suite and its hosted CI green;
 - the G5 measurement is in `reports/2026-11-27-geo-g5-measurement/README.md` in the Librarian repository.
+
+## 5. The supervised run in Resource-Library (validation, with the Owner)
+
+M5's acceptance and draft runs used new, throwaway libraries. The plan also needs one supervised run in the live Resource-Library (`G:\Libraries\Resource-Library`) before any as-is path is withdrawn. That library holds the Owner's work, so the Owner supervises, and every decision in it is the Owner's.
+
+- **Before anything:** back up `.librarian/` to `G:\Librarian-workackups\` with the date in the name. Read the library's settings: promotion mode, budget ceiling and spend (about $4.74 of $19.47 on 27 November), and the role assignments. Agree with the Owner which connected folder to use, and change no setting without their word.
+- **The run:** `ingest-folder` on that folder through the Core (the desktop app, or the Core API as the person, as `G:\Librarian-work\m5-draft-runun.py` drives one), with `approve_folder_drafts` only if the Owner approves the spend. Use `start_batch` only if the Owner starts it themselves.
+- **Record:**
+  - the ledger, the tickets, the spend by task, and the run time;
+  - every hold and its reason;
+  - any difference from the throwaway runs (reports `2026-11-27-m5-acceptance`, `2026-11-27-m5-draft-run`).
+- **Before and after:** run `scripts/regression_audit.py`. It needs no library, so it checks the code. Also confirm the library's saved state still loads and its earlier notes still resolve (a sample of `graph_paper` links and searches).
+
+**Done when:** `reports/2026-11-28-resource-library-supervised-run/README.md` holds the record, with the Owner's decisions marked as theirs, and nothing in the library changed beyond what the Owner approved.
+

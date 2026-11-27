@@ -265,6 +265,68 @@ def folder_queue_accepted(ctx: Context, root: str, limit: int = 50, scope: list[
     return {"folders": out, "queued": queued, "remaining": remaining}
 
 
+
+@tool("ingestion_begin", tier="contribute", effect="write", scope="library", orchestrates=True,
+      open_world=True, returns=("approved", "started", "held", "sensitive", "run"),
+      card=Card("Approve a surveyed folder's staged sources into the batch and start it, as the person; for "
+                "any other caller, hold that decision on the person's agenda",
+                "the ingest-folder pipeline's last decision, once its documents are captured",
+                "High risk: approving and starting commit spend (Research Pipeline §4.2). The person's own "
+                "call does both, through staging_decide and process_approved; another caller's call holds "
+                "them on the person's agenda as one reserved decision and changes nothing else. A source "
+                "marked sensitive is never approved here: a person reviews it on its own"))
+def ingestion_begin(ctx: Context, root: str, reason: str = "") -> dict:
+    """The batch from the pipeline (M5; plan M5 item 1). Starting the batch stays the person's, as it
+    always was (`process_approved` is curate tier). Until the commission (M2) lets tier 0 decide it, an
+    agent's run holds it for the person (policy: "High risk when no tier 0 oversees"), and the rest of
+    its run goes on."""
+    from ..ingestion import _key, staged_under
+    from ..tickets import TicketStore
+    staged = staged_under(ctx.vault, root)
+    sensitive = sorted(i["id"] for i in staged if i.get("sensitivity") == "review")
+    ready = sorted(i["id"] for i in staged if i.get("sensitivity") != "review")
+    scope = f"ingestion:{_key(root)}"[:300]
+    if not ready:
+        return {"approved": 0, "started": False, "held": False, "sensitive": sensitive,
+                "detail": "nothing staged from this folder waits to be approved"}
+    if not (_is_person(ctx) and ctx.tier == "curate"):
+        held = {}
+
+        def hold():
+            held.update(TicketStore(ctx.vault).ensure(
+                "reserved_decision", scope, opened_by="ingestion",
+                summary=f"{len(ready)} staged source(s) from {root} wait to be approved into the batch and "
+                        f"the batch started: a high-risk decision, the person's (Staging: approve, then "
+                        f"begin)" + (f"; {len(sensitive)} marked sensitive wait for review on their own"
+                                     if sensitive else ""),
+                evidence={"root": root, "items": ready[:200], "sensitive": sensitive[:200]}))
+        _write_tickets(ctx, hold)
+        return {"approved": 0, "started": False, "held": True, "sensitive": sensitive,
+                "ticket": held.get("id", "")}
+    approved: list[str] = []
+    refused: list[dict] = []
+    for start in range(0, len(ready), 100):
+        out = REGISTRY.call("staging_decide", {"item_ids": ready[start:start + 100], "decision": "approve",
+                                               "reason": reason or f"ingest-folder: {root}"}, ctx)
+        if "error" in out:
+            return {"approved": len(approved), "started": False, "held": False, "sensitive": sensitive,
+                    "refused": out.get("refused") or out.get("error"), "detail": str(out.get("detail") or "")[:300]}
+        for row in out.get("results") or []:
+            (refused.append({"id": row.get("id"), "why": str(row.get("refused") or row.get("error"))[:200]})
+             if ("refused" in row or "error" in row) else approved.append(row.get("id")))
+    begun = REGISTRY.call("process_approved", {"background": True}, ctx) if approved else {}
+
+    def recheck():
+        store = TicketStore(ctx.vault)
+        for ticket in store.all(open_only=True):
+            if ticket["scope"] == scope:
+                store.close(ticket["id"], "core-recheck", "the person approved the sources and began the batch")
+    if approved:
+        _write_tickets(ctx, recheck)
+    return {"approved": len(approved), "started": bool(begun.get("started")), "held": False,
+            "sensitive": sensitive, "run": begun.get("run", ""), **({"refused": refused} if refused else {}),
+            **({"detail": begun.get("detail")} if begun.get("detail") else {})}
+
 @tool("ingestion_ledger", tier="consult", effect="read",
       returns=("root", "folders", "documents", "sources", "unaccounted", "next"),
       card=Card("One surveyed folder's ingestion, reconciled: folders surveyed and accepted, documents "

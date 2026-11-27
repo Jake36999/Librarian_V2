@@ -4,7 +4,8 @@ purpose: >-
   cards when the commissioner approves the spend, accept the
   folders the agent policy may accept, queue the documents of the accepted reference folders, capture
   them into staging, and report the folder's reconciled ledger. Approving sources into the batch and
-  starting it stay with the person (implementation plan M5; as-is W-ING-01, W-FOL-04)
+  starting it stay with the person (with `start_batch`, the person's own run does both; another caller's
+  run holds them on the person's agenda) (implementation plan M5; as-is W-ING-01, W-FOL-04)
 inputs:
   path: {type: string}
   limit: {type: integer, default: 50}
@@ -12,6 +13,9 @@ inputs:
   # Without it, nothing is drafted and the run is as before: policy acceptance holds every undrafted
   # card, with a ticket naming the draft.
   approve_folder_drafts: {type: boolean, default: false}
+  # Approve the captured sources into the batch and begin it (high risk: it commits spend). The person's
+  # own run does it; another caller's run holds it on the person's agenda (no commission yet, M2).
+  start_batch: {type: boolean, default: false}
 steps:
   - id: survey
     action: folder_survey
@@ -36,11 +40,17 @@ steps:
   - id: capture
     workflow: run-queue
     args: {limit: {from: inputs.limit}}
+  - id: begin
+    action: ingestion_begin
+    args: {root: {from: inputs.path}}
+    when: {from: inputs.start_batch, is: true}
+    on_error: continue
   - id: ledger
     action: ingestion_ledger
     args: {root: {from: inputs.path}}
 outputs:
   drafted: {from: steps.draft}
+  begun: {from: steps.begin}
   folders: {from: steps.ledger.folders}
   documents: {from: steps.ledger.documents}
   sources: {from: steps.ledger.sources}

@@ -33,6 +33,7 @@ changes:
   folder_accept_policy: [staging, graphs]
   folder_approve_batch: [staging]
   folder_queue_sources: [staging]
+  ingestion_begin: [staging, outside]
   # Derived stores.
   index: [indexes]
   dik_rebuild: [indexes]
