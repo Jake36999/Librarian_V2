@@ -517,6 +517,83 @@ def fetch_file(rel: str, vault: Vault, store: EvidenceStore) -> Fetched:
     return fetched
 
 
+# A PDF's own identifier (the content model: a paper is "a paper, preprint or book chapter with a
+# bibliographic identifier"). arXiv stamps "arXiv:2405.14831v3 [cs.CL]" on a preprint's first page; a
+# journal prints its DOI on its first page; a downloaded preprint's file name often carries its id.
+PDF_ARXIV = re.compile(r"arXiv:\s?(\d{4}\.\d{4,5})(?:v\d+)?", re.I)
+NAME_ARXIV = re.compile(r"(?<![\d.])(\d{4}\.\d{4,5})(?:v\d+)?(?![\d])")
+PDF_OPENING = 6000                     # characters of the text read for an identifier and a title
+
+
+def _squash_title(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(text).casefold())
+
+
+def paper_from_file(fetched: Fetched, vault: Vault, fetcher: "Fetcher", store: EvidenceStore) -> Fetched:
+    """A captured PDF that names its own arXiv id or DOI is captured as the paper it is (M5, as-is: the
+    M5 acceptance run's arXiv preprints were captured as documents, with no identifier, authors or year).
+
+    The identifier is looked up with the existing arXiv and Crossref fetchers, and kept only when the
+    record's title is the PDF's own (it appears in the PDF's opening text, or is its readable title), so
+    a document that merely cites a DOI stays a document. The file's name, identity (`file:` digest),
+    evidence and quality verdict are kept; the record's identifier, authors, year and abstract are
+    added, and `_paper_check` says where they came from, for the person to confirm at acceptance. A
+    lookup that fails or does not match never fails the capture: the file stays a document, with a note.
+    """
+    if fetched.kind != "document" or not str(fetched.file).lower().endswith(".pdf"):
+        return fetched
+    opening = fetched.texts.get("documentation", "")[:PDF_OPENING]
+    candidates: list[tuple[str, str]] = []
+    for m in PDF_ARXIV.finditer(opening):
+        candidates.append(("arxiv", m.group(1)))
+    for m in DOI.finditer(opening[:3000]):
+        candidates.append(("doi", m.group(1).rstrip(".")))
+    for m in NAME_ARXIV.finditer(Path(fetched.file).stem):
+        candidates.append(("arxiv", m.group(1)))
+    seen: list[tuple[str, str]] = []
+    for c in candidates:
+        if c not in seen:
+            seen.append(c)
+    if not seen:
+        return fetched
+    text_key, title_key = _squash_title(opening), _squash_title(fetched.title)
+    mismatched = []
+    for kind, identifier in seen[:3]:
+        try:
+            # Its own store, so a record that does not match leaves no evidence on this source.
+            looked = FETCHERS[kind](identifier, fetcher, EvidenceStore(vault))
+        except (FetchError, ET.ParseError, ValueError, KeyError, OSError) as exc:
+            mismatched.append(f"{kind}:{identifier} (not looked up: {str(exc)[:80]})")
+            continue
+        record_key = _squash_title(looked.title)
+        if len(record_key) < 12 or not (record_key in text_key or record_key == title_key):
+            mismatched.append(f"{kind}:{identifier} (its record's title is not this PDF's)")
+            continue
+        url = ("https://export.arxiv.org/api/query?id_list=" + identifier if kind == "arxiv"
+               else "https://api.crossref.org/works/" + urllib.parse.quote(identifier))
+        _record(store, fetched, "metadata", url, {"title": looked.title, "identifier": identifier,
+                                                  "authors": looked.fields.get("authors"),
+                                                  "published": str(looked.fields.get("year") or ""),
+                                                  "matched": "the record's title is in the PDF's opening"})
+        fetched.kind = "paper"
+        fetched.title = looked.title
+        fetched.fields.update({k: v for k, v in looked.fields.items() if v not in (None, "", [])})
+        abstract = looked.texts.get("abstract") or ""
+        if abstract:
+            _record(store, fetched, "abstract", url, {"text": abstract})
+        # A paper's Claim is drawn from its abstract; without one in the record, from the PDF's own
+        # opening, which holds its abstract.
+        fetched.texts = {**fetched.texts, "abstract": abstract or opening[:4000]}
+        fetched.fields["_paper_check"] = {
+            "identifier_kind": kind, "identifier": identifier,
+            "found_in": "the PDF's text" if (kind == "doi" or identifier in
+                                             {m.group(1) for m in PDF_ARXIV.finditer(opening)}) else "the file name",
+            "verified": "the record's title appears in the PDF", "abstract": "record" if abstract else "PDF opening"}
+        return fetched
+    fetched.notes.append("identifier(s) found but not this PDF's: " + "; ".join(mismatched)[:400])
+    return fetched
+
+
 FETCHERS: dict[str, Callable[..., Fetched]] = {"github": fetch_github, "arxiv": fetch_arxiv,
                                                "dataset": fetch_dataset,
                                                "doi": fetch_doi, "page": fetch_page,
@@ -607,6 +684,7 @@ def ingest(vault: Vault, engine: Engine | None, ref: str, *, endpoint: clerk.End
     try:
         if reference.kind == "file":
             fetched = fetch_file(reference.key, vault, store)
+            fetched = paper_from_file(fetched, vault, fetcher, store)
         else:
             fetched = FETCHERS[reference.kind](reference.key, fetcher, store)
     except (FetchError, ET.ParseError, ValueError, KeyError) as exc:
@@ -696,6 +774,7 @@ def ingest(vault: Vault, engine: Engine | None, ref: str, *, endpoint: clerk.End
                  "intake": {"stages": ledger, "quality": fetched.quality or
                             quality.verdict("usable", "captured", "nothing")},
                  **({"digest": fetched.digest} if fetched.digest else {}),
+                 **_paper_proposals(fetched, fields),
                  **({"possible_duplicate_of": near} if near else {}),
                  # the fit judgement, kept apart from the neutral description (§4.4)
                  **({"fit_screen": screen} if screen else {}),
@@ -706,6 +785,21 @@ def ingest(vault: Vault, engine: Engine | None, ref: str, *, endpoint: clerk.End
                                 "draft": review["draft"].get("status"),
                                 **({"possible_duplicate_of": near} if near else {})},
                         quality=fetched.quality)
+
+
+PAPER_FIELDS = ("identifier_kind", "identifier", "authors", "year", "paper_kind", "venue")
+
+
+def _paper_proposals(fetched: Fetched, fields: dict[str, Any]) -> dict[str, Any]:
+    """A PDF captured as a paper (`paper_from_file`) says where its paper fields came from: proposals on
+    the staged item, confirmed when the person accepts it, as the batch's metadata proposals are."""
+    check = fetched.fields.get("_paper_check")
+    if not check:
+        return {}
+    said = (f"from the PDF's own {check['identifier_kind']} id ({check['found_in']}), looked up, and "
+            f"kept because {check['verified']}")
+    return {"metadata_proposals": {k: said for k in PAPER_FIELDS if k in fields},
+            "paper_check": {**check, "was": "document"}}
 
 
 def _held_path(engine: Engine, name: str) -> str:

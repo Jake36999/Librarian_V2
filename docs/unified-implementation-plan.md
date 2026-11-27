@@ -8263,3 +8263,30 @@ Tests: `test_m5_planted.py` (+3):
 - a sensitive source is never approved by the pipeline.
 
 **Not yet:** tier 0 deciding it under a commission (M2 item 1). Until then, the done-when "at most 2 tier-0 turns" for a commissioned ingestion is not shown.
+
+### M5, eighth part: papers from their own PDFs (2026-11-27)
+
+The content model defines a paper as "a paper, preprint or book chapter with a bibliographic identifier". The M5 acceptance run's arXiv preprints were captured as `document`, so they had no identifier, authors or year: capture filled those only when it was given an arXiv id or DOI as the reference. The Owner chose the recommended design on 27 November.
+
+**`intake.paper_from_file`**, after `fetch_file`, for a PDF:
+- **Finding the id.** It looks for the PDF's own identifier: arXiv's first-page stamp ("arXiv:2405.14831v3 [cs.DB]"), a DOI in the first page, or an arXiv id in the file name.
+- **The lookup.** Up to three candidates are looked up with the existing `fetch_arxiv` and `fetch_doi`, each into its own evidence store.
+- **The match.** A record is kept only when its title appears in the PDF's opening text, or is its readable title. So a document that only cites a DOI stays a document, with a note, and the record that did not match leaves no evidence on the source.
+- **What a match changes.** The source becomes kind `paper`, with the record's title, identifier, authors, year, paper kind and venue, and its abstract.
+  - Without an abstract in the record, the PDF's opening is used, so the paper's required `Claim` section is still drawn.
+  - The file's name, `file:` identity, evidence and text-quality verdict are kept, so duplicate checks are unchanged.
+- **The marking.** The staged item says where the fields came from (`paper_check`, and `metadata_proposals` for each paper field): proposals confirmed when the person accepts.
+- **Failure.** A lookup that fails never fails the capture: the file stays a document, with a note.
+- **The batch.** It reads a `paper` with a file exactly as a `document` (`batch._data`).
+
+**Live check** (real arXiv and Crossref, free; fetch and check only). Of the fixed folder's 8 PDFs:
+- 6 became papers, each from its own arXiv stamp, with the record's title, id, year and authors. "EXT O3 2405.14831 HippoRAG" became "HippoRAG: Neurobiologically Inspired Long-Term Memory for Large Language Models", 2024, 5 authors.
+- The EBSCO and IJES journal PDFs name no identifier in their opening, and stayed documents.
+- None was misidentified.
+
+Tests: `test_paper_from_file.py` (6, new):
+- an arXiv stamp, and an id in the file name;
+- a cited DOI that stays a document;
+- a failed lookup;
+- no identifier, and no lookup;
+- a DOI record without an abstract.

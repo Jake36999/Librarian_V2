@@ -321,9 +321,10 @@ The batch from the pipeline, 27 November: `ingest-folder` with `start_batch` end
 - The person's own run approves the folder's staged sources, never those marked sensitive, and begins the batch, through `staging_decide` and `process_approved`.
 - Another caller's run holds that decision on the person's agenda, as one reserved decision, until the commission lets tier 0 decide it.
 
+Papers from their own PDFs, 27 November: a captured PDF that names its own arXiv id or DOI is looked up with the existing arXiv and Crossref fetchers. When the record's title is the PDF's own, it is captured as that paper, with its identifier, authors and year, as proposals the person confirms at acceptance. On the fixed folder, 6 of 8 PDFs became papers, all correctly; the 2 journal PDFs without an identifier stayed documents.
+
 Still to do:
 - Tier 0 starting the batch inside the pipeline: this waits for the commission (M2 item 1). Until then, "at most 2 tier-0 turns" is not shown.
-- Free-text required fields (a paper's identifier, authors, year) have no task after capture. They stay Unknown unless a fetcher supplied them. The acceptance run's arXiv files were captured as `document`, not `paper`, so they carried none of these fields.
 - The supervised run in Resource-Library.
 
 1. **`ingest-folder` as a pipeline** over M1a's actions: folder review, then source intake, then batch enrichment, then acceptance. One parent starts each child.
